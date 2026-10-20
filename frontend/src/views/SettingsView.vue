@@ -4,12 +4,12 @@ import { useI18n } from 'vue-i18n'
 import {
   NButton, NCollapse, NCollapseItem, NInput, NInputNumber, NSelect, NSpace, NSwitch, NText, useMessage,
 } from 'naive-ui'
-import { Color24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
+import { ArrowRouting24Regular, Color24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
 import {
   GetOscTarget, SetOscTarget, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
-  ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming,
+  ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
 } from '../../wailsjs/go/app/App'
-import { metadata, osc, service } from '../../wailsjs/go/models'
+import { metadata, osc, settings } from '../../wailsjs/go/models'
 import { useTheme, type ThemeMode } from '../composables/useTheme'
 import { useLocale, type LocaleMode } from '../i18n'
 import InfoCard from '../components/InfoCard.vue'
@@ -32,6 +32,23 @@ const localeOptions = computed(() => [
   { label: t('settings.languageSystem'), value: 'system' },
 ])
 
+const outputMode = ref('parameters')
+GetOutputMode().then((v) => (outputMode.value = v))
+const outputOptions = computed(() => [
+  { label: t('settings.outputParameters'), value: 'parameters' },
+  { label: t('settings.outputNative'), value: 'native' },
+  { label: t('settings.outputBoth'), value: 'both' },
+])
+
+async function applyOutputMode(v: string) {
+  try {
+    await SetOutputMode(v)
+    outputMode.value = v
+  } catch (e) {
+    message.error(String(e))
+  }
+}
+
 const target = ref<osc.Target>(new osc.Target({ inPort: 9001, outPort: 9000, address: '127.0.0.1' }))
 GetOscTarget().then((v) => (target.value = v))
 
@@ -44,7 +61,7 @@ async function applyTarget() {
   }
 }
 
-const timing = ref<service.ModuleTiming>(new service.ModuleTiming({ updateIntervalMs: 10, initTimeoutSec: 15, sendIntervalMs: 10 }))
+const timing = ref<settings.Timing>(new settings.Timing({ updateIntervalMs: 10, initTimeoutSec: 15, sendIntervalMs: 10 }))
 GetModuleTiming().then((v) => (timing.value = v))
 
 async function applyTiming() {
@@ -103,6 +120,14 @@ GetMetadata().then((v) => (meta.value = v))
       <n-text depth="3">{{ t('settings.languageDesc') }}</n-text>
       <template #aside>
         <n-select :value="localeMode" :options="localeOptions" style="width: 200px" @update:value="(v: LocaleMode) => setLocaleMode(v)" />
+      </template>
+    </info-card>
+
+    <info-card :icon="ArrowRouting24Regular">
+      <div class="header">{{ t('settings.output') }}</div>
+      <n-text depth="3">{{ t('settings.outputDesc') }}</n-text>
+      <template #aside>
+        <n-select :value="outputMode" :options="outputOptions" style="width: 260px" @update:value="applyOutputMode" />
       </template>
     </info-card>
 

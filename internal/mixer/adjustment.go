@@ -1,10 +1,10 @@
-package mutation
+package mixer
 
 import "VRCFaceTracking/pkg/tracking"
 
-// ParameterAdjustment remaps groups of shapes from a user chosen
-// (floor, ceil) range onto 0..1.
-type ParameterAdjustment struct {
+// AdjustmentConfig is the persisted state of Adjustment. groups of shapes from a user chosen
+// Every range is remapped from (floor, ceil) onto 0..1.
+type AdjustmentConfig struct {
 	activeState
 	EyeBrowRaiser  Range `json:"eyeBrowRaiser"`
 	EyeBrowLower   Range `json:"eyeBrowLower"`
@@ -42,13 +42,20 @@ type ParameterAdjustment struct {
 	HeadPositionZ     Range `json:"headPositionZ"`
 }
 
-func NewParameterAdjustment() *ParameterAdjustment {
-	p := &ParameterAdjustment{}
-	p.reset()
-	return p
+// DefaultAdjustmentConfig maps every range onto itself (no adjustment).
+func DefaultAdjustmentConfig() AdjustmentConfig {
+	var c AdjustmentConfig
+	c.reset()
+	return c
 }
 
-func (p *ParameterAdjustment) reset() {
+// Adjustment remaps groups of shapes from a user chosen (floor, ceil) range
+// onto 0..1.
+type Adjustment struct {
+	AdjustmentConfig
+}
+
+func (p *AdjustmentConfig) reset() {
 	unit := Range{Floor: 0, Ceil: 1}
 	signed := Range{Floor: -1, Ceil: 1}
 	for _, r := range []*Range{
@@ -67,15 +74,13 @@ func (p *ParameterAdjustment) reset() {
 	}
 }
 
-func (p *ParameterAdjustment) Name() string                      { return "Parameter Adjustment" }
-func (p *ParameterAdjustment) Description() string               { return "Adjust VRCFaceTracking Parameters." }
-func (p *ParameterAdjustment) Priority() Priority                { return None }
-func (p *ParameterAdjustment) Persisted() bool                   { return true }
-func (p *ParameterAdjustment) Initialize(*tracking.TrackingData) {}
+func (p *Adjustment) Name() string        { return "Parameter Adjustment" }
+func (p *Adjustment) Description() string { return "Adjust VRCFaceTracking Parameters." }
+func (p *Adjustment) Priority() Priority  { return None }
 
 func remap(v *float32, r Range) { *v = (*v - r.Floor) / (r.Ceil - r.Floor) }
 
-func (p *ParameterAdjustment) Mutate(d *tracking.TrackingData) {
+func (p *Adjustment) Mutate(d *tracking.TrackingData) {
 	set := func(r Range, shapes ...tracking.UnifiedExpression) {
 		for _, s := range shapes {
 			remap(&d.Shapes[s].Weight, r)
@@ -117,7 +122,7 @@ func (p *ParameterAdjustment) Mutate(d *tracking.TrackingData) {
 	remap(&d.Head.PosZ, p.HeadPositionZ)
 }
 
-func (p *ParameterAdjustment) Components() []Component {
+func (p *Adjustment) Components() []Component {
 	return []Component{
 		button("Reset Values", p.reset),
 		rangeSlider("Eyebrow Raiser", 0, 1, &p.EyeBrowRaiser),

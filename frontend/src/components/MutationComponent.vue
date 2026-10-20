@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { NButton, NCheckbox, NSlider, NText } from 'naive-ui'
-import type { app } from '../../wailsjs/go/models'
+import type { mixer } from '../../wailsjs/go/models'
 import { InvokeMutationButton, SetMutationRange, SetMutationValue } from '../../wailsjs/go/app/App'
 import { useMutationText } from '../i18n'
 
 const { componentName } = useMutationText()
 
-const props = defineProps<{ mutation: string; component: app.ComponentView }>()
+const props = defineProps<{ mutation: string; component: mixer.ComponentState }>()
 
 function setValue(v: unknown) {
   props.component.value = v

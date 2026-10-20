@@ -1,4 +1,4 @@
-package mutation
+package mixer
 
 import (
 	"math"
@@ -34,12 +34,21 @@ func (f *euroFilter) filter(x, minCutoff, beta, dCutoff float32) float32 {
 	return lowPass(&f.xPrev, x, alpha(filterHz, cutoff))
 }
 
-// Filter smooths every channel with a One Euro filter.
-type Filter struct {
+// FilterConfig is the persisted state of Filter.
+type FilterConfig struct {
 	activeState
 	MinCutoff float32 `json:"minCutoff"`
 	Beta      float32 `json:"beta"`
 	DCutoff   float32 `json:"dCutoff"`
+}
+
+func DefaultFilterConfig() FilterConfig {
+	return FilterConfig{MinCutoff: 1, Beta: 0.5, DCutoff: 0.1}
+}
+
+// Filter smooths every channel with a One Euro filter.
+type Filter struct {
+	FilterConfig
 
 	shapes                       [tracking.ExpressionCount]euroFilter
 	gazeLeftX, gazeLeftY         euroFilter
@@ -50,17 +59,11 @@ type Filter struct {
 	headPosX, headPosY, headPosZ euroFilter
 }
 
-func NewFilter() *Filter {
-	return &Filter{MinCutoff: 1, Beta: 0.5, DCutoff: 0.1}
-}
-
 func (f *Filter) Name() string { return "Data Filter" }
 func (f *Filter) Description() string {
 	return "Default data filtering for VRCFaceTracking expressions."
 }
-func (f *Filter) Priority() Priority                { return Postprocessor }
-func (f *Filter) Persisted() bool                   { return true }
-func (f *Filter) Initialize(*tracking.TrackingData) {}
+func (f *Filter) Priority() Priority { return Postprocessor }
 
 func (f *Filter) apply(ef *euroFilter, v *float32) {
 	*v = ef.filter(*v, f.MinCutoff, f.Beta, f.DCutoff)
@@ -90,8 +93,8 @@ func (f *Filter) Mutate(d *tracking.TrackingData) {
 
 func (f *Filter) Components() []Component {
 	return []Component{
-		slider("Minimum Cutoff", true, 0, 2, &f.MinCutoff),
-		slider("Beta", true, 0, 1, &f.Beta),
-		slider("Derivative Cutoff", true, 0, 1, &f.DCutoff),
+		slider("Minimum Cutoff", 0, 2, &f.MinCutoff),
+		slider("Beta", 0, 1, &f.Beta),
+		slider("Derivative Cutoff", 0, 1, &f.DCutoff),
 	}
 }

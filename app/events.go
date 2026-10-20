@@ -5,9 +5,9 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"VRCFaceTracking/internal/engine"
 	"VRCFaceTracking/internal/logging"
 	"VRCFaceTracking/internal/oscquery"
+	"VRCFaceTracking/internal/sender"
 	"VRCFaceTracking/internal/service"
 	"VRCFaceTracking/module/manager"
 )
@@ -37,7 +37,7 @@ func (e *emitter) OnAvatarChanged(info oscquery.AvatarInfo) {
 	runtime.EventsEmit(e.ctx, eventAvatar, info)
 }
 
-func (e *emitter) OnParametersChanged(stats engine.ParameterStats) {
+func (e *emitter) OnParametersChanged(stats sender.ParameterStats) {
 	runtime.EventsEmit(e.ctx, eventParameters, stats)
 }
 

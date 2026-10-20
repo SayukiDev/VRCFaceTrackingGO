@@ -1,6 +1,6 @@
-// Package mutation post-processes raw tracking data (filtering,
-// range adjustment) before it is turned into output parameters.
-package mutation
+// Package mixer transforms raw tracking data (range adjustment, correction,
+// filtering) before it is turned into output parameters.
+package mixer
 
 import (
 	"fmt"
@@ -8,7 +8,7 @@ import (
 	"VRCFaceTracking/pkg/tracking"
 )
 
-// Priority orders mutations: preprocessors run first, postprocessors last.
+// Priority orders stages: preprocessors run first, postprocessors last.
 type Priority int
 
 const (
@@ -27,20 +27,18 @@ const (
 	KindButton   Kind = "button"
 )
 
-// Range is a (floor, ceil) pair used by ParameterAdjustment.
+// Range is a (floor, ceil) pair used by Adjustment.
 type Range struct {
 	Floor float32 `json:"floor"`
 	Ceil  float32 `json:"ceil"`
 }
 
-// Component is one user editable property (or action) of a mutation.
+// Component is one user editable property (or action) of a stage.
 type Component struct {
 	Name string
 	Kind Kind
 	Min  float32
 	Max  float32
-	// SaveImmediately requests the mutation be persisted after every change.
-	SaveImmediately bool
 
 	// Get returns the current value: bool, float32 or Range. Nil for buttons.
 	Get func() any
@@ -50,23 +48,20 @@ type Component struct {
 	Invoke func()
 }
 
-// Mutation transforms tracking data in place.
-type Mutation interface {
+// Stage transforms tracking data in place.
+type Stage interface {
 	Name() string
 	Description() string
 	Priority() Priority
-	// Persisted reports whether the mutation's state is saved to settings.
-	Persisted() bool
 	Active() bool
 	SetActive(bool)
-	Initialize(data *tracking.TrackingData)
 	Mutate(data *tracking.TrackingData)
 	Components() []Component
 }
 
-func checkbox(name string, saveImmediately bool, field *bool) Component {
+func checkbox(name string, field *bool) Component {
 	return Component{
-		Name: name, Kind: KindCheckbox, SaveImmediately: saveImmediately,
+		Name: name, Kind: KindCheckbox,
 		Get: func() any { return *field },
 		Set: func(v any) error {
 			b, ok := v.(bool)
@@ -79,9 +74,9 @@ func checkbox(name string, saveImmediately bool, field *bool) Component {
 	}
 }
 
-func slider(name string, saveImmediately bool, minValue, maxValue float32, field *float32) Component {
+func slider(name string, minValue, maxValue float32, field *float32) Component {
 	return Component{
-		Name: name, Kind: KindSlider, Min: minValue, Max: maxValue, SaveImmediately: saveImmediately,
+		Name: name, Kind: KindSlider, Min: minValue, Max: maxValue,
 		Get: func() any { return *field },
 		Set: func(v any) error {
 			f, ok := toFloat32(v)
@@ -127,7 +122,7 @@ func toFloat32(v any) (float32, bool) {
 	return 0, false
 }
 
-// activeState is embedded by mutations to provide Active/SetActive.
+// activeState is embedded by stage configs to provide Active/SetActive.
 type activeState struct {
 	IsActive bool `json:"isActive"`
 }

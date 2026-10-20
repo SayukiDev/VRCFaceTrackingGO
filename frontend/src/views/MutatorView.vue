@@ -2,16 +2,16 @@
 import { ref } from 'vue'
 import { NCollapse, NCollapseItem, NSwitch, NText } from 'naive-ui'
 import { GetMutations, SetMutationActive } from '../../wailsjs/go/app/App'
-import type { app } from '../../wailsjs/go/models'
+import type { mixer } from '../../wailsjs/go/models'
 import MutationComponent from '../components/MutationComponent.vue'
 import { useMutationText } from '../i18n'
 
 const { mutationName, mutationDescription } = useMutationText()
 
-const mutations = ref<app.MutationView[]>([])
+const mutations = ref<mixer.StageState[]>([])
 GetMutations().then((m) => (mutations.value = m))
 
-function setActive(m: app.MutationView, v: boolean) {
+function setActive(m: mixer.StageState, v: boolean) {
   m.active = v
   void SetMutationActive(m.name, v)
 }

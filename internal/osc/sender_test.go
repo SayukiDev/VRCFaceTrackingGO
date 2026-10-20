@@ -68,3 +68,40 @@ func TestSenderBundlesAndSplits(t *testing.T) {
 		t.Fatalf("expected the batch to be split, got %d datagrams", datagrams)
 	}
 }
+
+func TestSenderBlob(t *testing.T) {
+	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer conn.Close()
+
+	s := NewSender(zap.NewNop())
+	if err := s.SetTarget("127.0.0.1", conn.LocalAddr().(*net.UDPAddr).Port); err != nil {
+		t.Fatal(err)
+	}
+	payload := make([]byte, 102)
+	payload[36] = 255
+	if err := s.Send([]params.Message{{Address: "/tracking/face/v1", Value: payload}}); err != nil {
+		t.Fatal(err)
+	}
+
+	_ = conn.SetReadDeadline(time.Now().Add(time.Second))
+	buf := make([]byte, 65536)
+	n, _, err := conn.ReadFromUDP(buf)
+	if err != nil {
+		t.Fatal(err)
+	}
+	pkt, err := osc.ParsePacket(string(buf[:n]))
+	if err != nil {
+		t.Fatal(err)
+	}
+	msg := pkt.(*osc.Bundle).Messages[0]
+	if tags, _ := msg.TypeTags(); tags != ",b" {
+		t.Fatalf("type tags %q, want \",b\"", tags)
+	}
+	got := msg.Arguments[0].([]byte)
+	if len(got) != 102 || got[36] != 255 {
+		t.Fatalf("blob len %d, byte 36 = %d", len(got), got[36])
+	}
+}

@@ -62,6 +62,10 @@ export function GetOscTarget() {
   return window['go']['app']['App']['GetOscTarget']();
 }
 
+export function GetOutputMode() {
+  return window['go']['app']['App']['GetOutputMode']();
+}
+
 export function GetParameterStats() {
   return window['go']['app']['App']['GetParameterStats']();
 }
@@ -144,6 +148,10 @@ export function SetMutatorEnabled(arg1) {
 
 export function SetOscTarget(arg1) {
   return window['go']['app']['App']['SetOscTarget'](arg1);
+}
+
+export function SetOutputMode(arg1) {
+  return window['go']['app']['App']['SetOutputMode'](arg1);
 }
 
 export function SetTheme(arg1) {

@@ -42,6 +42,25 @@ func maxOf(a, b tracking.UnifiedExpression) getter {
 	return func(d *tracking.TrackingData) float32 { return max(d.Shapes[a].Weight, d.Shapes[b].Weight) }
 }
 
+// VRChat's built-in eye tracking inputs. They drive bone-rotation gaze and
+// the default eyelids independently of avatar parameters.
+const (
+	NativeGazeAddress       = "/tracking/eye/LeftRightPitchYaw"
+	NativeEyesClosedAddress = "/tracking/eye/EyesClosedAmount"
+)
+
+// NativeGaze returns both eyes as pitch/yaw degrees for NativeGazeAddress.
+func NativeGaze(d *tracking.TrackingData) tracking.Vector4 {
+	return tracking.Vector4{
+		X: d.Eye.Left.Gaze.ToPitch(), Y: d.Eye.Left.Gaze.ToYaw(),
+		Z: d.Eye.Right.Gaze.ToPitch(), W: d.Eye.Right.Gaze.ToYaw(),
+	}
+}
+
+// NativeEyesClosed returns the combined eyelid closure for
+// NativeEyesClosedAddress.
+func NativeEyesClosed(d *tracking.TrackingData) float32 { return 1 - d.Eye.Combined().Openness }
+
 func v2(name string, get getter) Parameter { return NewEParam("v2/"+name, get, 0.5) }
 
 // AllParameters returns every output parameter: one per Unified Expression,
@@ -114,21 +133,14 @@ func combinedShapes(status StatusProvider) []Parameter {
 		NewEParamVector2("v2/EyeRight", func(d *tracking.TrackingData) tracking.Vector2 { return d.Eye.Right.Gaze }, 0.5),
 
 		// Native gaze, used when the avatar has no eye X/Y parameters.
-		NewNative("/tracking/eye/LeftRightPitchYaw",
-			func(d *tracking.TrackingData) tracking.Vector4 {
-				return tracking.Vector4{
-					X: d.Eye.Left.Gaze.ToPitch(), Y: d.Eye.Left.Gaze.ToYaw(),
-					Z: d.Eye.Right.Gaze.ToPitch(), W: d.Eye.Right.Gaze.ToYaw(),
-				}
-			},
+		NewNative(NativeGazeAddress, NativeGaze,
 			func(defs []Definition) bool {
 				eye := filterDefs(defs, func(d Definition) bool {
 					return strings.Contains(d.Name, "Eye") && (strings.Contains(d.Name, "X") || strings.Contains(d.Name, "Y"))
 				})
 				return !hasAnyParameterNamed(eye, knownNamesOf())
 			}),
-		NewNative("/tracking/eye/EyesClosedAmount",
-			func(d *tracking.TrackingData) float32 { return 1 - d.Eye.Combined().Openness },
+		NewNative(NativeEyesClosedAddress, NativeEyesClosed,
 			func(defs []Definition) bool {
 				eye := filterDefs(defs, func(d Definition) bool {
 					return strings.Contains(d.Name, "Eye") && (strings.Contains(d.Name, "Open") || strings.Contains(d.Name, "Lid"))

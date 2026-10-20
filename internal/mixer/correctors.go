@@ -1,10 +1,9 @@
-package mutation
+package mixer
 
 import "VRCFaceTracking/pkg/tracking"
 
-// Correctors nudges data into shapes that better conform to Unified
-// Expressions.
-type Correctors struct {
+// CorrectorsConfig is the persisted state of Correctors.
+type CorrectorsConfig struct {
 	activeState
 	MouthClosedFix bool `json:"mouthClosedFix"`
 	LipSuckFix     bool `json:"lipSuckFix"`
@@ -14,19 +13,23 @@ type Correctors struct {
 	EyeLookSymmetrize bool    `json:"eyeLookSymmetrize"`
 }
 
-func NewCorrectors() *Correctors {
-	return &Correctors{
+func DefaultCorrectorsConfig() CorrectorsConfig {
+	return CorrectorsConfig{
 		activeState:    activeState{IsActive: true},
 		MouthClosedFix: true,
 		LipSuckFix:     true,
 	}
 }
 
-func (c *Correctors) Name() string                      { return "Unified Correctors" }
-func (c *Correctors) Description() string               { return "Processes data to conform to Unified Expressions." }
-func (c *Correctors) Priority() Priority                { return Postprocessor }
-func (c *Correctors) Persisted() bool                   { return true }
-func (c *Correctors) Initialize(*tracking.TrackingData) {}
+// Correctors nudges data into shapes that better conform to Unified
+// Expressions.
+type Correctors struct {
+	CorrectorsConfig
+}
+
+func (c *Correctors) Name() string        { return "Unified Correctors" }
+func (c *Correctors) Description() string { return "Processes data to conform to Unified Expressions." }
+func (c *Correctors) Priority() Priority  { return Postprocessor }
 
 func (c *Correctors) blend(current, influencer float32) float32 {
 	return max(0, min(1, current*(1-c.EyeLidBlend*0.5)+influencer*(c.EyeLidBlend*0.5)))
@@ -71,9 +74,9 @@ func (c *Correctors) Mutate(d *tracking.TrackingData) {
 
 func (c *Correctors) Components() []Component {
 	return []Component{
-		checkbox("MouthClosed/JawOpen Clamp", true, &c.MouthClosedFix),
-		checkbox("LipSuck Limiter", true, &c.LipSuckFix),
-		slider("EyeLid Blend", true, 0, 1, &c.EyeLidBlend),
-		checkbox("EyeLook Symmetrize", true, &c.EyeLookSymmetrize),
+		checkbox("MouthClosed/JawOpen Clamp", &c.MouthClosedFix),
+		checkbox("LipSuck Limiter", &c.LipSuckFix),
+		slider("EyeLid Blend", 0, 1, &c.EyeLidBlend),
+		checkbox("EyeLook Symmetrize", &c.EyeLookSymmetrize),
 	}
 }

@@ -1,31 +1,27 @@
-// Package service wires the tracking pipeline together (modules, mutator,
-// parameter engine, OSC and OSCQuery) and exposes the operations the UI
+// Package service wires the tracking pipeline together (modules, mixer,
+// sender, router, OSC and OSCQuery) and exposes the operations the UI
 // layer needs, independent of any GUI framework.
 package service
 
 import (
 	"context"
-	"sync"
 	"sync/atomic"
 	"time"
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/engine"
 	"VRCFaceTracking/internal/logging"
-	"VRCFaceTracking/internal/mutation"
+	"VRCFaceTracking/internal/mixer"
 	"VRCFaceTracking/internal/osc"
 	"VRCFaceTracking/internal/oscquery"
+	"VRCFaceTracking/internal/router"
+	"VRCFaceTracking/internal/sender"
 	"VRCFaceTracking/internal/settings"
 	"VRCFaceTracking/internal/vrchat"
 	"VRCFaceTracking/module/manager"
-	"VRCFaceTracking/pkg/tracking"
 )
 
-const (
-	oscTargetKey  = "OSCTarget"
-	statsInterval = time.Second
-)
+const statsInterval = time.Second
 
 // Listener receives state changes. Every method may be called from any
 // goroutine; implementations must be cheap and non-blocking.
@@ -33,7 +29,7 @@ type Listener interface {
 	OnLog(line logging.Line)
 	OnModulesChanged(modules []manager.ModuleInfo)
 	OnAvatarChanged(avatar oscquery.AvatarInfo)
-	OnParametersChanged(stats engine.ParameterStats)
+	OnParametersChanged(stats sender.ParameterStats)
 	OnOscStats(status OscStatus)
 }
 
@@ -47,15 +43,14 @@ type Service struct {
 	ctx    context.Context
 	cancel context.CancelFunc
 
-	store   *settings.Store
-	manager *manager.Manager
-	mutator *mutation.Mutator
-	sender  *osc.Sender
-	engine  *engine.Engine
-	query   *oscquery.Service
+	store     *settings.Store
+	manager   *manager.Manager
+	mixer     *mixer.Mixer
+	transport *osc.Sender
+	sender    *sender.Sender
+	router    *router.Router
+	query     *oscquery.Service
 
-	targetMu    sync.RWMutex
-	target      osc.Target
 	messagesIn  atomic.Int64
 	messagesOut atomic.Int64
 
@@ -86,42 +81,41 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 		return err
 	}
 	s.store = store
-
-	target := settings.GetOr(store, oscTargetKey, osc.DefaultTarget())
-	if err := target.Validate(); err != nil {
-		s.logger.Warn("Invalid OSC target in settings, reverting to default", zap.Error(err))
-		target = osc.DefaultTarget()
-	}
-	s.setTarget(target)
+	cfg := store.Get()
 
 	s.manager = manager.New(s.root)
 	s.manager.OnChange = listener.OnModulesChanged
-	s.loadModuleConfig()
+	if cfg.Modules != nil {
+		s.manager.SetConfig(cfg.Modules)
+	}
 
-	s.mutator = mutation.NewMutator(s.root, store)
-	s.sender = osc.NewSender(s.root)
-	s.sender.OnDispatched = func(n int) { s.messagesOut.Add(int64(n)) }
+	s.mixer = mixer.New(cfg.Mixer)
+	s.transport = osc.NewSender(s.root)
+	s.transport.OnDispatched = func(n int) { s.messagesOut.Add(int64(n)) }
 
-	s.engine = engine.New(s.root, s.manager, s.mutator, s.sender)
-	s.engine.OnParametersChanged = listener.OnParametersChanged
-	s.loadTiming()
+	s.sender = sender.New(s.root, s.manager, s.transport)
+	s.sender.OnParametersChanged = listener.OnParametersChanged
+	s.sender.SetOutputMode(cfg.Output)
+
+	s.router = router.New(s.manager, s.mixer, s.sender)
+	s.applyTiming(cfg.Timing)
 
 	s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
 	s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
-		s.engine.SetDefinitions(info.Parameters)
+		s.sender.SetDefinitions(info.Parameters)
 		listener.OnAvatarChanged(info)
 	}
-	s.query.OnForceRelevant = s.engine.SetAllRelevant
+	s.query.OnForceRelevant = s.sender.SetAllRelevant
 	s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
 
 	s.initialize()
-	go s.engine.Run(s.ctx)
+	go s.router.Run(s.ctx)
 	go s.statsLoop()
 	return nil
 }
 
 // initialize is the restartable part of Start: VRChat checks, network
-// endpoints, mutations and modules.
+// endpoints and modules.
 func (s *Service) initialize() {
 	if changed, err := vrchat.ForceEnableOSC(); err != nil {
 		s.logger.Warn("Could not verify VRChat OSC setting", zap.Error(err))
@@ -133,14 +127,13 @@ func (s *Service) initialize() {
 	}
 
 	target := s.Target()
-	if err := s.sender.SetTarget(target.Address, target.OutPort); err != nil {
+	if err := s.transport.SetTarget(target.Address, target.OutPort); err != nil {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
 	}
 	if err := s.query.Start(s.ctx, target); err != nil {
 		s.logger.Error("OSCQuery service failed to start", zap.Error(err))
 	}
 
-	s.mutator.Load(tracking.NewTrackingData())
 	s.moduleConfigDirty.Store(false)
 	s.manager.Initialize(s.ctx, s.root)
 }
@@ -160,19 +153,14 @@ func (s *Service) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
-	if s.mutator != nil {
-		if err := s.mutator.Save(); err != nil {
-			s.logger.Error("Failed to save mutations", zap.Error(err))
-		}
-	}
 	if s.manager != nil {
 		s.manager.Teardown()
 	}
 	if s.query != nil {
 		_ = s.query.Close()
 	}
-	if s.sender != nil {
-		_ = s.sender.Close()
+	if s.transport != nil {
+		_ = s.transport.Close()
 	}
 	if s.store != nil {
 		_ = s.store.Flush()

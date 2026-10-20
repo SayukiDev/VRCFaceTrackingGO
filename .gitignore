@@ -7,3 +7,4 @@ frontend/dist
 /.idea/modules.xml
 /.idea/vcs.xml
 /.idea/VRCFaceTracking.iml
+/temp

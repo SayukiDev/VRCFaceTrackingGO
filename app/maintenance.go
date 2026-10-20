@@ -10,11 +10,6 @@ import (
 	"VRCFaceTracking/internal/settings"
 )
 
-const (
-	themeKey  = "Theme"
-	localeKey = "Locale"
-)
-
 func (a *App) GetLogs() []logging.Line { return a.svc.Logs() }
 
 // CopyLogs puts the full log into the clipboard.
@@ -36,14 +31,18 @@ func (a *App) SaveLogs() (string, error) {
 	return filepath.Base(path), nil
 }
 
-func (a *App) GetTheme() string { return settings.GetOr(a.svc.Store(), themeKey, "dark") }
+func (a *App) GetTheme() string { return a.svc.Store().Get().Theme }
 
-func (a *App) SetTheme(theme string) error { return a.svc.Store().Set(themeKey, theme) }
+func (a *App) SetTheme(theme string) {
+	a.svc.Store().Update(func(s *settings.Settings) { s.Theme = theme })
+}
 
 // GetLocale returns the saved UI language, or "" to follow the system.
-func (a *App) GetLocale() string { return settings.GetOr(a.svc.Store(), localeKey, "") }
+func (a *App) GetLocale() string { return a.svc.Store().Get().Locale }
 
-func (a *App) SetLocale(locale string) error { return a.svc.Store().Set(localeKey, locale) }
+func (a *App) SetLocale(locale string) {
+	a.svc.Store().Update(func(s *settings.Settings) { s.Locale = locale })
+}
 
 func (a *App) ResetVRCFT() error { return a.svc.ScheduleReset() }
 

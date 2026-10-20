@@ -4,10 +4,11 @@ import {oscquery} from '../models';
 import {logging} from '../models';
 import {metadata} from '../models';
 import {manager} from '../models';
+import {settings} from '../models';
+import {mixer} from '../models';
 import {service} from '../models';
-import {app} from '../models';
 import {osc} from '../models';
-import {engine} from '../models';
+import {sender} from '../models';
 
 export function CopyLogs():Promise<void>;
 
@@ -27,11 +28,11 @@ export function GetModuleCatalog():Promise<Array<manager.Registered>>;
 
 export function GetModuleConfigDirty():Promise<boolean>;
 
-export function GetModuleTiming():Promise<service.ModuleTiming>;
+export function GetModuleTiming():Promise<settings.Timing>;
 
 export function GetModules():Promise<Array<manager.ModuleInfo>>;
 
-export function GetMutations():Promise<Array<app.MutationView>>;
+export function GetMutations():Promise<Array<mixer.StageState>>;
 
 export function GetMutatorEnabled():Promise<boolean>;
 
@@ -39,7 +40,9 @@ export function GetOscStatus():Promise<service.OscStatus>;
 
 export function GetOscTarget():Promise<osc.Target>;
 
-export function GetParameterStats():Promise<engine.ParameterStats>;
+export function GetOutputMode():Promise<string>;
+
+export function GetParameterStats():Promise<sender.ParameterStats>;
 
 export function GetTheme():Promise<string>;
 
@@ -65,7 +68,7 @@ export function SetModuleEnabled(arg1:string,arg2:boolean):Promise<void>;
 
 export function SetModuleOrder(arg1:Array<string>):Promise<void>;
 
-export function SetModuleTiming(arg1:service.ModuleTiming):Promise<void>;
+export function SetModuleTiming(arg1:settings.Timing):Promise<void>;
 
 export function SetModuleTracking(arg1:string,arg2:boolean,arg3:boolean):Promise<void>;
 
@@ -80,5 +83,7 @@ export function SetMutationValue(arg1:string,arg2:string,arg3:any):Promise<void>
 export function SetMutatorEnabled(arg1:boolean):Promise<void>;
 
 export function SetOscTarget(arg1:osc.Target):Promise<void>;
+
+export function SetOutputMode(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;

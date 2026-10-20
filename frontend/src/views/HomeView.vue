@@ -3,7 +3,7 @@ import { useI18n } from 'vue-i18n'
 import { NText, NAlert } from 'naive-ui'
 import { PlugConnected24Regular, Person24Regular } from '@vicons/fluent'
 import { GetModules, GetOscStatus, GetAvatar, GetParameterStats } from '../../wailsjs/go/app/App'
-import type { manager, service, oscquery, engine } from '../../wailsjs/go/models'
+import type { manager, service, oscquery, sender } from '../../wailsjs/go/models'
 import { Events, useBackendState } from '../composables/useBackend'
 import InfoCard from '../components/InfoCard.vue'
 import ModuleCard from '../components/ModuleCard.vue'
@@ -12,7 +12,7 @@ const { t } = useI18n()
 const modules = useBackendState<manager.ModuleInfo[]>(GetModules, Events.modules, [])
 const osc = useBackendState<service.OscStatus | null>(GetOscStatus, Events.oscStats, null)
 const avatar = useBackendState<oscquery.AvatarInfo | null>(GetAvatar, Events.avatar, null)
-const stats = useBackendState<engine.ParameterStats | null>(GetParameterStats, Events.parameters, null)
+const stats = useBackendState<sender.ParameterStats | null>(GetParameterStats, Events.parameters, null)
 </script>
 
 <template>

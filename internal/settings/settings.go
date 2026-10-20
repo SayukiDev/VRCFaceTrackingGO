@@ -1,0 +1,110 @@
+package settings
+
+import (
+	"fmt"
+	"time"
+
+	"VRCFaceTracking/internal/mixer"
+	"VRCFaceTracking/internal/osc"
+	"VRCFaceTracking/internal/router"
+	"VRCFaceTracking/internal/sender"
+	"VRCFaceTracking/module/manager"
+)
+
+// Settings is every persisted application setting.
+type Settings struct {
+	// Theme is the UI colour scheme: "light", "dark" or "system".
+	Theme string `json:"theme"`
+	// Locale is the UI language, or "" to follow the system.
+	Locale string            `json:"locale"`
+	OSC    osc.Target        `json:"osc"`
+	Output sender.OutputMode `json:"output"`
+	Timing Timing            `json:"timing"`
+	// Modules is the module priority list. Nil means the manager's default
+	// (every registered module, in registration order).
+	Modules []manager.Config `json:"modules"`
+	Mixer   mixer.Config     `json:"mixer"`
+}
+
+// Default returns the settings used for anything missing from the file.
+func Default() Settings {
+	return Settings{
+		Theme:  "dark",
+		OSC:    osc.DefaultTarget(),
+		Output: sender.OutputParameters,
+		Timing: DefaultTiming(),
+		Mixer:  mixer.DefaultConfig(),
+	}
+}
+
+const (
+	minUpdateIntervalMs = 1
+	maxUpdateIntervalMs = 1000
+	minInitTimeoutSec   = 1
+	maxInitTimeoutSec   = 300
+	minSendIntervalMs   = 1
+	maxSendIntervalMs   = 1000
+)
+
+// Timing holds the user adjustable scheduling values.
+type Timing struct {
+	// UpdateIntervalMs is the time between two Update calls of one module.
+	UpdateIntervalMs int `json:"updateIntervalMs"`
+	// InitTimeoutSec is the maximum time one module may spend in Initialize.
+	InitTimeoutSec int `json:"initTimeoutSec"`
+	// SendIntervalMs is the time between two OSC send passes.
+	SendIntervalMs int `json:"sendIntervalMs"`
+}
+
+// DefaultTiming mirrors the manager and router defaults.
+func DefaultTiming() Timing {
+	return Timing{
+		UpdateIntervalMs: int(manager.DefaultUpdateInterval / time.Millisecond),
+		InitTimeoutSec:   int(manager.DefaultInitTimeout / time.Second),
+		SendIntervalMs:   int(router.DefaultInterval / time.Millisecond),
+	}
+}
+
+// Validate checks the values are within a sane range.
+func (t Timing) Validate() error {
+	if t.UpdateIntervalMs < minUpdateIntervalMs || t.UpdateIntervalMs > maxUpdateIntervalMs {
+		return fmt.Errorf("update interval must be between %d and %d ms", minUpdateIntervalMs, maxUpdateIntervalMs)
+	}
+	if t.InitTimeoutSec < minInitTimeoutSec || t.InitTimeoutSec > maxInitTimeoutSec {
+		return fmt.Errorf("init timeout must be between %d and %d s", minInitTimeoutSec, maxInitTimeoutSec)
+	}
+	if t.SendIntervalMs < minSendIntervalMs || t.SendIntervalMs > maxSendIntervalMs {
+		return fmt.Errorf("send interval must be between %d and %d ms", minSendIntervalMs, maxSendIntervalMs)
+	}
+	return nil
+}
+
+func (t Timing) UpdateInterval() time.Duration {
+	return time.Duration(t.UpdateIntervalMs) * time.Millisecond
+}
+
+func (t Timing) InitTimeout() time.Duration { return time.Duration(t.InitTimeoutSec) * time.Second }
+
+func (t Timing) SendInterval() time.Duration {
+	return time.Duration(t.SendIntervalMs) * time.Millisecond
+}
+
+// sanitize replaces every invalid section with its default and returns
+// one error per replaced section.
+func (s *Settings) sanitize() []error {
+	def := Default()
+	var errs []error
+	if err := s.OSC.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("osc: %w", err))
+		s.OSC = def.OSC
+	}
+	if !s.Output.Valid() {
+		errs = append(errs, fmt.Errorf("output: unknown mode %q", s.Output))
+		s.Output = def.Output
+	}
+	if err := s.Timing.Validate(); err != nil {
+		errs = append(errs, fmt.Errorf("timing: %w", err))
+		s.Timing = def.Timing
+	}
+	return errs
+}

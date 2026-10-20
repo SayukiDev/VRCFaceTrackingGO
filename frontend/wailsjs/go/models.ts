@@ -1,85 +1,3 @@
-export namespace app {
-	
-	export class ComponentView {
-	    name: string;
-	    kind: string;
-	    min: number;
-	    max: number;
-	    value: any;
-	
-	    static createFrom(source: any = {}) {
-	        return new ComponentView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.kind = source["kind"];
-	        this.min = source["min"];
-	        this.max = source["max"];
-	        this.value = source["value"];
-	    }
-	}
-	export class MutationView {
-	    name: string;
-	    description: string;
-	    active: boolean;
-	    components: ComponentView[];
-	
-	    static createFrom(source: any = {}) {
-	        return new MutationView(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.name = source["name"];
-	        this.description = source["description"];
-	        this.active = source["active"];
-	        this.components = this.convertValues(source["components"], ComponentView);
-	    }
-	
-		convertValues(a: any, classs: any, asMap: boolean = false): any {
-		    if (!a) {
-		        return a;
-		    }
-		    if (a.slice && a.map) {
-		        return (a as any[]).map(elem => this.convertValues(elem, classs));
-		    } else if ("object" === typeof a) {
-		        if (asMap) {
-		            for (const key of Object.keys(a)) {
-		                a[key] = new classs(a[key]);
-		            }
-		            return a;
-		        }
-		        return new classs(a);
-		    }
-		    return a;
-		}
-	}
-
-}
-
-export namespace engine {
-	
-	export class ParameterStats {
-	    count: number;
-	    deprecated: number;
-	    hasNative: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new ParameterStats(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.count = source["count"];
-	        this.deprecated = source["deprecated"];
-	        this.hasNative = source["hasNative"];
-	    }
-	}
-
-}
-
 export namespace logging {
 	
 	export class Line {
@@ -247,6 +165,67 @@ export namespace metadata {
 
 }
 
+export namespace mixer {
+	
+	export class ComponentState {
+	    name: string;
+	    kind: string;
+	    min: number;
+	    max: number;
+	    value: any;
+	
+	    static createFrom(source: any = {}) {
+	        return new ComponentState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.kind = source["kind"];
+	        this.min = source["min"];
+	        this.max = source["max"];
+	        this.value = source["value"];
+	    }
+	}
+	export class StageState {
+	    name: string;
+	    description: string;
+	    active: boolean;
+	    components: ComponentState[];
+	
+	    static createFrom(source: any = {}) {
+	        return new StageState(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.active = source["active"];
+	        this.components = this.convertValues(source["components"], ComponentState);
+	    }
+	
+		convertValues(a: any, classs: any, asMap: boolean = false): any {
+		    if (!a) {
+		        return a;
+		    }
+		    if (a.slice && a.map) {
+		        return (a as any[]).map(elem => this.convertValues(elem, classs));
+		    } else if ("object" === typeof a) {
+		        if (asMap) {
+		            for (const key of Object.keys(a)) {
+		                a[key] = new classs(a[key]);
+		            }
+		            return a;
+		        }
+		        return new classs(a);
+		    }
+		    return a;
+		}
+	}
+
+}
+
 export namespace osc {
 	
 	export class Target {
@@ -308,24 +287,29 @@ export namespace params {
 
 }
 
-export namespace service {
+export namespace sender {
 	
-	export class ModuleTiming {
-	    updateIntervalMs: number;
-	    initTimeoutSec: number;
-	    sendIntervalMs: number;
+	export class ParameterStats {
+	    count: number;
+	    deprecated: number;
+	    hasNative: boolean;
 	
 	    static createFrom(source: any = {}) {
-	        return new ModuleTiming(source);
+	        return new ParameterStats(source);
 	    }
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.updateIntervalMs = source["updateIntervalMs"];
-	        this.initTimeoutSec = source["initTimeoutSec"];
-	        this.sendIntervalMs = source["sendIntervalMs"];
+	        this.count = source["count"];
+	        this.deprecated = source["deprecated"];
+	        this.hasNative = source["hasNative"];
 	    }
 	}
+
+}
+
+export namespace service {
+	
 	export class OscStatus {
 	    listenPort: number;
 	    sendPort: number;
@@ -348,6 +332,27 @@ export namespace service {
 	        this.messagesIn = source["messagesIn"];
 	        this.messagesOut = source["messagesOut"];
 	        this.allRelevant = source["allRelevant"];
+	    }
+	}
+
+}
+
+export namespace settings {
+	
+	export class Timing {
+	    updateIntervalMs: number;
+	    initTimeoutSec: number;
+	    sendIntervalMs: number;
+	
+	    static createFrom(source: any = {}) {
+	        return new Timing(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.updateIntervalMs = source["updateIntervalMs"];
+	        this.initTimeoutSec = source["initTimeoutSec"];
+	        this.sendIntervalMs = source["sendIntervalMs"];
 	    }
 	}
 

@@ -5,12 +5,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/engine"
 	"VRCFaceTracking/internal/oscquery"
+	"VRCFaceTracking/internal/sender"
+	"VRCFaceTracking/internal/settings"
 	"VRCFaceTracking/module/manager"
 )
-
-const modulesKey = "Modules"
 
 // Modules returns the loaded modules.
 func (s *Service) Modules() []manager.ModuleInfo { return s.manager.Modules() }
@@ -27,48 +26,15 @@ func (s *Service) SetModuleTracking(id string, eye, expression bool) {
 // ModuleCatalog returns every registered module with its setting and state.
 func (s *Service) ModuleCatalog() []manager.Registered { return s.manager.Catalog() }
 
-// savedModuleConfig is Config with optional kind flags so lists saved by
-// older versions (which had no per-kind setting) still mean "everything".
-type savedModuleConfig struct {
-	ID         string `json:"id"`
-	Enabled    bool   `json:"enabled"`
-	Eye        *bool  `json:"eye"`
-	Expression *bool  `json:"expression"`
-}
-
-// loadModuleConfig applies the persisted module list to the manager.
-func (s *Service) loadModuleConfig() {
-	var saved []savedModuleConfig
-	found, err := s.store.Get(modulesKey, &saved)
-	if err != nil {
-		s.logger.Warn("Ignoring unreadable module list", zap.Error(err))
-		return
-	}
-	if !found {
-		return
-	}
-	cfg := make([]manager.Config, 0, len(saved))
-	for _, c := range saved {
-		cfg = append(cfg, manager.Config{
-			ID:         c.ID,
-			Enabled:    c.Enabled,
-			Eye:        c.Eye == nil || *c.Eye,
-			Expression: c.Expression == nil || *c.Expression,
-		})
-	}
-	s.manager.SetConfig(cfg)
-}
-
 // SetModuleConfig replaces the priority list / enabled flags and persists
 // it. The running modules are left alone until ReloadModules is called, so
 // the user can make several changes before the (slow) re-initialisation.
 func (s *Service) SetModuleConfig(cfg []manager.Config) error {
 	s.manager.SetConfig(cfg)
-	if err := s.store.Set(modulesKey, s.manager.Config()); err != nil {
-		return err
-	}
+	cfg = s.manager.Config()
+	s.store.Update(func(c *settings.Settings) { c.Modules = cfg })
 	s.moduleConfigDirty.Store(true)
-	s.logger.Info("Module configuration changed; reload modules to apply", zap.Any("modules", s.manager.Config()))
+	s.logger.Info("Module configuration changed; reload modules to apply", zap.Any("modules", cfg))
 	return nil
 }
 
@@ -131,4 +97,4 @@ func (s *Service) SetModuleOrder(order []string) error {
 func (s *Service) Avatar() oscquery.AvatarInfo { return s.query.Avatar() }
 
 // ParameterStats summarises the relevant parameter set.
-func (s *Service) ParameterStats() engine.ParameterStats { return s.engine.Stats() }
+func (s *Service) ParameterStats() sender.ParameterStats { return s.sender.Stats() }
