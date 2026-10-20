@@ -1,0 +1,9 @@
+build/bin
+node_modules
+frontend/dist
+/.idea/inspectionProfiles/Project_Default.xml
+/.idea/.gitignore
+/.idea/go.imports.xml
+/.idea/modules.xml
+/.idea/vcs.xml
+/.idea/VRCFaceTracking.iml

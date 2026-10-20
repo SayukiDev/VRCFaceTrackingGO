@@ -1,0 +1,250 @@
+<script setup lang="ts">
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import {
+  NButton, NCollapse, NCollapseItem, NInput, NInputNumber, NSelect, NSpace, NSwitch, NText, useMessage,
+} from 'naive-ui'
+import { Color24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
+import {
+  GetOscTarget, SetOscTarget, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
+  ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming,
+} from '../../wailsjs/go/app/App'
+import { metadata, osc, service } from '../../wailsjs/go/models'
+import { useTheme, type ThemeMode } from '../composables/useTheme'
+import { useLocale, type LocaleMode } from '../i18n'
+import InfoCard from '../components/InfoCard.vue'
+
+const { t } = useI18n()
+const message = useMessage()
+
+const { mode, setMode } = useTheme()
+const themeOptions = computed(() => [
+  { label: t('settings.themeLight'), value: 'light' },
+  { label: t('settings.themeDark'), value: 'dark' },
+  { label: t('settings.themeSystem'), value: 'system' },
+])
+
+const { mode: localeMode, setMode: setLocaleMode } = useLocale()
+// Language names are shown in their own language on purpose.
+const localeOptions = computed(() => [
+  { label: 'English', value: 'en' },
+  { label: '日本語', value: 'ja' },
+  { label: t('settings.languageSystem'), value: 'system' },
+])
+
+const target = ref<osc.Target>(new osc.Target({ inPort: 9001, outPort: 9000, address: '127.0.0.1' }))
+GetOscTarget().then((v) => (target.value = v))
+
+async function applyTarget() {
+  try {
+    await SetOscTarget(target.value)
+  } catch (e) {
+    message.error(String(e))
+    target.value = await GetOscTarget()
+  }
+}
+
+const timing = ref<service.ModuleTiming>(new service.ModuleTiming({ updateIntervalMs: 10, initTimeoutSec: 15, sendIntervalMs: 10 }))
+GetModuleTiming().then((v) => (timing.value = v))
+
+async function applyTiming() {
+  try {
+    await SetModuleTiming(timing.value)
+  } catch (e) {
+    message.error(String(e))
+    timing.value = await GetModuleTiming()
+  }
+}
+
+const gremlin = ref(false)
+const allRelevant = ref(false)
+GetAllParametersRelevant().then((v) => (allRelevant.value = v))
+
+function setGremlin(v: boolean) {
+  gremlin.value = v
+  if (!v && allRelevant.value) setAllRelevant(false)
+}
+
+function setAllRelevant(v: boolean) {
+  allRelevant.value = v
+  void SetAllParametersRelevant(v)
+}
+
+async function resetVRCFT() {
+  await ResetVRCFT()
+  message.info(t('settings.resetVRCFTDone'))
+}
+
+async function resetAvatarConfigs() {
+  try {
+    await ResetAvatarConfigs()
+    message.success(t('settings.resetAvatarDone'))
+  } catch (e) {
+    message.error(String(e))
+  }
+}
+
+const meta = ref<metadata.Metadata>(new metadata.Metadata({ name: 'VRCFaceTrackingGO', author: {}, info: {} }))
+GetMetadata().then((v) => (meta.value = v))
+</script>
+
+<template>
+  <div class="stack">
+    <info-card :icon="Color24Regular">
+      <div class="header">{{ t('settings.theme') }}</div>
+      <n-text depth="3">{{ t('settings.themeDesc') }}</n-text>
+      <template #aside>
+        <n-select :value="mode" :options="themeOptions" style="width: 200px" @update:value="(v: ThemeMode) => setMode(v)" />
+      </template>
+    </info-card>
+
+    <info-card :icon="LocalLanguage24Regular">
+      <div class="header">{{ t('settings.language') }}</div>
+      <n-text depth="3">{{ t('settings.languageDesc') }}</n-text>
+      <template #aside>
+        <n-select :value="localeMode" :options="localeOptions" style="width: 200px" @update:value="(v: LocaleMode) => setLocaleMode(v)" />
+      </template>
+    </info-card>
+
+    <info-card :icon="PlugConnected24Regular">
+      <div class="header">{{ t('settings.osc') }}</div>
+      <n-text depth="3">{{ t('settings.oscDesc') }}</n-text>
+      <template #aside>
+        <n-space align="end">
+          <div>
+            <div class="field-label">{{ t('settings.inPort') }}</div>
+            <n-input-number v-model:value="target.inPort" :min="1" :max="65535" :show-button="true" @blur="applyTarget" />
+          </div>
+          <div>
+            <div class="field-label">{{ t('settings.ipAddress') }}</div>
+            <n-input v-model:value="target.address" placeholder="127.0.0.1" @blur="applyTarget" />
+          </div>
+          <div>
+            <div class="field-label">{{ t('settings.outPort') }}</div>
+            <n-input-number v-model:value="target.outPort" :min="1" :max="65535" :show-button="true" @blur="applyTarget" />
+          </div>
+        </n-space>
+      </template>
+    </info-card>
+
+    <info-card :icon="Timer24Regular">
+      <div class="header">{{ t('settings.timing') }}</div>
+      <n-text depth="3">{{ t('settings.timingDesc') }}</n-text>
+      <template #aside>
+        <n-space align="end">
+          <div>
+            <div class="field-label">{{ t('settings.updateInterval') }}</div>
+            <n-input-number v-model:value="timing.updateIntervalMs" :min="1" :max="1000" :step="1" :show-button="true" style="width: 140px" @blur="applyTiming">
+              <template #suffix>ms</template>
+            </n-input-number>
+          </div>
+          <div>
+            <div class="field-label">{{ t('settings.initTimeout') }}</div>
+            <n-input-number v-model:value="timing.initTimeoutSec" :min="1" :max="300" :step="1" :show-button="true" style="width: 140px" @blur="applyTiming">
+              <template #suffix>s</template>
+            </n-input-number>
+          </div>
+        </n-space>
+      </template>
+    </info-card>
+
+    <info-card :icon="Send24Regular">
+      <div class="header">{{ t('settings.sendTiming') }}</div>
+      <n-text depth="3">{{ t('settings.sendTimingDesc') }}</n-text>
+      <template #aside>
+        <div>
+          <div class="field-label">{{ t('settings.sendInterval') }}</div>
+          <n-input-number v-model:value="timing.sendIntervalMs" :min="1" :max="1000" :step="1" :show-button="true" style="width: 140px" @blur="applyTiming">
+            <template #suffix>ms</template>
+          </n-input-number>
+        </div>
+      </template>
+    </info-card>
+
+    <n-collapse arrow-placement="right">
+      <n-collapse-item name="risky">
+        <template #header>
+          <info-card :icon="Warning24Regular" class="flat">
+            <div class="header">{{ t('settings.risky') }}</div>
+            <n-text depth="3">{{ t('settings.riskyDesc') }}</n-text>
+            <template #aside>
+              <div @click.stop>
+                <n-switch :value="gremlin" @update:value="setGremlin">
+                  <template #checked>{{ t('settings.gremlin') }}</template>
+                </n-switch>
+              </div>
+            </template>
+          </info-card>
+        </template>
+        <div class="stack">
+          <info-card>
+            <div class="header">{{ t('settings.forceRelevancy') }}</div>
+            <n-text depth="3">{{ t('settings.forceRelevancyDesc') }}</n-text>
+            <template #aside><n-switch :value="allRelevant" :disabled="!gremlin" @update:value="setAllRelevant" /></template>
+          </info-card>
+          <info-card>
+            <div class="header">{{ t('settings.forceReInit') }}</div>
+            <n-text depth="3">{{ t('settings.forceReInitDesc') }}</n-text>
+            <template #aside><n-button :disabled="!gremlin" @click="ForceReInit()">{{ t('settings.reInit') }}</n-button></template>
+          </info-card>
+          <info-card>
+            <div class="header">{{ t('settings.resetVRCFT') }}</div>
+            <n-text depth="3">{{ t('settings.resetVRCFTDesc') }}</n-text>
+            <template #aside><n-button :disabled="!gremlin" @click="resetVRCFT">{{ t('settings.reset') }}</n-button></template>
+          </info-card>
+          <info-card>
+            <div class="header">{{ t('settings.resetAvatar') }}</div>
+            <n-text depth="3">{{ t('settings.resetAvatarDesc') }}</n-text>
+            <template #aside><n-button :disabled="!gremlin" @click="resetAvatarConfigs">{{ t('settings.reset') }}</n-button></template>
+          </info-card>
+        </div>
+      </n-collapse-item>
+    </n-collapse>
+
+    <div class="section">{{ t('settings.about') }}</div>
+    <info-card :icon="Info24Regular">
+      <div class="header">{{ meta.name }}</div>
+      <n-text depth="3">{{ meta.info.copyright }}</n-text>
+      <div class="links">
+        <n-button text type="primary" @click="OpenURL(meta.info.privacyUrl)">{{ t('settings.privacy') }}</n-button>
+        <n-button text type="primary" @click="OpenURL(meta.info.issuesUrl)">{{ t('settings.bugReport') }}</n-button>
+      </div>
+      <n-text depth="3" class="clone">git clone {{ meta.info.repository }}</n-text>
+      <n-text depth="3" class="disclaimer">{{ t('settings.disclaimer') }}</n-text>
+      <template #aside><n-text depth="3">{{ meta.info.productVersion }}</n-text></template>
+    </info-card>
+  </div>
+</template>
+
+<style scoped>
+.header {
+  font-weight: 600;
+}
+.field-label {
+  font-size: 12px;
+  opacity: 0.8;
+  margin-bottom: 4px;
+}
+.section {
+  font-weight: 600;
+  margin: 28px 0 4px 1px;
+}
+.links {
+  display: flex;
+  gap: 16px;
+  margin: 8px 0 4px;
+}
+.clone,
+.disclaimer {
+  display: block;
+  font-size: 12px;
+  user-select: text;
+}
+.disclaimer {
+  margin-top: 8px;
+}
+.flat :deep(.n-card) {
+  border: none;
+  background: transparent;
+}
+</style>

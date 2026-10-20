@@ -1,0 +1,17 @@
+html, body, #app {
+  margin: 0;
+  height: 100%;
+  font-family: "Segoe UI Variable", "Segoe UI", system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+.n-layout-content {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+.stack > * + * {
+  margin-top: 16px;
+}
