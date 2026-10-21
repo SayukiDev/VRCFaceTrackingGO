@@ -12,6 +12,7 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 - VRChat native eye tracking output
 - Mutations: parameter adjustment, Unified correctors and the data filter
 - Modules run as separate processes and restart automatically when they crash
+- Modules can be written in any language ([SDKs for Go and Rust](SDK/README.md))
 - Module priority, per module eye / expression selection and manual assignment
 - Material Design 3 UI with light / dark themes and a configurable accent colour
 - English and Japanese
