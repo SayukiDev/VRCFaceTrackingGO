@@ -3,7 +3,7 @@ package params
 import (
 	"github.com/dlclark/regexp2"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // Value is the set of Go types an output can carry. Besides the scalar OSC

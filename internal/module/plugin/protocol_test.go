@@ -6,8 +6,8 @@ import (
 	"errors"
 	"testing"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 func TestDataRoundTrip(t *testing.T) {

@@ -6,7 +6,7 @@ import (
 	"sort"
 	"sync"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // Config is the persisted state of every built-in stage.

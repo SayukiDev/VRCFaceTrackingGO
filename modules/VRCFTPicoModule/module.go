@@ -1,4 +1,4 @@
-// Command pico is the tracking module program for PICO 4 Pro / Enterprise
+// Command VRCFTPicoModule is the tracking module program for PICO 4 Pro / Enterprise
 // headsets streaming face data over UDP through PICO Connect or the
 // Streaming Assistant.
 package main
@@ -14,8 +14,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // files holds metadata.json and the icons it names.
@@ -60,7 +60,7 @@ func New() *Module {
 	return &Module{buf: make([]byte, maxDatagram)}
 }
 
-func (m *Module) ID() string { return "pico" }
+func (m *Module) ID() string { return "VRCFTPicoModule" }
 
 func (m *Module) Metadata() adapter.Metadata {
 	m.mu.Lock()
@@ -146,7 +146,7 @@ func (m *Module) discover(ctx context.Context) (*net.UDPConn, bool, error) {
 		}(conn, p.legacy)
 	}
 	if len(conns) == 0 {
-		return nil, false, errors.New("pico: could not listen on any port")
+		return nil, false, errors.New("VRCFTPicoModule: could not listen on any port")
 	}
 
 	var winner *discovered
@@ -163,7 +163,7 @@ func (m *Module) discover(ctx context.Context) (*net.UDPConn, bool, error) {
 		c.Close()
 	}
 	if winner == nil {
-		return nil, false, fmt.Errorf("pico: no data received on ports %d/%d within %s (is PICO Connect streaming face data?)", portCurrent, portLegacy, discoveryTimeout)
+		return nil, false, fmt.Errorf("VRCFTPicoModule: no data received on ports %d/%d within %s (is PICO Connect streaming face data?)", portCurrent, portLegacy, discoveryTimeout)
 	}
 	_ = winner.conn.SetReadDeadline(time.Time{})
 	return winner.conn, winner.legacy, nil
@@ -182,7 +182,7 @@ func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.conn == nil {
-		return errors.New("pico: module not initialised")
+		return errors.New("VRCFTPicoModule: module not initialised")
 	}
 
 	deadline := time.Now().Add(readTimeout)
@@ -205,7 +205,7 @@ func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error 
 		if errors.Is(err, net.ErrClosed) {
 			return nil
 		}
-		return fmt.Errorf("pico: receive: %w", err)
+		return fmt.Errorf("VRCFTPicoModule: receive: %w", err)
 	}
 	m.timeouts = 0
 

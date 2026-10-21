@@ -10,8 +10,8 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
-	"VRCFaceTracking/app"
-	"VRCFaceTracking/internal/metadata"
+	"VRCFaceTrackingGo/app"
+	"VRCFaceTrackingGo/internal/metadata"
 )
 
 // singleInstanceID identifies this application to Wails' single instance

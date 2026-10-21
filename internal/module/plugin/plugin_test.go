@@ -15,8 +15,8 @@ import (
 	"go.uber.org/zap"
 	"go.uber.org/zap/zaptest/observer"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // The test binary doubles as a module program when childEnv is set.

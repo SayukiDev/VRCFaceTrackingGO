@@ -18,9 +18,9 @@ import (
 	"path/filepath"
 	"strings"
 
-	"VRCFaceTracking/internal/metadata"
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/internal/module/manager"
+	"VRCFaceTrackingGo/internal/metadata"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/internal/module/manager"
 )
 
 const (

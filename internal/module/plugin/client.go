@@ -12,8 +12,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // exitTimeout is how long Close waits for the process to exit on its own

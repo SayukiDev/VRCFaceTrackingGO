@@ -10,8 +10,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // encodeSection appends one prefix and its parameters in wire format.
@@ -28,7 +28,7 @@ func TestCounts(t *testing.T) {
 		t.Fatalf("fb counts = %d/%d, tongue %d", fbFace1Count, fbFace2Count, fbTongueOut)
 	}
 	if picoCount != 72 || htcEyesCount != 14 || htcLipCount != 37 {
-		t.Fatalf("pico %d, htc eyes %d, htc lip %d", picoCount, htcEyesCount, htcLipCount)
+		t.Fatalf("VRCFTPicoModule %d, htc eyes %d, htc lip %d", picoCount, htcEyesCount, htcLipCount)
 	}
 	for prefix := range consumers {
 		if len(prefix) != prefixSize {

@@ -1,6 +1,6 @@
 package main
 
-import "VRCFaceTracking/pkg/tracking"
+import "VRCFaceTrackingGo/pkg/tracking"
 
 const (
 	smoothingFactor = 0.5

@@ -29,7 +29,7 @@ type sharedState struct {
 	state   *faceState
 }
 
-var errStreamerNotRunning = errors.New("virtualdesktop: shared memory not found; is the Virtual Desktop Streamer (v1.30+) running?")
+var errStreamerNotRunning = errors.New("VirtualDesktop: shared memory not found; is the Virtual Desktop Streamer (v1.30+) running?")
 
 // openSharedState attaches to the Streamer's section. It fails fast when the
 // Streamer is not running.

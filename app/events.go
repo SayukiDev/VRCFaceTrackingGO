@@ -5,11 +5,11 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"VRCFaceTracking/internal/logging"
-	"VRCFaceTracking/internal/oscquery"
-	"VRCFaceTracking/internal/router"
-	"VRCFaceTracking/internal/sender"
-	"VRCFaceTracking/internal/service"
+	"VRCFaceTrackingGo/internal/logging"
+	"VRCFaceTrackingGo/internal/oscquery"
+	"VRCFaceTrackingGo/internal/router"
+	"VRCFaceTrackingGo/internal/sender"
+	"VRCFaceTrackingGo/internal/service"
 )
 
 // Event names emitted to the frontend; keep in sync with

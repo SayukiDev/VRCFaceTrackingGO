@@ -3,7 +3,7 @@ package mixer
 import (
 	"math"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 const filterHz = 10

@@ -1,0 +1,9 @@
+{
+  "name": "GXRFT",
+  "description": "Provides face and eye tracking for the Samsung Galaxy XR through gxr-root-ft",
+  "author": "SayukiDev",
+  "pageUrl": "https://github.com/compdoge/gxr-root-ft",
+  "version": "1.0.0",
+  "usageInstructions": "Install gxr-root-ft on the rooted Galaxy XR, keep the headset and this PC on the same network and allow inbound UDP port 41463 in the firewall",
+  "icons": ["gxrft.png"]
+}

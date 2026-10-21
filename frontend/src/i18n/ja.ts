@@ -139,7 +139,7 @@ const ja: typeof en = {
     resetAvatarDone: 'VRChat のアバター設定をリセットしました。',
     reset: 'リセット',
     about: 'このアプリについて',
-    privacy: 'プライバシーポリシー',
+    notices: 'サードパーティ注記',
     bugReport: 'バグを報告する',
     disclaimer:
       '本コードおよび情報は「現状のまま」提供され、商品性や特定目的への適合性に関する黙示の保証を含め、明示・黙示を問わずいかなる保証もありません。',

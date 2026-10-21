@@ -1,4 +1,4 @@
-// Command virtualdesktop is the tracking module program that reads face and
+// Command VirtualDesktop is the tracking module program that reads face and
 // eye data published by the Virtual Desktop Streamer through a Windows
 // shared memory section. It follows the official VirtualDesktop.FaceTracking
 // module v1.5.
@@ -13,8 +13,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 const (
@@ -55,7 +55,7 @@ var _ adapter.Module = (*Module)(nil)
 // New returns an uninitialised Virtual Desktop module.
 func New() *Module { return &Module{} }
 
-func (m *Module) ID() string { return "virtualdesktop" }
+func (m *Module) ID() string { return "VirtualDesktop" }
 
 func (m *Module) Metadata() adapter.Metadata { return metadata }
 
@@ -88,7 +88,7 @@ func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.shm == nil {
-		return errors.New("virtualdesktop: module not initialised")
+		return errors.New("VirtualDesktop: module not initialised")
 	}
 
 	timeout := frameTimeout

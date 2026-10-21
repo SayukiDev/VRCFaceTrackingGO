@@ -3,13 +3,13 @@ package app
 import (
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"VRCFaceTracking/internal/module/plugin"
-	"VRCFaceTracking/internal/osc"
-	"VRCFaceTracking/internal/oscquery"
-	"VRCFaceTracking/internal/router"
-	"VRCFaceTracking/internal/sender"
-	"VRCFaceTracking/internal/service"
-	"VRCFaceTracking/internal/settings"
+	"VRCFaceTrackingGo/internal/module/plugin"
+	"VRCFaceTrackingGo/internal/osc"
+	"VRCFaceTrackingGo/internal/oscquery"
+	"VRCFaceTrackingGo/internal/router"
+	"VRCFaceTrackingGo/internal/sender"
+	"VRCFaceTrackingGo/internal/service"
+	"VRCFaceTrackingGo/internal/settings"
 )
 
 func (a *App) GetModules() []router.ModuleInfo { return a.svc.Modules() }

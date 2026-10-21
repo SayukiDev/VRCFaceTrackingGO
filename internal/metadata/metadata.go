@@ -24,7 +24,7 @@ type AppInfo struct {
 	ProductVersion string `json:"productVersion"`
 	Copyright      string `json:"copyright"`
 	Repository     string `json:"repository"`
-	PrivacyURL     string `json:"privacyUrl"`
+	NoticesURL     string `json:"noticesUrl"`
 	IssuesURL      string `json:"issuesUrl"`
 }
 

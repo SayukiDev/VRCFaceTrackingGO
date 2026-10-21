@@ -1,6 +1,6 @@
 package router
 
-import "VRCFaceTracking/internal/module/manager"
+import "VRCFaceTrackingGo/internal/module/manager"
 
 // Config is one entry of the user's module list: which module, whether it
 // is enabled and which tracking kinds it may claim. The slice order is the

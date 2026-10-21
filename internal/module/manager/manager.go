@@ -19,8 +19,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/internal/module/plugin"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/internal/module/plugin"
 )
 
 const (

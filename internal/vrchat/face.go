@@ -7,7 +7,7 @@ package vrchat
 import (
 	"math"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // FaceAddress is the OSC address VRChat listens on for native face tracking.

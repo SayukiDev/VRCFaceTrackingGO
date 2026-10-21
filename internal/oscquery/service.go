@@ -10,7 +10,7 @@ import (
 	goosc "github.com/hypebeast/go-osc/osc"
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/osc"
+	"VRCFaceTrackingGo/internal/osc"
 )
 
 // Service ties discovery, the HTTP server, the OSC receiver and the avatar

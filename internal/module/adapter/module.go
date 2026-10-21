@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // State is the host-side lifecycle state of a module.

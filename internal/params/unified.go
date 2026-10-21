@@ -3,8 +3,8 @@ package params
 import (
 	"strings"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // StatusProvider reports the router's tracking state, used by the

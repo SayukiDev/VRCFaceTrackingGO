@@ -3,8 +3,8 @@ package params
 import (
 	"testing"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 type fakeStatus struct{ eye, expr adapter.State }

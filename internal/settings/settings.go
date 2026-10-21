@@ -5,11 +5,11 @@ import (
 	"regexp"
 	"time"
 
-	"VRCFaceTracking/internal/mixer"
-	"VRCFaceTracking/internal/module/manager"
-	"VRCFaceTracking/internal/osc"
-	"VRCFaceTracking/internal/router"
-	"VRCFaceTracking/internal/sender"
+	"VRCFaceTrackingGo/internal/mixer"
+	"VRCFaceTrackingGo/internal/module/manager"
+	"VRCFaceTrackingGo/internal/osc"
+	"VRCFaceTrackingGo/internal/router"
+	"VRCFaceTrackingGo/internal/sender"
 )
 
 // Settings is every persisted application setting.

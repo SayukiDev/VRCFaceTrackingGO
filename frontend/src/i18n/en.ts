@@ -140,7 +140,7 @@ export default {
     resetAvatarDone: 'VRChat avatar configs reset.',
     reset: 'Reset',
     about: 'About',
-    privacy: 'Privacy Policy',
+    notices: 'Third Party Notices',
     bugReport: 'File a bug report',
     disclaimer:
       'THIS CODE AND INFORMATION IS PROVIDED ‘AS IS’ WITHOUT WARRANTY OF ANY KIND, EITHER EXPRESSED OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE IMPLIED WARRANTIES OF MERCHANTABILITY AND/OR FITNESS FOR A PARTICULAR PURPOSE.',

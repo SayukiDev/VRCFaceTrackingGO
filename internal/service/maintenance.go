@@ -7,8 +7,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/logging"
-	"VRCFaceTracking/internal/vrchat"
+	"VRCFaceTrackingGo/internal/logging"
+	"VRCFaceTrackingGo/internal/vrchat"
 )
 
 // resetMarker is created by ScheduleReset and consumed by

@@ -4,7 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // Wire format of the ALVR "VRCFaceTracking" sink (little endian): a datagram

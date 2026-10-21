@@ -1,7 +1,8 @@
-// Command gxrft is the GXRFT tracking module program. It receives eye and
-// face tracking over UDP in the format ALVR sends when "Eye and face
-// tracking" is set to "VRCFaceTracking" in its settings, following the
-// VRCFT-ALVR module v1.3.
+// Command GXRFT is the tracking module program for gxr-root-ft
+// (https://github.com/compdoge/gxr-root-ft), which streams the face and eye
+// tracking of a rooted Samsung Galaxy XR over UDP. gxr-root-ft uses the
+// packet format of ALVR's "VRCFaceTracking" sink, so this module follows
+// the VRCFT-ALVR module v1.3.
 package main
 
 import (
@@ -15,8 +16,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // files holds metadata.json and the icons it names.
@@ -51,7 +52,7 @@ func New() *Module {
 	return &Module{buf: make([]byte, maxDatagram)}
 }
 
-func (m *Module) ID() string { return "gxrft" }
+func (m *Module) ID() string { return "GXRFT" }
 
 func (m *Module) Metadata() adapter.Metadata { return metadata }
 
@@ -66,7 +67,7 @@ func (m *Module) Initialize(_ context.Context, logger *zap.Logger, avail adapter
 
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4zero, Port: port})
 	if err != nil {
-		return adapter.Support{}, fmt.Errorf("gxrft: listen on port %d: %w", port, err)
+		return adapter.Support{}, fmt.Errorf("GXRFT: listen on port %d: %w", port, err)
 	}
 
 	m.mu.Lock()
@@ -83,7 +84,7 @@ func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error 
 	m.mu.Lock()
 	defer m.mu.Unlock()
 	if m.conn == nil {
-		return errors.New("gxrft: module not initialised")
+		return errors.New("GXRFT: module not initialised")
 	}
 
 	deadline := time.Now().Add(readTimeout)
@@ -98,7 +99,7 @@ func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error 
 		if errors.As(err, &netErr) && netErr.Timeout() || errors.Is(err, net.ErrClosed) {
 			return nil
 		}
-		return fmt.Errorf("gxrft: receive: %w", err)
+		return fmt.Errorf("GXRFT: receive: %w", err)
 	}
 
 	sections, unknown := parsePacket(m.buf[:n])

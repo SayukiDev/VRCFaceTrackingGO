@@ -5,7 +5,7 @@ package mixer
 import (
 	"fmt"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // Priority orders stages: preprocessors run first, postprocessors last.

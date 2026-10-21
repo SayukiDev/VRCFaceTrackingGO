@@ -272,7 +272,7 @@ GetMetadata().then((v) => (meta.value = v))
       <div class="header">{{ meta.name }}</div>
       <n-text depth="3">{{ meta.info.copyright }}</n-text>
       <div class="links">
-        <n-button text type="primary" @click="OpenURL(meta.info.privacyUrl)">{{ t('settings.privacy') }}</n-button>
+        <n-button text type="primary" @click="OpenURL(meta.info.noticesUrl)">{{ t('settings.notices') }}</n-button>
         <n-button text type="primary" @click="OpenURL(meta.info.issuesUrl)">{{ t('settings.bugReport') }}</n-button>
       </div>
       <n-text depth="3" class="clone">git clone {{ meta.info.repository }}</n-text>

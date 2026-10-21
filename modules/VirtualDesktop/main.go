@@ -1,5 +1,5 @@
 package main
 
-import "VRCFaceTracking/internal/module/plugin"
+import "VRCFaceTrackingGo/internal/module/plugin"
 
 func main() { plugin.Serve(New()) }

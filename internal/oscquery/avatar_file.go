@@ -11,7 +11,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/params"
+	"VRCFaceTrackingGo/internal/params"
 )
 
 // avatarConfigFile is the JSON VRChat writes to OSC\<user>\Avatars\<id>.json.

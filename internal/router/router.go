@@ -12,10 +12,10 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/mixer"
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/internal/module/manager"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/mixer"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/internal/module/manager"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // DefaultSendInterval is the default time between two send passes.

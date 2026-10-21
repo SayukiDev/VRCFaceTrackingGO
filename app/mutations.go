@@ -1,6 +1,6 @@
 package app
 
-import "VRCFaceTracking/internal/mixer"
+import "VRCFaceTrackingGo/internal/mixer"
 
 func (a *App) GetMutatorEnabled() bool { return a.svc.MixerEnabled() }
 

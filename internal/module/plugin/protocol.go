@@ -8,8 +8,8 @@ import (
 	"io"
 	"math"
 
-	"VRCFaceTracking/internal/module/adapter"
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/internal/module/adapter"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 // The host sends one request at a time and waits for its response; all

@@ -5,8 +5,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTracking/internal/sender"
-	"VRCFaceTracking/internal/settings"
+	"VRCFaceTrackingGo/internal/sender"
+	"VRCFaceTrackingGo/internal/settings"
 )
 
 // OutputMode returns where tracking data is sent.

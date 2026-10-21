@@ -3,7 +3,7 @@ package mixer
 import (
 	"testing"
 
-	"VRCFaceTracking/pkg/tracking"
+	"VRCFaceTrackingGo/pkg/tracking"
 )
 
 func TestMixerAppliesCorrectors(t *testing.T) {

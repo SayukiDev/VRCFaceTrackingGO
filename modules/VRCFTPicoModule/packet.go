@@ -40,7 +40,7 @@ const (
 
 type weights [blendShapeCount]float32
 
-var errNotFaceData = errors.New("pico: packet does not contain face data")
+var errNotFaceData = errors.New("VRCFTPicoModule: packet does not contain face data")
 
 // parsePacket extracts the blend shape weights from a datagram.
 func parsePacket(data []byte, legacy bool) (*weights, error) {

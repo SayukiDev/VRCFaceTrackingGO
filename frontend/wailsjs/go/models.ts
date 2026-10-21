@@ -26,7 +26,7 @@ export namespace metadata {
 	    productVersion: string;
 	    copyright: string;
 	    repository: string;
-	    privacyUrl: string;
+	    noticesUrl: string;
 	    issuesUrl: string;
 	
 	    static createFrom(source: any = {}) {
@@ -41,7 +41,7 @@ export namespace metadata {
 	        this.productVersion = source["productVersion"];
 	        this.copyright = source["copyright"];
 	        this.repository = source["repository"];
-	        this.privacyUrl = source["privacyUrl"];
+	        this.noticesUrl = source["noticesUrl"];
 	        this.issuesUrl = source["issuesUrl"];
 	    }
 	}

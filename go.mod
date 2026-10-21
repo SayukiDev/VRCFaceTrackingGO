@@ -1,4 +1,4 @@
-module VRCFaceTracking
+module VRCFaceTrackingGo
 
 go 1.25.0
 
