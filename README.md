@@ -75,6 +75,10 @@ For development, `wails dev` runs the application with hot reload.
 
 Publishing a GitHub release runs [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds on Windows, Linux and macOS and attaches a ZIP for each to the release.
 
+## Use of LLMs
+
+This project is developed by one person for personal use, with limited time and energy, so LLMs (large language models) are used extensively in its development. The code has been checked once, but if you have concerns, reviewing it yourself is recommended.
+
 ## License
 
 VRCFaceTrackingGO, including the modules in [`modules`](modules), is licensed under the [GNU Affero General Public License v3.0](LICENSE) (AGPL-3.0).

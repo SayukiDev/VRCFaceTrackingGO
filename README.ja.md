@@ -75,6 +75,10 @@ go run ./cmd/build
 
 GitHub でリリースを公開すると [`.github/workflows/release.yml`](.github/workflows/release.yml) が動き、Windows・Linux・macOS でビルドして、それぞれの ZIP をリリースに添付します。
 
+## LLM の使用について
+
+個人的な使用を目的に個人で開発しており、時間と労力に限りがあるため、このプロジェクトでは開発に LLM(大規模言語モデル)を積極的に使用しています。コードはひととおり確認していますが、気になる場合は各自でレビューすることをおすすめします。
+
 ## ライセンス
 
 VRCFaceTrackingGO は、[`modules`](modules) 内のモジュールも含めて [GNU Affero General Public License v3.0](LICENSE)(AGPL-3.0)で公開しています。
