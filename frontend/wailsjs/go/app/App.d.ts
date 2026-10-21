@@ -36,6 +36,8 @@ export function GetMutations():Promise<Array<mixer.StageState>>;
 
 export function GetMutatorEnabled():Promise<boolean>;
 
+export function GetOscMode():Promise<string>;
+
 export function GetOscStatus():Promise<service.OscStatus>;
 
 export function GetOscTarget():Promise<osc.Target>;
@@ -91,6 +93,8 @@ export function SetMutationRange(arg1:string,arg2:string,arg3:number,arg4:number
 export function SetMutationValue(arg1:string,arg2:string,arg3:any):Promise<void>;
 
 export function SetMutatorEnabled(arg1:boolean):Promise<void>;
+
+export function SetOscMode(arg1:string):Promise<void>;
 
 export function SetOscTarget(arg1:osc.Target):Promise<void>;
 

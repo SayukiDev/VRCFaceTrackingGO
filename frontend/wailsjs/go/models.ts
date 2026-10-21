@@ -337,6 +337,7 @@ export namespace sender {
 export namespace service {
 	
 	export class OscStatus {
+	    mode: string;
 	    listenPort: number;
 	    sendPort: number;
 	    connected: boolean;
@@ -344,6 +345,7 @@ export namespace service {
 	    messagesIn: number;
 	    messagesOut: number;
 	    allRelevant: boolean;
+	    avatarUnresolved: boolean;
 	
 	    static createFrom(source: any = {}) {
 	        return new OscStatus(source);
@@ -351,6 +353,7 @@ export namespace service {
 	
 	    constructor(source: any = {}) {
 	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.mode = source["mode"];
 	        this.listenPort = source["listenPort"];
 	        this.sendPort = source["sendPort"];
 	        this.connected = source["connected"];
@@ -358,6 +361,7 @@ export namespace service {
 	        this.messagesIn = source["messagesIn"];
 	        this.messagesOut = source["messagesOut"];
 	        this.allRelevant = source["allRelevant"];
+	        this.avatarUnresolved = source["avatarUnresolved"];
 	    }
 	}
 

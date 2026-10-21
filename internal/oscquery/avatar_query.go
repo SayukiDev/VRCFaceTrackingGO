@@ -16,21 +16,22 @@ import (
 // QueryParser resolves the avatar through VRChat's OSCQuery HTTP endpoint.
 type QueryParser struct {
 	logger *zap.Logger
-	files  *FileParser
 	client *http.Client
 }
 
-func NewQueryParser(logger *zap.Logger, files *FileParser) *QueryParser {
+func NewQueryParser(logger *zap.Logger) *QueryParser {
 	return &QueryParser{
 		logger: logger.Named("OscQueryConfigParser"),
-		files:  files,
 		client: &http.Client{Timeout: 5 * time.Second},
 	}
 }
 
+// unknownAvatar fills the avatar name and ID until they are known.
+const unknownAvatar = "Unknown"
+
 // Parse fetches /avatar from endpoint and builds the parameter list. The
-// avatar name is looked up in the legacy config file because OSCQuery does
-// not expose it.
+// avatar name comes from /avatar/name, which VRChat exposes since 2026.4.1;
+// older builds report it as unknown.
 func (p *QueryParser) Parse(endpoint *net.TCPAddr) (AvatarInfo, error) {
 	if endpoint == nil {
 		return AvatarInfo{}, errors.New("no OSCQuery endpoint")
@@ -54,17 +55,6 @@ func (p *QueryParser) Parse(endpoint *net.TCPAddr) (AvatarInfo, error) {
 		return AvatarInfo{}, errors.New("avatar node has no parameters")
 	}
 
-	p.logger.Info("Attempting to resolve avatar config file", zap.String("avatarId", info.ID))
-	if fileInfo, err := p.files.Parse(info.ID); err == nil && fileInfo.Name != "" {
-		info.Name = fileInfo.Name
-		p.logger.Info("Successfully found config containing avatar name", zap.String("name", info.Name))
-	} else {
-		if err != nil {
-			p.logger.Warn("Odd. Parse config for this avatar failed.", zap.String("avatarId", info.ID), zap.Error(err))
-		} else {
-			p.logger.Warn("Odd. Our attempt to find the legacy osc config json for this avatar failed.", zap.String("avatarId", info.ID))
-		}
-	}
 	return info, nil
 }
 
@@ -73,14 +63,25 @@ func avatarFromNode(root *Node) (AvatarInfo, bool) {
 	if !ok {
 		return AvatarInfo{}, false
 	}
-	info := AvatarInfo{Name: "Unknown", ID: "Unknown"}
-	if change, ok := root.Contents["change"]; ok && len(change.Value) > 0 {
-		if id, ok := change.Value[0].(string); ok {
-			info.ID = id
-		}
+	info := AvatarInfo{Name: unknownAvatar, ID: unknownAvatar}
+	if id := stringValue(root.Contents["change"]); id != "" {
+		info.ID = id
+	}
+	// The name set in the SDK (VRChat 2026.4.1 and later).
+	if name := stringValue(root.Contents["name"]); name != "" {
+		info.Name = name
 	}
 	info.Parameters = collectDefinitions(parameters.Contents, nil)
 	return info, true
+}
+
+// stringValue returns the first value of n if it is a string.
+func stringValue(n *Node) string {
+	if n == nil || len(n.Value) == 0 {
+		return ""
+	}
+	s, _ := n.Value[0].(string)
+	return s
 }
 
 func collectDefinitions(entries map[string]*Node, out []params.Definition) []params.Definition {

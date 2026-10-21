@@ -31,6 +31,9 @@ type Service struct {
 
 	// OnAvatarChanged fires when a new avatar definition was resolved.
 	OnAvatarChanged func(AvatarInfo)
+	// OnAvatarUnresolved fires when the loaded avatar could not be
+	// resolved.
+	OnAvatarUnresolved func()
 	// OnForceRelevant fires for the /vrcft/settings/forceRelevant endpoint.
 	OnForceRelevant func(bool)
 	// OnMessageReceived fires for every incoming OSC message.
@@ -44,7 +47,7 @@ func NewService(logger *zap.Logger, oscDir string) *Service {
 		discovery: NewDiscovery(logger),
 		server:    NewServer(logger),
 		files:     files,
-		query:     NewQueryParser(logger, files),
+		query:     NewQueryParser(logger),
 		avatar:    NullAvatar("Loading...", "Loading..."),
 	}
 	s.receiver = osc.NewReceiver(logger, s.handleMessage)
@@ -53,8 +56,10 @@ func NewService(logger *zap.Logger, oscDir string) *Service {
 	return s
 }
 
-// Start binds the legacy receive port and begins mDNS discovery.
-func (s *Service) Start(ctx context.Context, target osc.Target) error {
+// Start binds the legacy receive port and, if discover is set, begins mDNS
+// discovery of VRChat's OSCQuery service. Without discovery the avatar is
+// only resolved from the legacy config files.
+func (s *Service) Start(ctx context.Context, target osc.Target, discover bool) error {
 	s.logger.Debug("OSC Service Initializing")
 	s.mu.Lock()
 	s.target = target
@@ -65,10 +70,10 @@ func (s *Service) Start(ctx context.Context, target osc.Target) error {
 	} else {
 		s.setListenPort(port)
 	}
-	if err := s.discovery.Start(ctx); err != nil {
-		return err
+	if !discover {
+		return nil
 	}
-	return nil
+	return s.discovery.Start(ctx)
 }
 
 // SetTarget updates the endpoint. The legacy receive port is only rebound
@@ -164,6 +169,9 @@ func (s *Service) resolve(avatarID string) {
 	}
 	if err != nil {
 		s.logger.Debug("Avatar not resolved", zap.Error(err))
+		if fn := s.OnAvatarUnresolved; fn != nil {
+			fn()
+		}
 		return
 	}
 

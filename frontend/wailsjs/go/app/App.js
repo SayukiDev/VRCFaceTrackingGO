@@ -54,6 +54,10 @@ export function GetMutatorEnabled() {
   return window['go']['app']['App']['GetMutatorEnabled']();
 }
 
+export function GetOscMode() {
+  return window['go']['app']['App']['GetOscMode']();
+}
+
 export function GetOscStatus() {
   return window['go']['app']['App']['GetOscStatus']();
 }
@@ -164,6 +168,10 @@ export function SetMutationValue(arg1, arg2, arg3) {
 
 export function SetMutatorEnabled(arg1) {
   return window['go']['app']['App']['SetMutatorEnabled'](arg1);
+}
+
+export function SetOscMode(arg1) {
+  return window['go']['app']['App']['SetOscMode'](arg1);
 }
 
 export function SetOscTarget(arg1) {

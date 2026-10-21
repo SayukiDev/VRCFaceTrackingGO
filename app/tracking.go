@@ -73,6 +73,11 @@ func (a *App) GetOscTarget() osc.Target { return a.svc.Target() }
 
 func (a *App) SetOscTarget(t osc.Target) error { return a.svc.SetTarget(t) }
 
+// GetOscMode returns "oscquery" or "osc".
+func (a *App) GetOscMode() string { return string(a.svc.OSCMode()) }
+
+func (a *App) SetOscMode(mode string) error { return a.svc.SetOSCMode(osc.Mode(mode)) }
+
 func (a *App) GetAllParametersRelevant() bool { return a.svc.AllParametersRelevant() }
 
 func (a *App) SetAllParametersRelevant(v bool) { a.svc.SetAllParametersRelevant(v) }

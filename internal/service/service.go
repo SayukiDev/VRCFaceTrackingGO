@@ -5,6 +5,7 @@ package service
 
 import (
 	"context"
+	"sync"
 	"sync/atomic"
 	"time"
 
@@ -50,6 +51,13 @@ type Service struct {
 	transport *osc.Sender
 	sender    *sender.Sender
 	query     *oscquery.Service
+
+	// relevanceMu guards the two reasons for sending every parameter.
+	relevanceMu sync.Mutex
+	// forceRelevant is the user's (or /vrcft/settings/forceRelevant) choice.
+	forceRelevant bool
+	// avatarUnresolved is set while the OSC mode cannot resolve the avatar.
+	avatarUnresolved bool
 
 	messagesIn  atomic.Int64
 	messagesOut atomic.Int64
@@ -99,20 +107,17 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.sender.OnParametersChanged = listener.OnParametersChanged
 	s.sender.SetOutputMode(cfg.Output)
 
-	if vrchat.Supported {
-		s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
-		s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
-			s.sender.SetDefinitions(info.Parameters)
-			listener.OnAvatarChanged(info)
-		}
-		s.query.OnForceRelevant = s.sender.SetAllRelevant
-		s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
-	} else {
-		// Without VRChat detection there is no avatar to match parameters
-		// against, so every parameter is sent and OSCQuery is not needed.
-		s.logger.Info("VRChat detection is not supported on this OS; sending every parameter")
-		s.sender.SetAllRelevant(true)
+	// The config file folder is only known on Windows; elsewhere config
+	// lookups fail and the OSC mode falls back to sending every parameter.
+	s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
+	s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
+		s.sender.SetDefinitions(info.Parameters)
+		s.setAvatarUnresolved(false)
+		listener.OnAvatarChanged(info)
 	}
+	s.query.OnAvatarUnresolved = func() { s.setAvatarUnresolved(true) }
+	s.query.OnForceRelevant = s.SetAllParametersRelevant
+	s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
 
 	s.initialize()
 	go s.router.Run(s.ctx, s.sender)
@@ -131,11 +136,7 @@ func (s *Service) initialize() {
 	if err := s.transport.SetTarget(target.Address, target.OutPort); err != nil {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
 	}
-	if s.query != nil {
-		if err := s.query.Start(s.ctx, target); err != nil {
-			s.logger.Error("OSCQuery service failed to start", zap.Error(err))
-		}
-	}
+	s.startQuery()
 
 	s.moduleConfigDirty.Store(false)
 	s.modules.Scan(s.ctx)
@@ -163,9 +164,7 @@ func (s *Service) ensureOSCEnabled() {
 func (s *Service) Reinitialize() {
 	s.logger.Info("Reinitializing VRCFT...")
 	s.router.Teardown()
-	if s.query != nil {
-		_ = s.query.Close()
-	}
+	_ = s.query.Close()
 	s.initialize()
 }
 

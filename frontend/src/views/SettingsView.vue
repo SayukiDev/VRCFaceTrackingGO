@@ -6,7 +6,7 @@ import {
 } from 'naive-ui'
 import { Checkmark20Regular, ArrowRouting24Regular, Color24Regular, PaintBrush24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
 import {
-  GetOscTarget, SetOscTarget, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
+  GetOscTarget, SetOscTarget, GetOscMode, SetOscMode, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
   ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
 } from '../../wailsjs/go/app/App'
 import { metadata, osc, settings } from '../../wailsjs/go/models'
@@ -54,6 +54,22 @@ async function applyOutputMode(v: string) {
   try {
     await SetOutputMode(v)
     outputMode.value = v
+  } catch (e) {
+    message.error(String(e))
+  }
+}
+
+const oscMode = ref('oscquery')
+GetOscMode().then((v) => (oscMode.value = v))
+const oscModeOptions = computed(() => [
+  { label: t('settings.oscModeQuery'), value: 'oscquery' },
+  { label: t('settings.oscModeOsc'), value: 'osc' },
+])
+
+async function applyOscMode(v: string) {
+  try {
+    await SetOscMode(v)
+    oscMode.value = v
   } catch (e) {
     message.error(String(e))
   }
@@ -176,6 +192,14 @@ GetMetadata().then((v) => (meta.value = v))
     </info-card>
 
     <info-card :icon="PlugConnected24Regular">
+      <div class="header">{{ t('settings.oscMode') }}</div>
+      <n-text depth="3">{{ t('settings.oscModeDesc') }}</n-text>
+      <template #aside>
+        <n-select :value="oscMode" :options="oscModeOptions" style="width: 260px" @update:value="applyOscMode" />
+      </template>
+    </info-card>
+
+    <info-card :icon="PlugConnected24Regular">
       <div class="header">{{ t('settings.osc') }}</div>
       <n-text depth="3">{{ t('settings.oscDesc') }}</n-text>
       <template #aside>
@@ -249,7 +273,7 @@ GetMetadata().then((v) => (meta.value = v))
           <info-card>
             <div class="header">{{ t('settings.forceRelevancy') }}</div>
             <n-text depth="3">{{ t('settings.forceRelevancyDesc') }}</n-text>
-            <template #aside><n-switch :value="allRelevant" :disabled="!gremlin || !isWindows" @update:value="setAllRelevant" /></template>
+            <template #aside><n-switch :value="allRelevant" :disabled="!gremlin" @update:value="setAllRelevant" /></template>
           </info-card>
           <info-card>
             <div class="header">{{ t('settings.forceReInit') }}</div>

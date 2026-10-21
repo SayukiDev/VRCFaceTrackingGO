@@ -23,10 +23,12 @@ type Settings struct {
 	// SeedColor.
 	UseSystemAccent bool `json:"useSystemAccent"`
 	// Locale is the UI language, or "" to follow the system.
-	Locale string            `json:"locale"`
-	OSC    osc.Target        `json:"osc"`
-	Output sender.OutputMode `json:"output"`
-	Timing Timing            `json:"timing"`
+	Locale string     `json:"locale"`
+	OSC    osc.Target `json:"osc"`
+	// OSCMode is how VRChat and the loaded avatar are found.
+	OSCMode osc.Mode          `json:"oscMode"`
+	Output  sender.OutputMode `json:"output"`
+	Timing  Timing            `json:"timing"`
 	// Modules is the module priority list. Nil means the router's default
 	// (every installed module, in file name order).
 	Modules []router.Config `json:"modules"`
@@ -39,6 +41,7 @@ func Default() Settings {
 		Theme:     "dark",
 		SeedColor: DefaultSeedColor,
 		OSC:       osc.DefaultTarget(),
+		OSCMode:   osc.ModeOSCQuery,
 		Output:    sender.OutputParameters,
 		Timing:    DefaultTiming(),
 		Mixer:     mixer.DefaultConfig(),

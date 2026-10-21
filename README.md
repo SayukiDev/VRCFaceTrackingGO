@@ -8,7 +8,8 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 
 ## Features
 
-- Unified Expressions (v2) and head parameters, with OSCQuery avatar detection
+- Unified Expressions (v2) and head parameters
+- OSCQuery or plain OSC: OSCQuery finds VRChat and sends only the parameters of the current avatar; plain OSC uses fixed ports and sends every parameter when the avatar is unknown
 - VRChat native eye tracking output
 - Mutations: parameter adjustment, Unified correctors and the data filter
 - Modules run as separate processes and restart automatically when they crash
@@ -43,7 +44,7 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 - GTK 3 and WebKitGTK 4.1 (`libgtk-3-0t64` and `libwebkit2gtk-4.1-0` on Ubuntu 24.04 or later)
 - Limits:
   - Only modules that support Linux can be used.
-  - VRChat, its OSC setting and the current avatar are not detected, so OSCQuery is not used and every parameter is sent.
+  - VRChat's OSC setting is not turned on automatically, and the OSC mode cannot read avatar config files, so it sends every parameter. Use the OSCQuery mode to send only the current avatar's parameters.
   - The system accent colour option is not available.
 
 ### macOS
@@ -52,7 +53,7 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 - The app is not signed; open it with right click → Open the first time.
 - Limits:
   - Only modules that support macOS can be used.
-  - VRChat, its OSC setting and the current avatar are not detected, so OSCQuery is not used and every parameter is sent.
+  - VRChat's OSC setting is not turned on automatically, and the OSC mode cannot read avatar config files, so it sends every parameter. Use the OSCQuery mode to send only the current avatar's parameters.
   - The system accent colour option is not available.
 
 ## Build
