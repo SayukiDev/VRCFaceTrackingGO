@@ -28,6 +28,9 @@ type Service struct {
 	avatar       AvatarInfo
 	lastAvatarID string
 	listenPort   int
+	// discover is set in the OSCQuery mode, where the receive port is only
+	// bound once VRChat is discovered.
+	discover bool
 
 	// OnAvatarChanged fires when a new avatar definition was resolved.
 	OnAvatarChanged func(AvatarInfo)
@@ -56,33 +59,37 @@ func NewService(logger *zap.Logger, oscDir string) *Service {
 	return s
 }
 
-// Start binds the legacy receive port and, if discover is set, begins mDNS
-// discovery of VRChat's OSCQuery service. Without discovery the avatar is
-// only resolved from the legacy config files.
+// Start begins mDNS discovery of VRChat's OSCQuery service if discover is
+// set, binding a receive port only once VRChat is found. Otherwise it binds
+// the legacy receive port and the avatar is only resolved from the legacy
+// config files.
 func (s *Service) Start(ctx context.Context, target osc.Target, discover bool) error {
 	s.logger.Debug("OSC Service Initializing")
 	s.mu.Lock()
 	s.target = target
+	s.discover = discover
+	s.listenPort = 0
 	s.mu.Unlock()
 
+	if discover {
+		return s.discovery.Start(ctx)
+	}
 	if port, err := s.receiver.Listen(target.Address, target.InPort); err != nil {
 		s.logger.Warn("Could not bind to recv endpoint", zap.Error(err))
 	} else {
 		s.setListenPort(port)
 	}
-	if !discover {
-		return nil
-	}
-	return s.discovery.Start(ctx)
+	return nil
 }
 
 // SetTarget updates the endpoint. The legacy receive port is only rebound
-// while OSCQuery has not taken over port negotiation.
+// in the OSC mode; the OSCQuery mode negotiates its own port.
 func (s *Service) SetTarget(target osc.Target) {
 	s.mu.Lock()
 	s.target = target
+	discover := s.discover
 	s.mu.Unlock()
-	if s.discovery.Endpoint() != nil {
+	if discover {
 		return
 	}
 	if port, err := s.receiver.Listen(target.Address, target.InPort); err != nil {
