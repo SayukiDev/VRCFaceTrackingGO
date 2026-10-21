@@ -24,6 +24,7 @@
 |---|---|---|---|
 | [ALVR](modules/ALVR) | [ALVR](https://github.com/alvr-org/ALVR) 経由のフェイストラッキング対応ヘッドセット | Windows、Linux | [VRCFT-ALVR](https://github.com/alvr-org/VRCFT-ALVR) |
 | [GXRFT](modules/GXRFT) | [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) 経由の Samsung Galaxy XR | Windows、Linux、macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
+| [SteamLink](modules/SteamLink) | Steam Link 経由の Meta Quest | Windows | [LinkFT](https://github.com/ykeara/LinkFT) |
 | [VirtualDesktop](modules/VirtualDesktop) | Virtual Desktop 経由の Quest Pro など | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 

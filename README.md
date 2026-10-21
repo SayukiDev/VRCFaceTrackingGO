@@ -24,6 +24,7 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 |---|---|---|---|
 | [ALVR](modules/ALVR) | Headsets with face tracking through [ALVR](https://github.com/alvr-org/ALVR) | Windows, Linux | [VRCFT-ALVR](https://github.com/alvr-org/VRCFT-ALVR) |
 | [GXRFT](modules/GXRFT) | Samsung Galaxy XR through [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) | Windows, Linux, macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
+| [SteamLink](modules/SteamLink) | Meta Quest through Steam Link | Windows | [LinkFT](https://github.com/ykeara/LinkFT) |
 | [VirtualDesktop](modules/VirtualDesktop) | Quest Pro etc. through Virtual Desktop | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 

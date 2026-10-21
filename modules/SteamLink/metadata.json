@@ -1,0 +1,10 @@
+{
+  "name": "SteamLink",
+  "description": "Provides eye and face tracking for Meta Quest headsets through Steam Link",
+  "author": "SayukiDev",
+  "pageUrl": "https://github.com/ykeara/LinkFT",
+  "version": "1.0.0",
+  "usageInstructions": "In Steam Link's advanced settings, turn on \"Enable OSC\" and the eye and face tracking sharing options, and set the OSC output port to 9015",
+  "icons": ["steamlink.png"],
+  "platforms": ["windows"]
+}
