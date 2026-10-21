@@ -12,12 +12,15 @@ import {
 import { metadata, osc, settings } from '../../wailsjs/go/models'
 import { defaultSeed, useTheme, type ThemeMode } from '../composables/useTheme'
 import { useLocale, type LocaleMode } from '../i18n'
+import { usePlatform } from '../composables/usePlatform'
 import InfoCard from '../components/InfoCard.vue'
 
 const { t } = useI18n()
 const message = useMessage()
 
 const { mode, setMode, seed, setSeed, saveSeed, useSystemAccent, setUseSystemAccent } = useTheme()
+// The system accent colour and VRChat / avatar detection only exist on Windows.
+const { isWindows } = usePlatform()
 // M3 baseline purple, a few hues around the wheel, and the default app pink.
 const seedSwatches = ['#6750A4', '#0061A4', '#006A6A', '#006E1C', '#6A5F00', '#9C4146', '#8B5000', defaultSeed]
 
@@ -125,11 +128,11 @@ GetMetadata().then((v) => (meta.value = v))
     <info-card :icon="PaintBrush24Regular">
       <div class="header">{{ t('settings.seedColor') }}</div>
       <n-text depth="3">{{ t('settings.seedColorDesc') }}</n-text>
-      <label class="accent-switch">
+      <label v-if="isWindows" class="accent-switch">
         <n-switch :value="useSystemAccent" @update:value="setUseSystemAccent" />
         <span>{{ t('settings.useSystemAccent') }}</span>
       </label>
-      <div class="swatches" :class="{ disabled: useSystemAccent }">
+      <div class="swatches" :class="{ disabled: isWindows && useSystemAccent }">
         <button
           v-for="c in seedSwatches"
           :key="c"
@@ -137,7 +140,7 @@ GetMetadata().then((v) => (meta.value = v))
           :class="{ selected: c.toUpperCase() === seed.toUpperCase() }"
           :style="{ background: c }"
           :title="c"
-          :disabled="useSystemAccent"
+          :disabled="isWindows && useSystemAccent"
           @click="pickSwatch(c)"
         >
           <n-icon v-if="c.toUpperCase() === seed.toUpperCase()" :size="20"><checkmark20-regular /></n-icon>
@@ -149,7 +152,7 @@ GetMetadata().then((v) => (meta.value = v))
           :value="seed"
           :modes="['hex']"
           :show-alpha="false"
-          :disabled="useSystemAccent"
+          :disabled="isWindows && useSystemAccent"
           @update:value="(v: string) => setSeed(v.toUpperCase())"
           @update:show="(open: boolean) => !open && saveSeed()"
         />
@@ -246,7 +249,7 @@ GetMetadata().then((v) => (meta.value = v))
           <info-card>
             <div class="header">{{ t('settings.forceRelevancy') }}</div>
             <n-text depth="3">{{ t('settings.forceRelevancyDesc') }}</n-text>
-            <template #aside><n-switch :value="allRelevant" :disabled="!gremlin" @update:value="setAllRelevant" /></template>
+            <template #aside><n-switch :value="allRelevant" :disabled="!gremlin || !isWindows" @update:value="setAllRelevant" /></template>
           </info-card>
           <info-card>
             <div class="header">{{ t('settings.forceReInit') }}</div>
@@ -258,7 +261,7 @@ GetMetadata().then((v) => (meta.value = v))
             <n-text depth="3">{{ t('settings.resetVRCFTDesc') }}</n-text>
             <template #aside><n-button :disabled="!gremlin" @click="resetVRCFT">{{ t('settings.reset') }}</n-button></template>
           </info-card>
-          <info-card>
+          <info-card v-if="isWindows">
             <div class="header">{{ t('settings.resetAvatar') }}</div>
             <n-text depth="3">{{ t('settings.resetAvatarDesc') }}</n-text>
             <template #aside><n-button :disabled="!gremlin" @click="resetAvatarConfigs">{{ t('settings.reset') }}</n-button></template>

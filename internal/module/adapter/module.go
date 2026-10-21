@@ -4,6 +4,7 @@ package adapter
 
 import (
 	"context"
+	"slices"
 
 	"go.uber.org/zap"
 
@@ -53,6 +54,14 @@ type Metadata struct {
 	UsageInstructions string `json:"usageInstructions"`
 	// Icons are PNG encoded images shown next to the module.
 	Icons [][]byte `json:"icons"`
+	// Platforms lists the operating systems (GOOS values such as
+	// "windows") the module is built and distributed for. Empty means all.
+	Platforms []string `json:"platforms,omitempty"`
+}
+
+// SupportsPlatform reports whether the module is meant for the GOOS goos.
+func (m Metadata) SupportsPlatform(goos string) bool {
+	return len(m.Platforms) == 0 || slices.Contains(m.Platforms, goos)
 }
 
 // Module is implemented by every tracking backend.

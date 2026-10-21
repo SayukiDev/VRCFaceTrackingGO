@@ -2,7 +2,7 @@
 
 | **English** | [日本語](README.ja.md) |
 
-A Go reimplementation of [VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) for Windows, built with [Wails](https://wails.io) and Vue.
+A Go reimplementation of [VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) for Windows, built with [Wails](https://wails.io) and Vue. Linux and macOS are supported with [some limits](#linux).
 
 It receives eye and face tracking from tracking modules and sends it to VRChat over OSC, either as Unified Expressions (v2) avatar parameters, through VRChat's native eye tracking, or both.
 
@@ -15,21 +15,42 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 - Module priority, per module eye / expression selection and manual assignment
 - Material Design 3 UI with light / dark themes and a configurable accent colour
 - English and Japanese
+- Multi-platform: Windows, Linux and macOS ([with limits](#linux) outside Windows)
 
 ## Modules
 
-| Module | Hardware | Based on |
-|---|---|---|
-| [GXRFT](modules/GXRFT) | Samsung Galaxy XR through [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
-| [VirtualDesktop](modules/VirtualDesktop) | Quest Pro etc. through Virtual Desktop | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
-| [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
+| Module | Hardware | Platforms | Based on |
+|---|---|---|---|
+| [GXRFT](modules/GXRFT) | Samsung Galaxy XR through [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) | Windows, Linux, macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
+| [VirtualDesktop](modules/VirtualDesktop) | Quest Pro etc. through Virtual Desktop | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
+| [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
 Modules are standalone programs (`.vfgmod`). The installer can install the bundled ones; others are installed from the Modules page. See [docs/module-protocol.md](docs/module-protocol.md) to write your own.
 
 ## Requirements
 
-- Windows 10 or later
+### Windows
+
+- Windows 10 or later (x64)
 - [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) (installed by the installer when missing)
+
+### Linux
+
+- x64
+- GTK 3 and WebKitGTK 4.1 (`libgtk-3-0t64` and `libwebkit2gtk-4.1-0` on Ubuntu 24.04 or later)
+- Limits:
+  - Only modules that support Linux can be used.
+  - VRChat, its OSC setting and the current avatar are not detected, so OSCQuery is not used and every parameter is sent.
+  - The system accent colour option is not available.
+
+### macOS
+
+- A Mac with Apple silicon (arm64), macOS 11 or later
+- The app is not signed; open it with right click → Open the first time.
+- Limits:
+  - Only modules that support macOS can be used.
+  - VRChat, its OSC setting and the current avatar are not detected, so OSCQuery is not used and every parameter is sent.
+  - The system accent colour option is not available.
 
 ## Build
 
@@ -39,15 +60,18 @@ Prerequisites: Go 1.25+, Node.js, the [Wails v2 CLI](https://wails.io/docs/getti
 go run ./cmd/build
 ```
 
-This builds every module into `build/bin/modules`, the application and the installer into `build/bin`. Flags:
+This builds every module whose `metadata.json` lists the current OS into `build/bin/modules`, and the application and the installer (Windows only) into `build/bin`. Flags:
 
 | Flag | Default | |
 |---|---|---|
 | `-app` | `true` | Build the application after the modules |
-| `-nsis` | `true` | Also build the installer |
-| `-install` | `false` | Copy the modules into `%APPDATA%\VRCFaceTrackingGO\Modules` |
+| `-nsis` | `true` on Windows | Also build the installer (Windows only) |
+| `-install` | `false` | Copy the modules into the module folder (`%APPDATA%\VRCFaceTrackingGO\Modules` on Windows, see [docs/module-protocol.md](docs/module-protocol.md#module-program) for other OSes) |
+| `-tags` | | Build tags for `wails build`, e.g. `webkit2_41` for WebKitGTK 4.1 on Linux |
 
 For development, `wails dev` runs the application with hot reload.
+
+Publishing a GitHub release runs [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds on Windows, Linux and macOS and attaches a ZIP for each to the release.
 
 ## License
 

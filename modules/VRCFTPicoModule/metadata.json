@@ -4,5 +4,6 @@
   "author": "SayukiDev",
   "version": "1.0.0",
   "usageInstructions": "Start PICO Connect (or the Streaming Assistant) and enable face tracking on the headset before activating this module",
-  "icons": ["pico.png"]
+  "icons": ["pico.png"],
+  "platforms": ["windows"]
 }

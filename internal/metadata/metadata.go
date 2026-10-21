@@ -47,8 +47,9 @@ func Init(metadata []byte) {
 	}
 }
 
-// PersistentDataDir is the per-user settings folder, %APPDATA%\<Name> on
-// Windows.
+// PersistentDataDir is the per-user settings folder: %APPDATA%\<Name> on
+// Windows, ~/.config/<Name> on Linux and ~/Library/Application
+// Support/<Name> on macOS.
 func (m Metadata) PersistentDataDir() (string, error) {
 	cfg, err := os.UserConfigDir()
 	if err != nil {

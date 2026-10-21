@@ -34,6 +34,7 @@ export default {
     msgsOut: '{n} msgs/sec Outgoing',
     avatarStatus: 'Avatar Status',
     loading: 'Loading...',
+    noAvatarDetection: 'Avatars cannot be detected on this OS, so every parameter is sent.',
     parameters: '{n} Parameters',
     legacyParameters: '{n} Legacy Parameters',
   },

@@ -1,0 +1,98 @@
+# Builds the application when a GitHub release is published and attaches
+# one ZIP per platform to it:
+#   Windows:       the installer (which bundles the modules) and THIRD_PARTY_NOTICES.md
+#   Linux / macOS: the application, the modules built for that OS and THIRD_PARTY_NOTICES.md
+name: Release
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: write
+
+env:
+  APP_NAME: VRCFaceTrackingGO
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            platform: windows-amd64
+          - os: ubuntu-24.04
+            platform: linux-amd64
+            # Ubuntu 24.04 ships WebKitGTK 4.1 only.
+            tags: webkit2_41
+          - os: macos-latest
+            platform: darwin-arm64
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        shell: bash
+    env:
+      ZIP_NAME: VRCFaceTrackingGO-${{ github.event.release.tag_name }}-${{ matrix.platform }}.zip
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go.mod
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install the Wails CLI matching go.mod
+        run: go install github.com/wailsapp/wails/v2/cmd/wails@$(go list -m -f '{{.Version}}' github.com/wailsapp/wails/v2)
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libgtk-3-dev libwebkit2gtk-4.1-dev
+
+      - name: Install NSIS
+        if: runner.os == 'Windows'
+        run: |
+          choco install nsis -y --no-progress
+          echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
+
+      - name: Build
+        run: go run ./cmd/build -tags "${{ matrix.tags }}"
+
+      - name: Pack (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "build/bin/$env:APP_NAME-amd64-installer.exe", THIRD_PARTY_NOTICES.md -DestinationPath $env:ZIP_NAME
+
+      - name: Pack (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist/modules
+          cp "build/bin/$APP_NAME" THIRD_PARTY_NOTICES.md dist/
+          cp build/bin/modules/*.vfgmod dist/modules/ 2>/dev/null || true
+          rmdir dist/modules 2>/dev/null || true
+          (cd dist && zip -r "../$ZIP_NAME" .)
+
+      - name: Pack (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          mkdir -p dist/modules
+          cp -R "build/bin/$APP_NAME.app" dist/
+          cp THIRD_PARTY_NOTICES.md dist/
+          cp build/bin/modules/*.vfgmod dist/modules/ 2>/dev/null || true
+          rmdir dist/modules 2>/dev/null || true
+          # ditto keeps the app bundle's symlinks and permissions.
+          ditto -c -k dist "$ZIP_NAME"
+
+      - name: Upload to the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" "$ZIP_NAME" --clobber

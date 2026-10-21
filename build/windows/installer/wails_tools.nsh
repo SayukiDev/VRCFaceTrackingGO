@@ -17,7 +17,7 @@
     !define INFO_PRODUCTVERSION "0.0.2"
 !endif
 !ifndef INFO_COPYRIGHT
-    !define INFO_COPYRIGHT "© 2026 SayukiDev. All rights reserved."
+    !define INFO_COPYRIGHT "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0."
 !endif
 !ifndef PRODUCT_EXECUTABLE
     !define PRODUCT_EXECUTABLE "${INFO_PROJECTNAME}.exe"

@@ -5,6 +5,7 @@ import (
 
 	"VRCFaceTrackingGo/internal/osc"
 	"VRCFaceTrackingGo/internal/settings"
+	"VRCFaceTrackingGo/internal/vrchat"
 )
 
 // OscStatus is the state of the OSC endpoints plus per-second counters.
@@ -20,15 +21,18 @@ type OscStatus struct {
 
 // OscStatus returns the current status and resets the message counters.
 func (s *Service) OscStatus() OscStatus {
-	return OscStatus{
-		ListenPort:  s.query.ListenPort(),
+	st := OscStatus{
 		SendPort:    s.Target().OutPort,
 		Connected:   s.transport.Connected(),
-		OscQuery:    s.query.OSCQueryActive(),
 		MessagesIn:  int(s.messagesIn.Swap(0)),
 		MessagesOut: int(s.messagesOut.Swap(0)),
 		AllRelevant: s.sender.AllRelevant(),
 	}
+	if s.query != nil {
+		st.ListenPort = s.query.ListenPort()
+		st.OscQuery = s.query.OSCQueryActive()
+	}
+	return st
 }
 
 // Target returns the configured OSC endpoint.
@@ -43,7 +47,9 @@ func (s *Service) SetTarget(t osc.Target) error {
 	if err := s.transport.SetTarget(t.Address, t.OutPort); err != nil {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
 	}
-	s.query.SetTarget(t)
+	if s.query != nil {
+		s.query.SetTarget(t)
+	}
 	return nil
 }
 
@@ -51,4 +57,11 @@ func (s *Service) SetTarget(t osc.Target) error {
 func (s *Service) AllParametersRelevant() bool { return s.sender.AllRelevant() }
 
 // SetAllParametersRelevant forces every parameter to be sent every frame.
-func (s *Service) SetAllParametersRelevant(v bool) { s.sender.SetAllRelevant(v) }
+// Without VRChat detection every parameter is always sent, so turning it
+// off is ignored there.
+func (s *Service) SetAllParametersRelevant(v bool) {
+	if !v && !vrchat.Supported {
+		return
+	}
+	s.sender.SetAllRelevant(v)
+}

@@ -2,7 +2,7 @@
 
 | [English](README.md) | **日本語** |
 
-[VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) を Go で再実装した Windows 向けアプリです。[Wails](https://wails.io) と Vue で作られています。
+[VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) を Go で再実装した Windows 向けアプリです。[Wails](https://wails.io) と Vue で作られています。Linux と macOS にも[一部制限付き](#linux)で対応しています。
 
 トラッキングモジュールから目と顔のトラッキングを受け取り、OSC で VRChat に送ります。送り方は Unified Expressions (v2) のアバターパラメーター、VRChat のネイティブアイトラッキング、またはその両方から選べます。
 
@@ -15,21 +15,42 @@
 - モジュールの優先順位、モジュールごとの目/表情の選択、手動での割り当て
 - Material Design 3 の UI(ライト/ダークテーマ、アクセントカラーの変更)
 - 英語と日本語に対応
+- マルチプラットフォーム対応(Windows 以外では[制限](#linux)があります)
 
 ## モジュール
 
-| モジュール | 対応機器 | 移植元 |
-|---|---|---|
-| [GXRFT](modules/GXRFT) | [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) 経由の Samsung Galaxy XR | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
-| [VirtualDesktop](modules/VirtualDesktop) | Virtual Desktop 経由の Quest Pro など | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
-| [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
+| モジュール | 対応機器 | 対応 OS | 移植元 |
+|---|---|---|---|
+| [GXRFT](modules/GXRFT) | [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) 経由の Samsung Galaxy XR | Windows、Linux、macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
+| [VirtualDesktop](modules/VirtualDesktop) | Virtual Desktop 経由の Quest Pro など | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
+| [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
 モジュールは独立したプログラム(`.vfgmod`)です。同梱のモジュールはインストーラーで、それ以外はアプリのモジュールページからインストールします。自作する場合は [docs/module-protocol.ja.md](docs/module-protocol.ja.md) を参照してください。
 
 ## 動作環境
 
-- Windows 10 以降
+### Windows
+
+- Windows 10 以降(x64)
 - [WebView2 ランタイム](https://developer.microsoft.com/microsoft-edge/webview2/)(未インストールならインストーラーが導入します)
+
+### Linux
+
+- x64
+- GTK 3 と WebKitGTK 4.1(Ubuntu 24.04 以降なら `libgtk-3-0t64` と `libwebkit2gtk-4.1-0`)
+- 制限:
+  - Linux に対応したモジュールしか使用できません。
+  - VRChat・OSC の設定・現在のアバターを検出しません。そのため OSCQuery は使わず、すべてのパラメーターを送信します。
+  - システムのアクセントカラーは使えません。
+
+### macOS
+
+- Apple シリコン(arm64)の Mac、macOS 11 以降
+- 署名していないため、初回は右クリックの「開く」から起動してください。
+- 制限:
+  - macOS に対応したモジュールしか使用できません。
+  - VRChat・OSC の設定・現在のアバターを検出しません。そのため OSCQuery は使わず、すべてのパラメーターを送信します。
+  - システムのアクセントカラーは使えません。
 
 ## ビルド
 
@@ -39,15 +60,18 @@
 go run ./cmd/build
 ```
 
-すべてのモジュールを `build/bin/modules` に、アプリとインストーラーを `build/bin` にビルドします。オプション:
+`metadata.json` に今の OS が含まれるモジュールを `build/bin/modules` に、アプリとインストーラー(Windows のみ)を `build/bin` にビルドします。オプション:
 
 | オプション | 既定値 | |
 |---|---|---|
 | `-app` | `true` | モジュールの後にアプリをビルドする |
-| `-nsis` | `true` | インストーラーも作る |
-| `-install` | `false` | モジュールを `%APPDATA%\VRCFaceTrackingGO\Modules` にコピーする |
+| `-nsis` | Windows では `true` | インストーラーも作る(Windows のみ) |
+| `-install` | `false` | モジュールをモジュールフォルダにコピーする(Windows は `%APPDATA%\VRCFaceTrackingGO\Modules`、ほかの OS は [docs/module-protocol.ja.md](docs/module-protocol.ja.md#モジュールプログラム) を参照) |
+| `-tags` | | `wails build` に渡すビルドタグ(Linux で WebKitGTK 4.1 を使う場合は `webkit2_41` など) |
 
 開発中は `wails dev` でホットリロード付きで起動できます。
+
+GitHub でリリースを公開すると [`.github/workflows/release.yml`](.github/workflows/release.yml) が動き、Windows・Linux・macOS でビルドして、それぞれの ZIP をリリースに添付します。
 
 ## ライセンス
 

@@ -36,6 +36,7 @@ const ja: typeof en = {
     msgsOut: '送信 {n} msgs/秒',
     avatarStatus: 'アバター状態',
     loading: '読み込み中...',
+    noAvatarDetection: 'この OS ではアバターを検出できないため、すべてのパラメーターを送信します。',
     parameters: 'パラメータ {n} 個',
     legacyParameters: 'レガシーパラメータ {n} 個',
   },

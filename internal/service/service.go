@@ -99,13 +99,20 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.sender.OnParametersChanged = listener.OnParametersChanged
 	s.sender.SetOutputMode(cfg.Output)
 
-	s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
-	s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
-		s.sender.SetDefinitions(info.Parameters)
-		listener.OnAvatarChanged(info)
+	if vrchat.Supported {
+		s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
+		s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
+			s.sender.SetDefinitions(info.Parameters)
+			listener.OnAvatarChanged(info)
+		}
+		s.query.OnForceRelevant = s.sender.SetAllRelevant
+		s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
+	} else {
+		// Without VRChat detection there is no avatar to match parameters
+		// against, so every parameter is sent and OSCQuery is not needed.
+		s.logger.Info("VRChat detection is not supported on this OS; sending every parameter")
+		s.sender.SetAllRelevant(true)
 	}
-	s.query.OnForceRelevant = s.sender.SetAllRelevant
-	s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
 
 	s.initialize()
 	go s.router.Run(s.ctx, s.sender)
@@ -116,21 +123,18 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 // initialize is the restartable part of Start: VRChat checks, network
 // endpoints and modules.
 func (s *Service) initialize() {
-	if changed, err := vrchat.ForceEnableOSC(); err != nil {
-		s.logger.Warn("Could not verify VRChat OSC setting", zap.Error(err))
-	} else if changed {
-		s.logger.Warn("VRCFT detected OSC was disabled and automatically enabled it.")
-		if vrchat.IsRunning() {
-			s.logger.Error("However, VRChat was running while this change was made.\nIf parameters do not update, please restart VRChat or manually enable OSC yourself in your avatar's expressions menu.")
-		}
+	if vrchat.Supported {
+		s.ensureOSCEnabled()
 	}
 
 	target := s.Target()
 	if err := s.transport.SetTarget(target.Address, target.OutPort); err != nil {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
 	}
-	if err := s.query.Start(s.ctx, target); err != nil {
-		s.logger.Error("OSCQuery service failed to start", zap.Error(err))
+	if s.query != nil {
+		if err := s.query.Start(s.ctx, target); err != nil {
+			s.logger.Error("OSCQuery service failed to start", zap.Error(err))
+		}
 	}
 
 	s.moduleConfigDirty.Store(false)
@@ -138,12 +142,30 @@ func (s *Service) initialize() {
 	s.router.Initialize(s.ctx)
 }
 
+// ensureOSCEnabled turns VRChat's OSC setting on if it was off.
+func (s *Service) ensureOSCEnabled() {
+	changed, err := vrchat.ForceEnableOSC()
+	if err != nil {
+		s.logger.Warn("Could not verify VRChat OSC setting", zap.Error(err))
+		return
+	}
+	if !changed {
+		return
+	}
+	s.logger.Warn("VRCFT detected OSC was disabled and automatically enabled it.")
+	if vrchat.IsRunning() {
+		s.logger.Error("However, VRChat was running while this change was made.\nIf parameters do not update, please restart VRChat or manually enable OSC yourself in your avatar's expressions menu.")
+	}
+}
+
 // Reinitialize tears down the modules and network endpoints and brings
 // them back up. Most modules will not enjoy this.
 func (s *Service) Reinitialize() {
 	s.logger.Info("Reinitializing VRCFT...")
 	s.router.Teardown()
-	_ = s.query.Close()
+	if s.query != nil {
+		_ = s.query.Close()
+	}
 	s.initialize()
 }
 

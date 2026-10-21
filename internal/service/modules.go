@@ -151,7 +151,12 @@ func (s *Service) SetModuleOrder(order []string) error {
 }
 
 // Avatar returns the last resolved avatar.
-func (s *Service) Avatar() oscquery.AvatarInfo { return s.query.Avatar() }
+func (s *Service) Avatar() oscquery.AvatarInfo {
+	if s.query == nil {
+		return oscquery.AvatarInfo{}
+	}
+	return s.query.Avatar()
+}
 
 // ParameterStats summarises the relevant parameter set.
 func (s *Service) ParameterStats() sender.ParameterStats { return s.sender.Stats() }

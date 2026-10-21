@@ -6,11 +6,13 @@ import { PlugConnected24Regular, Person24Regular, ArrowSync24Regular } from '@vi
 import { GetModules, GetOscStatus, GetAvatar, GetParameterStats, ReloadModules } from '../../wailsjs/go/app/App'
 import type { router, service, oscquery, sender } from '../../wailsjs/go/models'
 import { Events, useBackendState, useEvent } from '../composables/useBackend'
+import { usePlatform } from '../composables/usePlatform'
 import InfoCard from '../components/InfoCard.vue'
 import ModuleCard from '../components/ModuleCard.vue'
 import TrackingAssignment from '../components/TrackingAssignment.vue'
 
 const { t } = useI18n()
+const { isWindows } = usePlatform()
 const modules = useBackendState<router.ModuleInfo[]>(GetModules, Events.modules, [])
 const osc = useBackendState<service.OscStatus | null>(GetOscStatus, Events.oscStats, null)
 const avatar = useBackendState<oscquery.AvatarInfo | null>(GetAvatar, Events.avatar, null)
@@ -56,7 +58,7 @@ async function reload() {
 
     <info-card :icon="PlugConnected24Regular">
       <div class="subtitle">{{ t('home.oscStatus') }}</div>
-      <div v-if="osc?.connected"><n-text depth="3">{{ t('home.listeningOn', { port: osc?.listenPort }) }}</n-text></div>
+      <div v-if="osc?.connected && osc?.listenPort"><n-text depth="3">{{ t('home.listeningOn', { port: osc?.listenPort }) }}</n-text></div>
       <div><n-text depth="3">{{ t('home.sendingOn', { port: osc?.sendPort }) }}</n-text></div>
       <template #aside>
         <div><n-text depth="3">{{ t('home.msgsIn', { n: osc?.messagesIn ?? 0 }) }}</n-text></div>
@@ -66,8 +68,11 @@ async function reload() {
 
     <info-card :icon="Person24Regular">
       <div class="subtitle">{{ t('home.avatarStatus') }}</div>
-      <div><n-text depth="3">{{ avatar?.name ?? t('home.loading') }}</n-text></div>
-      <div><n-text depth="3">{{ avatar?.id ?? t('home.loading') }}</n-text></div>
+      <template v-if="isWindows">
+        <div><n-text depth="3">{{ avatar?.name ?? t('home.loading') }}</n-text></div>
+        <div><n-text depth="3">{{ avatar?.id ?? t('home.loading') }}</n-text></div>
+      </template>
+      <div v-else><n-text depth="3">{{ t('home.noAvatarDetection') }}</n-text></div>
       <template #aside>
         <div><n-text depth="3">{{ t('home.parameters', { n: stats?.count ?? 0 }) }}</n-text></div>
         <div v-if="(stats?.deprecated ?? 0) > 0">

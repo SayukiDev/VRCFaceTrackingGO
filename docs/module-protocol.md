@@ -11,9 +11,18 @@ The reference implementation is [`internal/module/plugin`](../internal/module/pl
 
 ## Module program
 
-A module program is an executable named `<id>.vfgmod` installed in
-`%APPDATA%\VRCFaceTrackingGO\Modules`. The host recognises it only by the
-`.vfgmod` extension, so a module may be written in any language.
+A module program is an executable named `<id>.vfgmod` installed in the
+`Modules` folder of the application's data directory:
+
+| OS | Module folder |
+|---|---|
+| Windows | `%APPDATA%\VRCFaceTrackingGO\Modules` |
+| Linux | `~/.config/VRCFaceTrackingGO/Modules` |
+| macOS | `~/Library/Application Support/VRCFaceTrackingGO/Modules` |
+
+The host recognises it only by the `.vfgmod` extension, so a module may be
+written in any language. Outside Windows the file must be executable; the
+Modules page installs it that way.
 
 It must handle these command lines:
 
@@ -38,7 +47,8 @@ device.
     "version": "1.0.0",
     "pageUrl": "",
     "usageInstructions": "Make sure to install ...",
-    "icons": ["<base64 PNG>"]
+    "icons": ["<base64 PNG>"],
+    "platforms": ["windows"]
   },
   "supported": { "eye": true, "expression": true }
 }
@@ -49,6 +59,10 @@ device.
   Modules with a duplicate ID are skipped.
 - `metadata` is shown on the Modules page. `icons` are PNG images encoded
   as base64 strings.
+- `platforms` lists the operating systems (Go `GOOS` values: `windows`,
+  `linux`, `darwin`) the module is built and distributed for. It is
+  optional; an empty list means every platform. `go run ./cmd/build` skips
+  modules that do not list the current OS.
 - `supported` states what the module can provide before it is initialised.
 - The host waits at most 5 seconds for `--info`. It re-reads the
   description only when the file's size or modification time changes.
@@ -56,7 +70,7 @@ device.
 ## Process lifecycle
 
 1. The host starts `<prog> --vfgmod=true` with stdin, stdout and stderr
-   connected to pipes and no console window.
+   connected to pipes (and, on Windows, no console window).
 2. It sends **Initialize** once, with a 15 second timeout (configurable in
    the settings).
 3. While the module is in use, it sends **Update** every 10 ms
@@ -65,8 +79,12 @@ device.
    timeout) and closes stdin. The module must exit on EOF; after 3 more
    seconds it is killed.
 
-The host puts every module in a kill-on-close job object, so modules end
-together with the host even if the host crashes.
+Modules end together with the host even if the host crashes: on Windows
+the host puts every module in a kill-on-close job object, and on Linux the
+kernel kills the module when its parent dies (`PR_SET_PDEATHSIG`). On
+macOS there is no such facility; `plugin.Serve` exits when its parent
+process changes, and modules in other languages should at least exit when
+stdin reaches EOF.
 
 If a module exits or an Update times out, the host restarts the program
 and initialises it again with the support it had before. It waits 1 s
@@ -176,7 +194,8 @@ func main() { plugin.Serve(New()) }
 `plugin.Serve` handles the command line, the protocol, logging and
 recovering from panics. Keep the metadata in `metadata.json` next to the
 code and load it with `adapter.MustLoadMetadata` from an `embed.FS`; the
-installer reads the same file. Icons are listed by file name there and
+build script and the installer read the same file. Set `platforms` there
+when the module only works on some operating systems. Icons are listed by file name there and
 embedded as PNG.
 
 Build every module with `go run ./cmd/build`, or one of them with:
@@ -191,18 +210,21 @@ above itself, as described in the next section.
 
 ## Writing a module in another language
 
-Any language works as long as the result is a Windows executable. The host
-starts the `.vfgmod` file directly, so it must be a native program (PE
-file), not a script: bundle scripts into an executable (for example with
-PyInstaller) and rename it to `<id>.vfgmod`. The host already hides the
-console window, so a console program is fine.
+Any language works as long as the result is an executable for the OS the
+application runs on. The host starts the `.vfgmod` file directly, so it
+must be a native program (PE on Windows, ELF on Linux, Mach-O on macOS),
+not a script: bundle scripts into an executable (for example with
+PyInstaller) and rename it to `<id>.vfgmod`. On Windows the host already
+hides the console window, so a console program is fine. Set `platforms` in
+the description to the operating systems you build it for.
 
 Checklist:
 
 - Accept exactly `--info` and `--vfgmod=true`, and refuse anything else.
 - Put stdin and stdout in **binary mode** so no newline translation
-  happens (`sys.stdin.buffer` in Python, `_setmode(_fileno(stdin),
-  _O_BINARY)` in C, `Console.OpenStandardInput()` in .NET).
+  happens on Windows (`sys.stdin.buffer` in Python,
+  `_setmode(_fileno(stdin), _O_BINARY)` in C, `Console.OpenStandardInput()`
+  in .NET).
 - **Flush** stdout after every response; the host blocks until it arrives.
 - Never write anything but responses to stdout. Send logs and any library
   output to stderr.
@@ -289,11 +311,14 @@ if __name__ == "__main__":
     main()
 ```
 
-Build it into `MyModule.vfgmod`:
+Build it into `MyModule.vfgmod` on the OS it is for:
 
 ```sh
 pyinstaller --onefile --name MyModule mymodule.py
+# Windows
 copy dist\MyModule.exe MyModule.vfgmod
+# Linux / macOS
+cp dist/MyModule MyModule.vfgmod
 ```
 
 Then install it from the Modules page. Shape indices are the positions in

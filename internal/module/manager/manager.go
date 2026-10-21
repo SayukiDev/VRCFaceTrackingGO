@@ -313,7 +313,9 @@ func copyFile(src, dst string) error {
 	}
 	defer in.Close()
 	tmp := dst + ".tmp"
-	out, err := os.Create(tmp)
+	// Module programs are executed, which needs the execute bit outside
+	// Windows.
+	out, err := os.OpenFile(tmp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
 	if err != nil {
 		return err
 	}

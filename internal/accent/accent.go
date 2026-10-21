@@ -1,24 +1,8 @@
-// Package accent reads the Windows accent colour.
+// Package accent reads the system accent colour. Only Windows has one;
+// elsewhere Color returns ErrUnsupported.
 package accent
 
-import (
-	"fmt"
+import "errors"
 
-	"golang.org/x/sys/windows/registry"
-)
-
-// Color returns the user's Windows accent colour as "#RRGGBB".
-func Color() (string, error) {
-	key, err := registry.OpenKey(registry.CURRENT_USER, `Software\Microsoft\Windows\DWM`, registry.QUERY_VALUE)
-	if err != nil {
-		return "", fmt.Errorf("open DWM registry key: %w", err)
-	}
-	defer key.Close()
-
-	// AccentColor is stored as 0xAABBGGRR.
-	v, _, err := key.GetIntegerValue("AccentColor")
-	if err != nil {
-		return "", fmt.Errorf("read AccentColor: %w", err)
-	}
-	return fmt.Sprintf("#%02X%02X%02X", v&0xff, v>>8&0xff, v>>16&0xff), nil
-}
+// ErrUnsupported is returned where the OS has no accent colour to read.
+var ErrUnsupported = errors.New("the system accent colour is only available on Windows")

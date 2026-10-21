@@ -4,10 +4,11 @@
 //
 //	go run ./cmd/build [flags]
 //
-// It builds every modules/<id> into build/bin/modules/<id>.vfgmod, writes
-// the installer's module sections (build/windows/installer/modules.nsh)
-// from their metadata.json, and then runs "wails build", with -nsis unless
-// -nsis=false.
+// It builds every modules/<id> whose metadata.json lists the current OS in
+// "platforms" into build/bin/modules/<id>.vfgmod, writes the installer's
+// module sections (build/windows/installer/modules.nsh) from their
+// metadata.json, and then runs "wails build". The NSIS installer (-nsis)
+// is only built on Windows.
 package main
 
 import (
@@ -16,6 +17,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"VRCFaceTrackingGo/internal/metadata"
@@ -42,8 +44,9 @@ func main() {
 
 func run() error {
 	app := flag.Bool("app", true, "build the application with wails after the modules")
-	nsis := flag.Bool("nsis", true, "also build the NSIS installer (needs -app)")
+	nsis := flag.Bool("nsis", runtime.GOOS == "windows", "also build the NSIS installer (needs -app, Windows only)")
 	install := flag.Bool("install", false, "copy the built modules into the current user's module folder")
+	tags := flag.String("tags", "", "build tags for wails build (e.g. webkit2_41 for WebKitGTK 4.1 on Linux)")
 	flag.Parse()
 
 	raw, err := os.ReadFile(metadataFile)
@@ -51,6 +54,9 @@ func run() error {
 		return fmt.Errorf("run from the repository root: %w", err)
 	}
 	metadata.Init(raw)
+	if *nsis && runtime.GOOS != "windows" {
+		return fmt.Errorf("the NSIS installer can only be built on Windows")
+	}
 
 	modules, err := buildModules()
 	if err != nil {
@@ -65,6 +71,9 @@ func run() error {
 		return nil
 	}
 	args := []string{"build"}
+	if *tags != "" {
+		args = append(args, "-tags", *tags)
+	}
 	if *nsis {
 		if err := writeNSISInclude(modules); err != nil {
 			return err
@@ -82,8 +91,8 @@ type module struct {
 	meta adapter.Metadata
 }
 
-// buildModules builds every modules/<id> that is a main package and reads
-// its metadata.json.
+// buildModules builds every modules/<id> that is a main package and whose
+// metadata.json supports the current OS.
 func buildModules() ([]module, error) {
 	entries, err := os.ReadDir(modulesDir)
 	if err != nil {
@@ -103,15 +112,16 @@ func buildModules() ([]module, error) {
 		if err != nil {
 			return nil, fmt.Errorf("module %s: %w", id, err)
 		}
+		if !meta.SupportsPlatform(runtime.GOOS) {
+			fmt.Printf("Skipping module %s (platforms: %s)\n", id, strings.Join(meta.Platforms, ", "))
+			continue
+		}
 		out := filepath.Join(moduleOutDir, id+moduleExt)
 		fmt.Printf("Building module %s -> %s\n", id, out)
 		if err := runCmd("go", "build", "-ldflags="+moduleLDFlags, "-o", out, "./"+modulesDir+"/"+id); err != nil {
 			return nil, fmt.Errorf("build module %s: %w", id, err)
 		}
 		built = append(built, module{id: id, path: out, meta: meta})
-	}
-	if len(built) == 0 {
-		return nil, fmt.Errorf("no modules found in %s", modulesDir)
 	}
 	return built, nil
 }

@@ -4,5 +4,6 @@
   "author": "SayukiDev",
   "version": "1.0.0",
   "usageInstructions": "Make sure to install the Virtual Desktop Streamer version 1.30 or greater before activating this module",
-  "icons": ["logo256.png"]
+  "icons": ["logo256.png"],
+  "platforms": ["windows"]
 }

@@ -8,7 +8,15 @@
 
 ## モジュールプログラム
 
-モジュールプログラムは `<id>.vfgmod` という名前の実行ファイルで、`%APPDATA%\VRCFaceTrackingGO\Modules` にインストールされます。ホストは `.vfgmod` という拡張子だけで判別するので、どの言語で書いても構いません。
+モジュールプログラムは `<id>.vfgmod` という名前の実行ファイルで、アプリのデータフォルダ内の `Modules` にインストールされます。
+
+| OS | モジュールフォルダ |
+|---|---|
+| Windows | `%APPDATA%\VRCFaceTrackingGO\Modules` |
+| Linux | `~/.config/VRCFaceTrackingGO/Modules` |
+| macOS | `~/Library/Application Support/VRCFaceTrackingGO/Modules` |
+
+ホストは `.vfgmod` という拡張子だけで判別するので、どの言語で書いても構いません。Windows 以外ではファイルに実行権限が必要です。モジュールページからインストールすると実行権限付きで保存されます。
 
 次のコマンドラインに対応する必要があります。
 
@@ -32,7 +40,8 @@
     "version": "1.0.0",
     "pageUrl": "",
     "usageInstructions": "Make sure to install ...",
-    "icons": ["<base64 PNG>"]
+    "icons": ["<base64 PNG>"],
+    "platforms": ["windows"]
   },
   "supported": { "eye": true, "expression": true }
 }
@@ -40,17 +49,18 @@
 
 - `id` は必須で、`^[A-Za-z0-9][A-Za-z0-9._-]*$` に一致する必要があります。設定のキーとインストール時のファイル名に使われるので、変更してはいけません。ID が重複したモジュールは読み込まれません。
 - `metadata` はモジュールページに表示されます。`icons` は PNG 画像を base64 文字列にしたものです。
+- `platforms` は、モジュールをビルド・配布する OS の一覧です(Go の `GOOS` の値: `windows`、`linux`、`darwin`)。省略可能で、空ならすべての OS が対象です。`go run ./cmd/build` は、今の OS が含まれないモジュールをビルドしません。
 - `supported` は、初期化前の時点でモジュールが提供できるものを表します。
 - ホストは `--info` の応答を最大 5 秒待ちます。情報を読み直すのは、ファイルのサイズか更新日時が変わったときだけです。
 
 ## プロセスの流れ
 
-1. ホストが `<prog> --vfgmod=true` を起動します。標準入力・標準出力・標準エラー出力はパイプにつながり、コンソールウィンドウは表示されません。
+1. ホストが `<prog> --vfgmod=true` を起動します。標準入力・標準出力・標準エラー出力はパイプにつながります(Windows ではコンソールウィンドウは表示されません)。
 2. **Initialize** を 1 回送ります。時間制限は 15 秒です(設定で変更可)。
 3. モジュールの使用中は、10 ミリ秒ごとに **Update** を送ります(設定で変更可)。各 Update には 5 秒以内に応答する必要があります。
 4. モジュールを止めるときは **Teardown** を送り(時間制限 3 秒)、標準入力を閉じます。モジュールは EOF を受けたら終了しなければなりません。さらに 3 秒経っても終了しない場合は強制終了されます。
 
-ホストはすべてのモジュールを kill-on-close のジョブオブジェクトに入れます。そのため、ホストが異常終了した場合もモジュールは一緒に終了します。
+ホストが異常終了した場合も、モジュールは一緒に終了します。Windows ではホストがすべてのモジュールを kill-on-close のジョブオブジェクトに入れ、Linux では親プロセスが終わるとカーネルがモジュールを終了させます(`PR_SET_PDEATHSIG`)。macOS にはこの仕組みがないため、`plugin.Serve` は親プロセスが変わったら終了します。ほかの言語のモジュールも、最低限、標準入力が EOF になったら終了してください。
 
 モジュールが終了した場合や Update が時間切れになった場合、ホストはプログラムを再起動し、以前と同じ対応範囲で初期化し直します。最初の再起動までは 1 秒待ち、その後は失敗のたびに待ち時間を倍にします。1 分以内に 3 回を超えて失敗すると、再起動をあきらめます。再起動後に以前と異なる対応範囲を返した場合も失敗として扱います。
 
@@ -133,7 +143,7 @@ import "VRCFaceTrackingGo/internal/module/plugin"
 func main() { plugin.Serve(New()) }
 ```
 
-`New` は `adapter.Module`([`internal/module/adapter`](../internal/module/adapter/module.go))を返します。`plugin.Serve` が、コマンドラインの処理、プロトコル、ログ、panic からの復帰を受け持ちます。メタデータはコードと同じフォルダの `metadata.json` に置き、`embed.FS` から `adapter.MustLoadMetadata` で読み込みます。インストーラーも同じファイルを読みます。アイコンはこのファイルにファイル名で書き、PNG として埋め込みます。
+`New` は `adapter.Module`([`internal/module/adapter`](../internal/module/adapter/module.go))を返します。`plugin.Serve` が、コマンドラインの処理、プロトコル、ログ、panic からの復帰を受け持ちます。メタデータはコードと同じフォルダの `metadata.json` に置き、`embed.FS` から `adapter.MustLoadMetadata` で読み込みます。ビルドスクリプトとインストーラーも同じファイルを読みます。特定の OS でしか動かないモジュールは、ここで `platforms` を指定してください。アイコンはこのファイルにファイル名で書き、PNG として埋め込みます。
 
 すべてのモジュールは `go run ./cmd/build` で、1 つだけなら次のコマンドでビルドできます。
 
@@ -145,12 +155,12 @@ Go の `internal` の規則により、このリポジトリの外のコード�
 
 ## ほかの言語でモジュールを書く
 
-Windows の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(PE ファイル)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめ、`<id>.vfgmod` に名前を変えてください。コンソールウィンドウはホストが非表示にするので、コンソールアプリのままで問題ありません。
+アプリが動く OS の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(Windows は PE、Linux は ELF、macOS は Mach-O)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめ、`<id>.vfgmod` に名前を変えてください。Windows ではコンソールウィンドウをホストが非表示にするので、コンソールアプリのままで問題ありません。情報の `platforms` には、ビルドした OS を指定してください。
 
 チェックリスト:
 
 - `--info` と `--vfgmod=true` だけを受け付け、それ以外は起動を拒否する。
-- 改行コードの変換が起きないよう、標準入力と標準出力を**バイナリモード**にする(Python は `sys.stdin.buffer`、C は `_setmode(_fileno(stdin), _O_BINARY)`、.NET は `Console.OpenStandardInput()`)。
+- Windows で改行コードの変換が起きないよう、標準入力と標準出力を**バイナリモード**にする(Python は `sys.stdin.buffer`、C は `_setmode(_fileno(stdin), _O_BINARY)`、.NET は `Console.OpenStandardInput()`)。
 - レスポンスを書くたびに標準出力を **flush** する。ホストは届くまで待ち続けます。
 - 標準出力にはレスポンス以外を絶対に書かない。ログやライブラリの出力は標準エラー出力に送る。
 - トラッキングデータのバッファはセッション中 1 つだけ持ち、上記の初期値で始めて、Update のたびにその場で更新する。
@@ -233,11 +243,14 @@ if __name__ == "__main__":
     main()
 ```
 
-`MyModule.vfgmod` にビルドします。
+対象の OS 上で `MyModule.vfgmod` にビルドします。
 
 ```sh
 pyinstaller --onefile --name MyModule mymodule.py
+# Windows
 copy dist\MyModule.exe MyModule.vfgmod
+# Linux / macOS
+cp dist/MyModule MyModule.vfgmod
 ```
 
 あとはモジュールページからインストールします。シェイプの番号は [`pkg/tracking/expressions.go`](../pkg/tracking/expressions.go) での並び順(0 始まり)です。
