@@ -69,11 +69,12 @@ fn main() {
   carries the protocol.
 - A panic ends the process; the host restarts the module.
 
-Build it and install `<id>.vfgmod` from the Modules page:
+Build it and install `<id>.<os>.<arch>.vfgmod` (see the
+[suffix table](../README.md#module-program)) from the Modules page:
 
 ```sh
 cargo build --release
-# copy target/release/<binary>(.exe) to MyModule.vfgmod
+# copy target/release/<binary>(.exe) to MyModule.windows.amd64.vfgmod (Windows x64)
 ```
 
 ## Example
@@ -83,7 +84,7 @@ hardware: it moves the jaw, smile, eyes and blinks on its own.
 
 ```sh
 cargo build --release --example demo
-# copy target/release/examples/demo(.exe) to DemoRust.vfgmod
+# copy target/release/examples/demo(.exe) to DemoRust.windows.amd64.vfgmod (Windows x64)
 ```
 
 ## License

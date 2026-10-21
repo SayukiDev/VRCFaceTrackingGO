@@ -15,7 +15,7 @@ SDK がプロトコルのモジュール側を実装しているので、モジ�
 
 ## モジュールプログラム
 
-モジュールプログラムは `<id>.vfgmod` という名前の実行ファイルで、アプリのデータフォルダ内の `Modules` にインストールされます。
+モジュールプログラムは `<id>.<os>.<arch>.vfgmod` という名前の実行ファイルで、アプリのデータフォルダ内の `Modules` にインストールされます。
 
 | OS | モジュールフォルダ |
 |---|---|
@@ -23,7 +23,18 @@ SDK がプロトコルのモジュール側を実装しているので、モジ�
 | Linux | `~/.config/VRCFaceTrackingGO/Modules` |
 | macOS | `~/Library/Application Support/VRCFaceTrackingGO/Modules` |
 
-ホストは `.vfgmod` という拡張子だけで判別するので、どの言語で書いても構いません。Windows 以外ではファイルに実行権限が必要です。モジュールページからインストールすると実行権限付きで保存されます。
+ホストはファイル名の末尾だけで判別するので、どの言語で書いても構いません。`<os>` と `<arch>` はビルド対象のプラットフォームを Go の `GOOS`・`GOARCH` の値で表したもので、ホストは自分のプラットフォーム用のものだけを認識・インストールします。
+
+| プラットフォーム | 末尾 |
+|---|---|
+| Windows x64 | `.windows.amd64.vfgmod` |
+| Windows ARM64 | `.windows.arm64.vfgmod` |
+| Linux x64 | `.linux.amd64.vfgmod` |
+| Linux ARM64 | `.linux.arm64.vfgmod` |
+| macOS Intel | `.darwin.amd64.vfgmod` |
+| macOS Apple シリコン | `.darwin.arm64.vfgmod` |
+
+Windows 以外ではファイルに実行権限が必要です。モジュールページからインストールすると実行権限付きで保存されます。
 
 次のコマンドラインに対応する必要があります。
 
@@ -144,7 +155,7 @@ SDK を使ってください。[Go のガイド](Golang/README.ja.md)と [Rust �
 
 ## ほかの言語でモジュールを書く
 
-アプリが動く OS の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(Windows は PE、Linux は ELF、macOS は Mach-O)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめ、`<id>.vfgmod` に名前を変えてください。Windows ではコンソールウィンドウをホストが非表示にするので、コンソールアプリのままで問題ありません。情報の `platforms` には、ビルドした OS を指定してください。
+アプリが動く OS の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(Windows は PE、Linux は ELF、macOS は Mach-O)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめ、`<id>.<os>.<arch>.vfgmod` に名前を変えてください。Windows ではコンソールウィンドウをホストが非表示にするので、コンソールアプリのままで問題ありません。情報の `platforms` には、ビルドした OS を指定してください。
 
 チェックリスト:
 
@@ -232,14 +243,16 @@ if __name__ == "__main__":
     main()
 ```
 
-対象の OS 上で `MyModule.vfgmod` にビルドします。
+対象のプラットフォーム上でビルドし、そのプラットフォームの名前を付けます。
 
 ```sh
 pyinstaller --onefile --name MyModule mymodule.py
-# Windows
-copy dist\MyModule.exe MyModule.vfgmod
-# Linux / macOS
-cp dist/MyModule MyModule.vfgmod
+# Windows x64
+copy dist\MyModule.exe MyModule.windows.amd64.vfgmod
+# Linux x64
+cp dist/MyModule MyModule.linux.amd64.vfgmod
+# macOS Apple シリコン
+cp dist/MyModule MyModule.darwin.arm64.vfgmod
 ```
 
 あとはモジュールページからインストールします。シェイプの番号は [`pkg/tracking/expressions.go`](../pkg/tracking/expressions.go) での並び順(0 始まり)です。

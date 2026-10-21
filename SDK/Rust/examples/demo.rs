@@ -6,7 +6,7 @@
 //!
 //! ```sh
 //! cargo build --release --example demo
-//! # then copy target/release/examples/demo(.exe) to DemoRust.vfgmod
+//! # then copy target/release/examples/demo(.exe) to DemoRust.<os>.<arch>.vfgmod
 //! ```
 
 use std::time::{Duration, Instant};

@@ -21,8 +21,8 @@ module without an SDK. The reference implementation is
 
 ## Module program
 
-A module program is an executable named `<id>.vfgmod` installed in the
-`Modules` folder of the application's data directory:
+A module program is an executable named `<id>.<os>.<arch>.vfgmod` installed
+in the `Modules` folder of the application's data directory:
 
 | OS | Module folder |
 |---|---|
@@ -30,9 +30,22 @@ A module program is an executable named `<id>.vfgmod` installed in the
 | Linux | `~/.config/VRCFaceTrackingGO/Modules` |
 | macOS | `~/Library/Application Support/VRCFaceTrackingGO/Modules` |
 
-The host recognises it only by the `.vfgmod` extension, so a module may be
-written in any language. Outside Windows the file must be executable; the
-Modules page installs it that way.
+The host recognises it only by the file name suffix, so a module may be
+written in any language. `<os>` and `<arch>` name the platform the
+program was built for, using Go's `GOOS` and `GOARCH` values; the host
+only recognises and installs programs for its own platform:
+
+| Platform | Suffix |
+|---|---|
+| Windows x64 | `.windows.amd64.vfgmod` |
+| Windows ARM64 | `.windows.arm64.vfgmod` |
+| Linux x64 | `.linux.amd64.vfgmod` |
+| Linux ARM64 | `.linux.arm64.vfgmod` |
+| macOS Intel | `.darwin.amd64.vfgmod` |
+| macOS Apple silicon | `.darwin.arm64.vfgmod` |
+
+Outside Windows the file must be executable; the Modules page installs it
+that way.
 
 It must handle these command lines:
 
@@ -198,7 +211,7 @@ Any language works as long as the result is an executable for the OS the
 application runs on. The host starts the `.vfgmod` file directly, so it
 must be a native program (PE on Windows, ELF on Linux, Mach-O on macOS),
 not a script: bundle scripts into an executable (for example with
-PyInstaller) and rename it to `<id>.vfgmod`. On Windows the host already
+PyInstaller) and rename it to `<id>.<os>.<arch>.vfgmod`. On Windows the host already
 hides the console window, so a console program is fine. Set `platforms` in
 the description to the operating systems you build it for.
 
@@ -295,14 +308,16 @@ if __name__ == "__main__":
     main()
 ```
 
-Build it into `MyModule.vfgmod` on the OS it is for:
+Build it on the platform it is for and name it for that platform:
 
 ```sh
 pyinstaller --onefile --name MyModule mymodule.py
-# Windows
-copy dist\MyModule.exe MyModule.vfgmod
-# Linux / macOS
-cp dist/MyModule MyModule.vfgmod
+# Windows x64
+copy dist\MyModule.exe MyModule.windows.amd64.vfgmod
+# Linux x64
+cp dist/MyModule MyModule.linux.amd64.vfgmod
+# macOS Apple silicon
+cp dist/MyModule MyModule.darwin.arm64.vfgmod
 ```
 
 Then install it from the Modules page. Shape indices are the positions in

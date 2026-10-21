@@ -4,7 +4,7 @@
 //
 // Build it into a module program and install it from the Modules page:
 //
-//	go build -o Demo.vfgmod ./SDK/Golang/example
+//	go build -o Demo.windows.amd64.vfgmod ./SDK/Golang/example
 package main
 
 import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"

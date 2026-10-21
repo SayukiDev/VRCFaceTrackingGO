@@ -71,10 +71,13 @@ go get github.com/SayukiDev/VRCFaceTrackingGO@latest
    func main() { plugin.Serve(New()) }
    ```
 
-4. Build it as `<id>.vfgmod` and install it from the Modules page:
+4. Build it as `<id>.<GOOS>.<GOARCH>.vfgmod` (see the
+   [suffix table](../README.md#module-program)) and install it from the
+   Modules page:
 
    ```sh
-   go build -ldflags="-s -w" -o MyModule.vfgmod .
+   # Windows x64
+   go build -ldflags="-s -w" -o MyModule.windows.amd64.vfgmod .
    ```
 
 Modules inside this repository live in `modules/<id>` and are built with
@@ -87,5 +90,5 @@ installer.
 jaw, smile, eyes and blinks on its own.
 
 ```sh
-go build -o Demo.vfgmod ./SDK/Golang/example
+go build -o Demo.windows.amd64.vfgmod ./SDK/Golang/example
 ```

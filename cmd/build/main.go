@@ -5,9 +5,9 @@
 //	go run ./cmd/build [flags]
 //
 // It builds every modules/<id> whose metadata.json lists the current OS in
-// "platforms" into build/bin/modules/<id>.vfgmod, writes the installer's
-// module sections (build/windows/installer/modules.nsh) from their
-// metadata.json, and then runs "wails build". The NSIS installer (-nsis)
+// "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod, writes
+// the installer's module sections (build/windows/installer/modules.nsh)
+// from their metadata.json, and then runs "wails build". The NSIS installer (-nsis)
 // is only built on Windows.
 package main
 
@@ -23,13 +23,13 @@ import (
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )
 
 const (
 	modulesDir         = "modules"
 	moduleMetadataFile = "metadata.json"
 	moduleOutDir       = "build/bin/modules"
-	moduleExt          = ".vfgmod"
 	nsisInclude        = "build/windows/installer/modules.nsh"
 	metadataFile       = "wails.json"
 	moduleLDFlags      = "-s -w"
@@ -116,7 +116,7 @@ func buildModules() ([]module, error) {
 			fmt.Printf("Skipping module %s (platforms: %s)\n", id, strings.Join(meta.Platforms, ", "))
 			continue
 		}
-		out := filepath.Join(moduleOutDir, id+moduleExt)
+		out := filepath.Join(moduleOutDir, id+plugin.HostSuffix)
 		fmt.Printf("Building module %s -> %s\n", id, out)
 		if err := runCmd("go", "build", "-ldflags="+moduleLDFlags, "-o", out, "./"+modulesDir+"/"+id); err != nil {
 			return nil, fmt.Errorf("build module %s: %w", id, err)
@@ -138,7 +138,7 @@ func installModules(modules []module) error {
 		return err
 	}
 	for _, m := range modules {
-		dst := filepath.Join(dir, m.id+moduleExt)
+		dst := filepath.Join(dir, m.id+plugin.HostSuffix)
 		fmt.Printf("Installing module %s -> %s\n", m.id, dst)
 		data, err := os.ReadFile(m.path)
 		if err != nil {
@@ -162,7 +162,7 @@ func writeNSISInclude(modules []module) error {
 	b.WriteString("!macro moduleSections\n")
 	for _, m := range modules {
 		fmt.Fprintf(&b, "    Section \"%s\" %s\n", nsisString.Replace(m.meta.Name), sectionID(m.id))
-		fmt.Fprintf(&b, "        !insertmacro installModule \"%s\"\n", m.id)
+		fmt.Fprintf(&b, "        !insertmacro installModule \"%s\"\n", filepath.Base(m.path))
 		b.WriteString("    SectionEnd\n")
 	}
 	b.WriteString("!macroend\n\n")

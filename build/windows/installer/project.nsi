@@ -110,10 +110,10 @@ SectionEnd
 # Bundled modules go to %APPDATA%\VRCFaceTrackingGO\Modules of the user running
 # the installer, where the app scans for them (os.UserConfigDir()/<name>/Modules).
 # They are left in place on uninstall, like modules installed from the app.
-!macro installModule ID
+!macro installModule FILE
     SetShellVarContext current
     SetOutPath "$APPDATA\${INFO_PROJECTNAME}\Modules"
-    File "..\..\bin\modules\${ID}.vfgmod"
+    File "..\..\bin\modules\${FILE}"
 !macroend
 
 # modules.nsh (moduleSections, moduleDescriptions) is generated from the

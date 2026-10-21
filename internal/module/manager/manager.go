@@ -168,7 +168,7 @@ func (m *Manager) Scan(ctx context.Context) []Info {
 	var scanned []*cached
 	var wg sync.WaitGroup
 	for _, e := range entries {
-		if !e.Type().IsRegular() || !strings.EqualFold(filepath.Ext(e.Name()), plugin.Suffix) {
+		if !e.Type().IsRegular() || !plugin.HasHostSuffix(e.Name()) {
 			continue
 		}
 		fi, err := e.Info()
@@ -233,9 +233,13 @@ func (m *Manager) Inspect(ctx context.Context, path string) (plugin.Description,
 }
 
 // Install copies the module program at src into the module directory as
-// <id>.vfgmod, replacing an installed module with the same ID. A running
+// <id>.<GOOS>.<GOARCH>.vfgmod, replacing an installed module with the same
+// ID. Only programs named for the host's platform are accepted. A running
 // module cannot be replaced.
 func (m *Manager) Install(ctx context.Context, src string) (Info, error) {
+	if !plugin.HasHostSuffix(src) {
+		return Info{}, fmt.Errorf("%s is not a module program for this platform (*%s)", filepath.Base(src), plugin.HostSuffix)
+	}
 	desc, err := m.inspect(ctx, src)
 	if err != nil {
 		return Info{}, err
@@ -246,7 +250,7 @@ func (m *Manager) Install(ctx context.Context, src string) (Info, error) {
 	if m.running[desc.ID] != nil {
 		return Info{}, fmt.Errorf("install %s: %w", desc.ID, ErrRunning)
 	}
-	dst := filepath.Join(m.dir, desc.ID+plugin.Suffix)
+	dst := filepath.Join(m.dir, desc.ID+plugin.HostSuffix)
 	if err := os.MkdirAll(m.dir, 0o755); err != nil {
 		return Info{}, fmt.Errorf("create module directory: %w", err)
 	}

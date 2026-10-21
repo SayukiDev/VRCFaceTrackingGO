@@ -39,7 +39,7 @@ func (a *App) GetModuleConfigDirty() bool { return a.svc.ModuleConfigDirty() }
 func (a *App) InstallModule() (string, error) {
 	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
 		Title:   "Install module",
-		Filters: []runtime.FileFilter{{DisplayName: "VRCFaceTracking module (*" + plugin.Suffix + ")", Pattern: "*" + plugin.Suffix}},
+		Filters: []runtime.FileFilter{{DisplayName: "VRCFaceTracking module (*" + plugin.HostSuffix + ")", Pattern: "*" + plugin.HostSuffix}},
 	})
 	if err != nil || path == "" {
 		return "", err

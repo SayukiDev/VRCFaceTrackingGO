@@ -47,8 +47,8 @@ pub type Result<T> = std::result::Result<T, Error>;
 /// while the module is in use, and `teardown` when it stops the module.
 pub trait Module: Send {
     /// Stable, machine friendly identifier: the settings key and the
-    /// installed file name (`<id>.vfgmod`). It must never change and must
-    /// match `^[A-Za-z0-9][A-Za-z0-9._-]*$`.
+    /// installed file name (`<id>.<os>.<arch>.vfgmod`). It must never change
+    /// and must match `^[A-Za-z0-9][A-Za-z0-9._-]*$`.
     fn id(&self) -> &str;
 
     /// User facing information shown on the Modules page.

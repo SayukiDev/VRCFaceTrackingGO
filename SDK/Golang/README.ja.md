@@ -65,10 +65,11 @@ go get github.com/SayukiDev/VRCFaceTrackingGO@latest
    func main() { plugin.Serve(New()) }
    ```
 
-4. `<id>.vfgmod` としてビルドし、モジュールページからインストールします。
+4. `<id>.<GOOS>.<GOARCH>.vfgmod`([末尾の一覧](../README.ja.md#モジュールプログラム))としてビルドし、モジュールページからインストールします。
 
    ```sh
-   go build -ldflags="-s -w" -o MyModule.vfgmod .
+   # Windows x64
+   go build -ldflags="-s -w" -o MyModule.windows.amd64.vfgmod .
    ```
 
 このリポジトリ内のモジュールは `modules/<id>` に置き、`go run ./cmd/build` でビルドします。`platforms` の判定とインストーラーへの追加もこのコマンドが行います。
@@ -78,5 +79,5 @@ go get github.com/SayukiDev/VRCFaceTrackingGO@latest
 [`example`](example) は、ハードウェアなしで動くデモモジュールです。顎・笑顔・視線・瞬きを自動で動かします。
 
 ```sh
-go build -o Demo.vfgmod ./SDK/Golang/example
+go build -o Demo.windows.amd64.vfgmod ./SDK/Golang/example
 ```

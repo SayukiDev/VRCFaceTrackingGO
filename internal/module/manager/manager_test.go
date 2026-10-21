@@ -95,26 +95,26 @@ func TestScanInstallUninstall(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(dir, "readme.txt"), []byte("hi"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	program(t, dir, "custom-name"+plugin.Suffix, "alpha")
+	program(t, dir, "custom-name"+plugin.HostSuffix, "alpha")
 	got := m.Scan(ctx)
 	if len(got) != 1 || got[0].ID != "alpha" || got[0].Metadata.Name != "Module alpha" {
 		t.Fatalf("scan = %+v", got)
 	}
 
 	// Installing the same ID again replaces the old file name.
-	src := program(t, t.TempDir(), "download"+plugin.Suffix, "alpha")
+	src := program(t, t.TempDir(), "download"+plugin.HostSuffix, "alpha")
 	info, err := m.Install(ctx, src)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if want := filepath.Join(dir, "alpha"+plugin.Suffix); info.Path != want {
+	if want := filepath.Join(dir, "alpha"+plugin.HostSuffix); info.Path != want {
 		t.Fatalf("installed at %s, want %s", info.Path, want)
 	}
-	if _, err := os.Stat(filepath.Join(dir, "custom-name"+plugin.Suffix)); !errors.Is(err, os.ErrNotExist) {
+	if _, err := os.Stat(filepath.Join(dir, "custom-name"+plugin.HostSuffix)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("old program not removed: %v", err)
 	}
 
-	src = program(t, t.TempDir(), "beta"+plugin.Suffix, "beta")
+	src = program(t, t.TempDir(), "beta"+plugin.HostSuffix, "beta")
 	if _, err := m.Install(ctx, src); err != nil {
 		t.Fatal(err)
 	}
@@ -130,9 +130,26 @@ func TestScanInstallUninstall(t *testing.T) {
 	}
 }
 
+func TestOtherPlatformIgnored(t *testing.T) {
+	dir := t.TempDir()
+	m := New(zap.NewNop(), dir)
+	ctx := context.Background()
+
+	other := plugin.PlatformSuffix("plan9", "mips")
+	program(t, dir, "alpha"+other, "alpha")
+	program(t, dir, "beta"+plugin.Suffix, "beta")
+	if got := ids(m.Scan(ctx)); len(got) != 0 {
+		t.Fatalf("scanned %v", got)
+	}
+	src := program(t, t.TempDir(), "gamma"+other, "gamma")
+	if _, err := m.Install(ctx, src); err == nil {
+		t.Fatal("program for another platform installed")
+	}
+}
+
 func TestInstallRejectsUnsafeID(t *testing.T) {
 	m := New(zap.NewNop(), t.TempDir())
-	src := program(t, t.TempDir(), "evil"+plugin.Suffix, `..\evil`)
+	src := program(t, t.TempDir(), "evil"+plugin.HostSuffix, `..\evil`)
 	if _, err := m.Install(context.Background(), src); err == nil {
 		t.Fatal("unsafe ID accepted")
 	}
@@ -141,7 +158,7 @@ func TestInstallRejectsUnsafeID(t *testing.T) {
 func TestStartRunsModuleAndBlocksUninstall(t *testing.T) {
 	dir := t.TempDir()
 	m := New(zap.NewNop(), dir)
-	program(t, dir, "alpha"+plugin.Suffix, "alpha")
+	program(t, dir, "alpha"+plugin.HostSuffix, "alpha")
 	m.Scan(context.Background())
 
 	inst, err := m.Start(context.Background(), "alpha", adapter.Support{Expression: true})
@@ -196,7 +213,7 @@ func startFailing(t *testing.T, fail string, once bool) (*Manager, *Instance) {
 	m := New(zap.NewNop(), dir)
 	m.restartDelay = 10 * time.Millisecond
 	m.updateTimeout = 500 * time.Millisecond
-	program(t, dir, "alpha"+plugin.Suffix, "alpha")
+	program(t, dir, "alpha"+plugin.HostSuffix, "alpha")
 	m.Scan(context.Background())
 
 	t.Setenv(childFailEnv, fail)

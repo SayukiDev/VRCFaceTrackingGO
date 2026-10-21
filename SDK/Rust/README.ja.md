@@ -62,11 +62,11 @@ fn main() {
 - ログは `initialize` に渡される `Logger` で出します。標準エラー出力に JSON で書かれ、ホストのログに転送されます。**標準出力には絶対に書かないでください**(プロトコル専用です)。
 - panic するとプロセスが終了し、ホストがモジュールを再起動します。
 
-ビルドして `<id>.vfgmod` をモジュールページからインストールします。
+ビルドして `<id>.<os>.<arch>.vfgmod`([末尾の一覧](../README.ja.md#モジュールプログラム))をモジュールページからインストールします。
 
 ```sh
 cargo build --release
-# target/release/<バイナリ>(.exe) を MyModule.vfgmod としてコピー
+# target/release/<バイナリ>(.exe) を MyModule.windows.amd64.vfgmod としてコピー(Windows x64)
 ```
 
 ## 例
@@ -75,7 +75,7 @@ cargo build --release
 
 ```sh
 cargo build --release --example demo
-# target/release/examples/demo(.exe) を DemoRust.vfgmod としてコピー
+# target/release/examples/demo(.exe) を DemoRust.windows.amd64.vfgmod としてコピー(Windows x64)
 ```
 
 ## ライセンス
