@@ -58,6 +58,7 @@ ManifestDPIAware true
 
 !insertmacro MUI_PAGE_WELCOME # Welcome to the installer page.
 # !insertmacro MUI_PAGE_LICENSE "resources\eula.txt" # Adds a EULA page to the installer
+!insertmacro MUI_PAGE_COMPONENTS # Pick the bundled modules to install.
 !insertmacro MUI_PAGE_DIRECTORY # In which folder install page.
 !insertmacro MUI_PAGE_INSTFILES # Installing page.
 !insertmacro MUI_PAGE_FINISH # Finished installation page.
@@ -79,7 +80,8 @@ Function .onInit
    !insertmacro wails.checkArchitecture
 FunctionEnd
 
-Section
+Section "${INFO_PRODUCTNAME}" SecApp
+    SectionIn RO # The app itself is always installed.
     !insertmacro wails.setShellContext
 
     !insertmacro wails.webview2runtime
@@ -96,6 +98,36 @@ Section
 
     !insertmacro wails.writeUninstaller
 SectionEnd
+
+# Bundled modules go to %APPDATA%\VRCFaceTrackingGO\Modules of the user running
+# the installer, where the app scans for them (os.UserConfigDir()/<name>/Modules).
+# Build them into build\bin\modules before "wails build -nsis".
+# They are left in place on uninstall, like modules installed from the app.
+!macro installModule ID
+    SetShellVarContext current
+    SetOutPath "$APPDATA\${INFO_PROJECTNAME}\Modules"
+    File "..\..\bin\modules\${ID}.vfgmod"
+!macroend
+
+SectionGroup /e "Modules" SecModules
+    Section "Virtual Desktop" SecModVirtualDesktop
+        !insertmacro installModule "virtualdesktop"
+    SectionEnd
+    Section "PICO" SecModPico
+        !insertmacro installModule "pico"
+    SectionEnd
+    Section "GXRFT" SecModGxrft
+        !insertmacro installModule "gxrft"
+    SectionEnd
+SectionGroupEnd
+
+!insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecApp} "The ${INFO_PRODUCTNAME} application."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecModules} "Tracking modules. They can also be installed or removed later from the Modules page."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecModVirtualDesktop} "Face, eye and tongue tracking for the Quest Pro when using Virtual Desktop."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecModPico} "Face and eye tracking for the PICO 4 Pro / Enterprise through PICO Connect or the Streaming Assistant."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecModGxrft} "Face and eye tracking forwarded over UDP in the ALVR VRCFaceTracking format."
+!insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "uninstall"
     !insertmacro wails.setShellContext
