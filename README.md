@@ -6,6 +6,8 @@ A Go reimplementation of [VRCFaceTracking](https://github.com/benaclejames/VRCFa
 
 It receives eye and face tracking from tracking modules and sends it to VRChat over OSC, either as Unified Expressions (v2) avatar parameters, through VRChat's native eye tracking, or both.
 
+This is not a faithful port of the original VRCFaceTracking. It takes the original logic as a reference and implements it in its own way, so behaviour, settings and the module system differ from the original.
+
 ## Features
 
 - Unified Expressions (v2) and head parameters
