@@ -11,11 +11,12 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options/windows"
 
 	"VRCFaceTracking/app"
-	"VRCFaceTracking/internal/logging"
 	"VRCFaceTracking/internal/metadata"
-	"VRCFaceTracking/internal/service"
-	"VRCFaceTracking/pkg/processlock"
 )
+
+// singleInstanceID identifies this application to Wails' single instance
+// lock. It must never change.
+const singleInstanceID = "a9309d2e-6bc4-46f3-9592-f0cb6979885b"
 
 //go:embed all:frontend/dist
 var assets embed.FS
@@ -29,13 +30,6 @@ func init() {
 }
 
 func main() {
-	// Process lock
-	ep, _ := os.Executable()
-	if processlock.IsLocked(ep, os.Getpid()) {
-		fmt.Fprintf(os.Stderr, "Error: %s is already running.", metadata.Info.Name)
-		os.Exit(1)
-	}
-
 	if err := run(); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
 		os.Exit(1)
@@ -43,21 +37,10 @@ func main() {
 }
 
 func run() error {
-	dataDir, err := metadata.Info.PersistentDataDir()
-	if err != nil {
-		return err
-	}
-	if err := service.ApplyResetIfRequested(dataDir); err != nil {
-		return err
-	}
-
-	logger, logBuf, err := logging.New(metadata.Info.LogDir(), metadata.Info.IsDev())
-	if err != nil {
-		return err
-	}
-	defer logger.Sync()
-	svc := service.New(logger, logBuf, dataDir)
-	ui := app.New(svc)
+	// A second instance hands over to the running one inside wails.Run and
+	// exits before OnStartup, so everything that touches the data or log
+	// directory happens in ui.Startup.
+	ui := app.New()
 
 	return wails.Run(&options.App{
 		Title:     metadata.Info.Name,
@@ -68,11 +51,12 @@ func run() error {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 24, G: 24, B: 28, A: 1},
-		OnStartup:        ui.Startup,
-		OnShutdown:       ui.Shutdown,
-		Bind:             []any{ui},
-		Frameless:        true,
+		BackgroundColour:   &options.RGBA{R: 24, G: 24, B: 28, A: 1},
+		SingleInstanceLock: app.SingleInstanceLock(ui, singleInstanceID),
+		OnStartup:          ui.Startup,
+		OnShutdown:         ui.Shutdown,
+		Bind:               []any{ui},
+		Frameless:          true,
 		Windows: &windows.Options{
 			WebviewIsTransparent: false,
 			WindowIsTranslucent:  false,

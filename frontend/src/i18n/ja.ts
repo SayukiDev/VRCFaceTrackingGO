@@ -20,6 +20,12 @@ const ja: typeof en = {
     eyeInactive: 'アイトラッキング 停止中',
     faceInactive: 'フェイストラッキング 停止中',
     toggleTracking: 'トラッキング切替',
+    assignTitle: 'アイ / フェイスの取得元',
+    assignBody: '種類ごとに使うモジュールを手動で選べます。「自動」はモジュールページの順序に従います。この設定は保存されず、次回起動時に元に戻ります。',
+    assignAuto: '自動',
+    staleTitle: 'トラッキングデータを受信できていません',
+    staleBody: '{names} からしばらくデータが届いていません。ヘッドセット側のソフトが配信中か確認するか、モジュールを再読み込みしてください。',
+    noData: 'データなし',
     noModulesTitle: 'モジュールが読み込まれていません',
     noModulesBody:
       'トラッキング元が見つかりませんでした。ヘッドセット側のソフトが配信中か確認し、モジュールページで有効化・並べ替えるか、設定の「強制再初期化」を実行してください。',
@@ -57,6 +63,13 @@ const ja: typeof en = {
     eye: 'アイ',
     face: 'フェイス',
     enabled: '有効',
+    install: 'モジュールをインストール',
+    website: '公式サイト',
+    uninstall: 'アンインストール',
+    installed: '{name} をインストールしました。使用するにはモジュールを再読み込みしてください。',
+    uninstallConfirm: '{name} をアンインストールしますか？動作中の場合は先に停止します。',
+    uninstalled: '{name} をアンインストールしました。',
+    none: 'モジュールがインストールされていません。.vfgmod ファイルをインストールしてください。',
   },
   mutations: {
     names: {

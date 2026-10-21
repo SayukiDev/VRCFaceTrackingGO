@@ -3,11 +3,11 @@ package params
 import (
 	"strings"
 
-	"VRCFaceTracking/module/adapter"
+	"VRCFaceTracking/internal/module/adapter"
 	"VRCFaceTracking/pkg/tracking"
 )
 
-// StatusProvider reports the module manager's tracking state, used by the
+// StatusProvider reports the router's tracking state, used by the
 // EyeTrackingActive / ExpressionTrackingActive parameters.
 type StatusProvider interface {
 	EyeStatus() adapter.State

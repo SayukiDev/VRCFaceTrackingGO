@@ -18,6 +18,12 @@ export default {
     eyeInactive: 'Eye Tracking Inactive',
     faceInactive: 'Face Tracking Inactive',
     toggleTracking: 'Toggle Tracking',
+    assignTitle: 'Eye & Face Source',
+    assignBody: 'Pick the module for each kind by hand. Automatic follows the order on the Modules page. Not saved; resets on the next launch.',
+    assignAuto: 'Automatic',
+    staleTitle: 'No tracking data',
+    staleBody: '{names} has not delivered data for a while. Check that your headset software is streaming, or reload the modules.',
+    noData: 'No data',
     noModulesTitle: 'No Modules Loaded',
     noModulesBody:
       'No tracking source was found. Check that your headset software is streaming, then enable and order modules on the Modules page or use Force Re-Initialize in Settings.',
@@ -55,6 +61,13 @@ export default {
     eye: 'Eye',
     face: 'Face',
     enabled: 'Enabled',
+    install: 'Install module',
+    website: 'Website',
+    uninstall: 'Uninstall',
+    installed: 'Installed {name}. Reload the modules to use it.',
+    uninstallConfirm: 'Uninstall {name}? A running module is stopped first.',
+    uninstalled: 'Uninstalled {name}.',
+    none: 'No modules installed. Install a .vfgmod file to get started.',
   },
   // Display names for mutations coming from the Go side, keyed by their Go
   // name. Missing keys fall back to the original string, so parameter range

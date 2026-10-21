@@ -5,10 +5,10 @@ import (
 	"time"
 
 	"VRCFaceTracking/internal/mixer"
+	"VRCFaceTracking/internal/module/manager"
 	"VRCFaceTracking/internal/osc"
 	"VRCFaceTracking/internal/router"
 	"VRCFaceTracking/internal/sender"
-	"VRCFaceTracking/module/manager"
 )
 
 // Settings is every persisted application setting.
@@ -20,10 +20,10 @@ type Settings struct {
 	OSC    osc.Target        `json:"osc"`
 	Output sender.OutputMode `json:"output"`
 	Timing Timing            `json:"timing"`
-	// Modules is the module priority list. Nil means the manager's default
-	// (every registered module, in registration order).
-	Modules []manager.Config `json:"modules"`
-	Mixer   mixer.Config     `json:"mixer"`
+	// Modules is the module priority list. Nil means the router's default
+	// (every installed module, in file name order).
+	Modules []router.Config `json:"modules"`
+	Mixer   mixer.Config    `json:"mixer"`
 }
 
 // Default returns the settings used for anything missing from the file.
@@ -56,12 +56,12 @@ type Timing struct {
 	SendIntervalMs int `json:"sendIntervalMs"`
 }
 
-// DefaultTiming mirrors the manager and router defaults.
+// DefaultTiming mirrors the module manager and router defaults.
 func DefaultTiming() Timing {
 	return Timing{
 		UpdateIntervalMs: int(manager.DefaultUpdateInterval / time.Millisecond),
 		InitTimeoutSec:   int(manager.DefaultInitTimeout / time.Second),
-		SendIntervalMs:   int(router.DefaultInterval / time.Millisecond),
+		SendIntervalMs:   int(router.DefaultSendInterval / time.Millisecond),
 	}
 }
 

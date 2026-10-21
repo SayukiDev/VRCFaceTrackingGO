@@ -1,15 +1,18 @@
 package app
 
 import (
+	"github.com/wailsapp/wails/v2/pkg/runtime"
+
+	"VRCFaceTracking/internal/module/plugin"
 	"VRCFaceTracking/internal/osc"
 	"VRCFaceTracking/internal/oscquery"
+	"VRCFaceTracking/internal/router"
 	"VRCFaceTracking/internal/sender"
 	"VRCFaceTracking/internal/service"
 	"VRCFaceTracking/internal/settings"
-	"VRCFaceTracking/module/manager"
 )
 
-func (a *App) GetModules() []manager.ModuleInfo { return a.svc.Modules() }
+func (a *App) GetModules() []router.ModuleInfo { return a.svc.Modules() }
 
 func (a *App) SetModuleActive(id string, active bool) { a.svc.SetModuleActive(id, active) }
 
@@ -17,7 +20,7 @@ func (a *App) SetModuleTracking(id string, eye, expression bool) {
 	a.svc.SetModuleTracking(id, eye, expression)
 }
 
-func (a *App) GetModuleCatalog() []manager.Registered { return a.svc.ModuleCatalog() }
+func (a *App) GetModuleCatalog() []router.Registered { return a.svc.ModuleCatalog() }
 
 func (a *App) SetModuleEnabled(id string, enabled bool) error {
 	return a.svc.SetModuleEnabled(id, enabled)
@@ -30,6 +33,33 @@ func (a *App) SetModuleUse(id string, eye, expression bool) error {
 }
 
 func (a *App) GetModuleConfigDirty() bool { return a.svc.ModuleConfigDirty() }
+
+// InstallModule asks for a module program and installs it. It returns the
+// installed module's name, or "" when cancelled.
+func (a *App) InstallModule() (string, error) {
+	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
+		Title:   "Install module",
+		Filters: []runtime.FileFilter{{DisplayName: "VRCFaceTracking module (*" + plugin.Suffix + ")", Pattern: "*" + plugin.Suffix}},
+	})
+	if err != nil || path == "" {
+		return "", err
+	}
+	info, err := a.svc.InstallModule(a.ctx, path)
+	if err != nil {
+		return "", err
+	}
+	return info.Metadata.Name, nil
+}
+
+func (a *App) UninstallModule(id string) error { return a.svc.UninstallModule(id) }
+
+func (a *App) GetTrackingAssignment() router.Assignment { return a.svc.TrackingAssignment() }
+
+// SetTrackingAssignment picks the eye and face module by ID; "" means
+// automatic.
+func (a *App) SetTrackingAssignment(eye, expression string) error {
+	return a.svc.SetTrackingAssignment(router.Assignment{Eye: eye, Expression: expression})
+}
 
 func (a *App) ReloadModules() { a.svc.ReloadModules() }
 

@@ -3,7 +3,7 @@
 import {oscquery} from '../models';
 import {logging} from '../models';
 import {metadata} from '../models';
-import {manager} from '../models';
+import {router} from '../models';
 import {settings} from '../models';
 import {mixer} from '../models';
 import {service} from '../models';
@@ -24,13 +24,13 @@ export function GetLogs():Promise<Array<logging.Line>>;
 
 export function GetMetadata():Promise<metadata.Metadata>;
 
-export function GetModuleCatalog():Promise<Array<manager.Registered>>;
+export function GetModuleCatalog():Promise<Array<router.Registered>>;
 
 export function GetModuleConfigDirty():Promise<boolean>;
 
 export function GetModuleTiming():Promise<settings.Timing>;
 
-export function GetModules():Promise<Array<manager.ModuleInfo>>;
+export function GetModules():Promise<Array<router.ModuleInfo>>;
 
 export function GetMutations():Promise<Array<mixer.StageState>>;
 
@@ -45,6 +45,10 @@ export function GetOutputMode():Promise<string>;
 export function GetParameterStats():Promise<sender.ParameterStats>;
 
 export function GetTheme():Promise<string>;
+
+export function GetTrackingAssignment():Promise<router.Assignment>;
+
+export function InstallModule():Promise<string>;
 
 export function InvokeMutationButton(arg1:string,arg2:string):Promise<void>;
 
@@ -87,3 +91,7 @@ export function SetOscTarget(arg1:osc.Target):Promise<void>;
 export function SetOutputMode(arg1:string):Promise<void>;
 
 export function SetTheme(arg1:string):Promise<void>;
+
+export function SetTrackingAssignment(arg1:string,arg2:string):Promise<void>;
+
+export function UninstallModule(arg1:string):Promise<void>;

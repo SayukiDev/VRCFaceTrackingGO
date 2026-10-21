@@ -24,9 +24,9 @@ func (s *Service) SetOutputMode(m sender.OutputMode) error {
 }
 
 func (s *Service) applyTiming(t settings.Timing) {
-	s.manager.SetUpdateInterval(t.UpdateInterval())
-	s.manager.SetInitTimeout(t.InitTimeout())
-	s.router.SetInterval(t.SendInterval())
+	s.modules.SetUpdateInterval(t.UpdateInterval())
+	s.modules.SetInitTimeout(t.InitTimeout())
+	s.router.SetSendInterval(t.SendInterval())
 }
 
 // Timing returns the current scheduling values.

@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
-import { NCard, NImage, NSwitch, NText } from 'naive-ui'
-import type { manager } from '../../wailsjs/go/models'
+import { NCard, NImage, NSwitch, NTag, NText } from 'naive-ui'
+import type { router } from '../../wailsjs/go/models'
 import { SetModuleActive } from '../../wailsjs/go/app/App'
 
-defineProps<{ module: manager.ModuleInfo }>()
+defineProps<{ module: router.ModuleInfo }>()
 const { t } = useI18n()
 
 function toggle(id: string, value: boolean) {
@@ -29,6 +29,9 @@ function toggle(id: string, value: boolean) {
         <n-text v-if="module.usingExpression" depth="3" :class="{ inactive: !module.expressionActive }">
           {{ module.expressionActive ? t('home.faceActive') : t('home.faceInactive') }}
         </n-text>
+        <div v-if="module.stale">
+          <n-tag size="small" type="warning" :bordered="false">{{ t('home.noData') }}</n-tag>
+        </div>
       </div>
       <div class="toggle">
         <n-switch :value="module.active" size="large" @update:value="(v: boolean) => toggle(module.id, v)">

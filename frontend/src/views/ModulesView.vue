@@ -2,22 +2,33 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  NAlert, NButton, NButtonGroup, NCard, NCheckbox, NIcon, NImage, NSwitch, NTag, NText, NSpace, NTooltip, useMessage,
+  NAlert, NButton, NButtonGroup, NCard, NCheckbox, NCollapseTransition, NEmpty, NIcon, NImage, NPopconfirm, NSwitch,
+  NTag, NText, NSpace, NTooltip, useMessage,
 } from 'naive-ui'
-import { ArrowUp24Regular, ArrowDown24Regular, ArrowSync24Regular } from '@vicons/fluent'
 import {
-  GetModuleCatalog, GetModuleConfigDirty, ReloadModules, SetModuleEnabled, SetModuleOrder, SetModuleUse,
+  Add24Regular, ArrowUp24Regular, ArrowDown24Regular, ArrowSync24Regular, ChevronDown20Regular, Delete24Regular,
+  Info16Regular, Open16Regular,
+} from '@vicons/fluent'
+import {
+  GetModuleCatalog, GetModuleConfigDirty, InstallModule, OpenURL, ReloadModules, SetModuleEnabled, SetModuleOrder,
+  SetModuleUse, UninstallModule,
 } from '../../wailsjs/go/app/App'
-import type { manager } from '../../wailsjs/go/models'
+import type { router } from '../../wailsjs/go/models'
 import { Events, useEvent } from '../composables/useBackend'
 
 const { t } = useI18n()
 const message = useMessage()
-const modules = ref<manager.Registered[]>([])
+const modules = ref<router.Registered[]>([])
 // dirty: the saved list differs from what is running. reloading: a reload
-// is in flight (cleared when the manager reports the new module list).
+// is in flight (cleared when the router reports the new module list).
 const dirty = ref(false)
 const reloading = ref(false)
+// IDs of the cards whose details are open.
+const expanded = ref(new Set<string>())
+
+function toggle(id: string) {
+  if (!expanded.value.delete(id)) expanded.value.add(id)
+}
 
 async function refresh() {
   ;[modules.value, dirty.value] = await Promise.all([GetModuleCatalog(), GetModuleConfigDirty()])
@@ -28,7 +39,7 @@ useEvent(Events.modules, () => {
   refresh()
 })
 
-async function setEnabled(m: manager.Registered, enabled: boolean) {
+async function setEnabled(m: router.Registered, enabled: boolean) {
   m.enabled = enabled
   try {
     await SetModuleEnabled(m.id, enabled)
@@ -54,7 +65,7 @@ async function move(index: number, delta: number) {
 
 // "Use for" checkboxes decide what the module may claim at initialization;
 // like ordering they need a reload.
-async function setUse(m: manager.Registered, eye: boolean, expression: boolean) {
+async function setUse(m: router.Registered, eye: boolean, expression: boolean) {
   m.useEye = eye
   m.useExpression = expression
   try {
@@ -66,13 +77,34 @@ async function setUse(m: manager.Registered, eye: boolean, expression: boolean) 
   }
 }
 
+async function install() {
+  try {
+    const name = await InstallModule()
+    if (!name) return
+    message.success(t('modules.installed', { name }))
+    await refresh()
+  } catch (e) {
+    message.error(String(e))
+  }
+}
+
+async function uninstall(m: router.Registered) {
+  try {
+    await UninstallModule(m.id)
+    message.success(t('modules.uninstalled', { name: m.name }))
+    await refresh()
+  } catch (e) {
+    message.error(String(e))
+  }
+}
+
 async function reload() {
   reloading.value = true
   dirty.value = false
   await ReloadModules()
 }
 
-function status(m: manager.Registered): { text: string; type: 'success' | 'warning' | 'default' } {
+function status(m: router.Registered): { text: string; type: 'success' | 'warning' | 'default' } {
   if (!m.enabled) return { text: t('modules.disabled'), type: 'default' }
   if (!m.loaded) return { text: t('modules.notLoaded'), type: 'warning' }
   return { text: m.active ? t('modules.active') : t('modules.idle'), type: 'success' }
@@ -81,7 +113,13 @@ function status(m: manager.Registered): { text: string; type: 'success' | 'warni
 
 <template>
   <div class="stack">
-    <n-text depth="3">{{ t('modules.intro') }}</n-text>
+    <div class="tip">
+      <n-text depth="3">{{ t('modules.intro') }}</n-text>
+      <n-button :disabled="reloading" @click="install">
+        <template #icon><n-icon><add24-regular /></n-icon></template>
+        {{ t('modules.install') }}
+      </n-button>
+    </div>
 
     <n-alert v-if="reloading" type="info" :title="t('modules.reloadingTitle')">
       {{ t('modules.reloadingBody') }}
@@ -96,38 +134,22 @@ function status(m: manager.Registered): { text: string; type: 'success' | 'warni
       </div>
     </n-alert>
 
+    <n-empty v-if="modules.length === 0" :description="t('modules.none')" />
+
     <n-card v-for="(m, i) in modules" :key="m.id" size="small">
       <div class="row">
-        <div class="rank"><n-text depth="3">{{ i + 1 }}</n-text></div>
-        <div class="icons">
-          <n-image v-for="(src, k) in m.icons" :key="k" :src="src" height="64" preview-disabled object-fit="cover" />
-        </div>
-        <div class="info">
-          <div class="name">{{ m.name }}</div>
-          <n-space size="small" align="center">
-            <n-tag size="small" :bordered="false" :type="status(m).type">{{ status(m).text }}</n-tag>
-            <n-tag v-if="m.supportsEye" size="small" :bordered="false" :type="m.usingEye ? 'info' : 'default'">{{ t('modules.eye') }}</n-tag>
-            <n-tag v-if="m.supportsExpression" size="small" :bordered="false" :type="m.usingExpression ? 'info' : 'default'">{{ t('modules.face') }}</n-tag>
-          </n-space>
-          <n-space size="medium" align="center" class="use">
-            <n-text depth="3" class="use-label">{{ t('modules.useFor') }}</n-text>
-            <n-tooltip v-if="m.supportsEye">
-              <template #trigger>
-                <n-checkbox :checked="m.useEye" :disabled="!m.enabled || reloading" @update:checked="(v: boolean) => setUse(m, v, m.useExpression)">
-                  {{ t('modules.eye') }}
-                </n-checkbox>
-              </template>
-              {{ t('modules.useForHint') }}
-            </n-tooltip>
-            <n-tooltip v-if="m.supportsExpression">
-              <template #trigger>
-                <n-checkbox :checked="m.useExpression" :disabled="!m.enabled || reloading" @update:checked="(v: boolean) => setUse(m, m.useEye, v)">
-                  {{ t('modules.face') }}
-                </n-checkbox>
-              </template>
-              {{ t('modules.useForHint') }}
-            </n-tooltip>
-          </n-space>
+        <div class="summary" @click="toggle(m.id)">
+          <n-icon class="chevron" :class="{ open: expanded.has(m.id) }" size="18"><chevron-down20-regular /></n-icon>
+          <div class="icons">
+            <n-image v-for="(src, k) in m.icons" :key="k" :src="src" height="40" preview-disabled object-fit="cover" />
+          </div>
+          <div class="info">
+            <div class="title">
+              <span class="name">{{ m.name }}</span>
+              <n-text v-if="m.version" depth="3" class="small version">v{{ m.version }}</n-text>
+            </div>
+            <n-text v-if="m.description" depth="3" class="desc" :class="{ clamp: !expanded.has(m.id) }">{{ m.description }}</n-text>
+          </div>
         </div>
         <n-button-group class="order">
           <n-button quaternary :disabled="i === 0 || reloading" @click="move(i, -1)">
@@ -137,10 +159,61 @@ function status(m: manager.Registered): { text: string; type: 'success' | 'warni
             <template #icon><n-icon><arrow-down24-regular /></n-icon></template>
           </n-button>
         </n-button-group>
-        <n-switch :value="m.enabled" :disabled="reloading" @update:value="(v: boolean) => setEnabled(m, v)">
+        <n-switch class="enabled" :value="m.enabled" :disabled="reloading" @update:value="(v: boolean) => setEnabled(m, v)">
           <template #checked>{{ t('modules.enabled') }}</template>
           <template #unchecked>{{ t('modules.disabled') }}</template>
         </n-switch>
+        <n-popconfirm @positive-click="uninstall(m)">
+          <template #trigger>
+            <n-button quaternary type="error" class="uninstall" :title="t('modules.uninstall')" :disabled="reloading">
+              <template #icon><n-icon><delete24-regular /></n-icon></template>
+            </n-button>
+          </template>
+          {{ t('modules.uninstallConfirm', { name: m.name }) }}
+        </n-popconfirm>
+      </div>
+
+      <n-collapse-transition :show="expanded.has(m.id)">
+        <div class="details">
+          <div v-if="m.author || m.pageUrl" class="meta">
+            <n-text v-if="m.author" depth="3">{{ m.author }}</n-text>
+            <n-button v-if="m.pageUrl" text type="primary" size="small" @click="OpenURL(m.pageUrl)">
+              <template #icon><n-icon><open16-regular /></n-icon></template>
+              {{ t('modules.website') }}
+            </n-button>
+          </div>
+          <div v-if="m.usageInstructions" class="usage">
+            <n-icon class="usage-icon"><info16-regular /></n-icon>
+            <n-text depth="3">{{ m.usageInstructions }}</n-text>
+          </div>
+        </div>
+      </n-collapse-transition>
+
+      <div class="bar">
+        <n-space size="small" align="center">
+          <n-tag size="small" :bordered="false" :type="status(m).type">{{ status(m).text }}</n-tag>
+          <n-tag v-if="m.supportsEye" size="small" :bordered="false" :type="m.usingEye ? 'info' : 'default'">{{ t('modules.eye') }}</n-tag>
+          <n-tag v-if="m.supportsExpression" size="small" :bordered="false" :type="m.usingExpression ? 'info' : 'default'">{{ t('modules.face') }}</n-tag>
+        </n-space>
+        <n-space size="medium" align="center" class="use">
+          <n-text depth="3" class="small">{{ t('modules.useFor') }}</n-text>
+          <n-tooltip v-if="m.supportsEye">
+            <template #trigger>
+              <n-checkbox :checked="m.useEye" :disabled="!m.enabled || reloading" @update:checked="(v: boolean) => setUse(m, v, m.useExpression)">
+                {{ t('modules.eye') }}
+              </n-checkbox>
+            </template>
+            {{ t('modules.useForHint') }}
+          </n-tooltip>
+          <n-tooltip v-if="m.supportsExpression">
+            <template #trigger>
+              <n-checkbox :checked="m.useExpression" :disabled="!m.enabled || reloading" @update:checked="(v: boolean) => setUse(m, m.useEye, v)">
+                {{ t('modules.face') }}
+              </n-checkbox>
+            </template>
+            {{ t('modules.useForHint') }}
+          </n-tooltip>
+        </n-space>
       </div>
     </n-card>
   </div>
@@ -153,36 +226,116 @@ function status(m: manager.Registered): { text: string; type: 'success' | 'warni
   justify-content: space-between;
   gap: 16px;
 }
+/* Everything lines up with the first line, so a wrapped description of an
+   open card grows downwards without moving the controls. */
 .row {
   display: flex;
-  align-items: center;
-  gap: 20px;
-  padding: 6px 8px;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 4px 8px;
 }
-.rank {
-  width: 20px;
-  text-align: right;
-  font-variant-numeric: tabular-nums;
+.summary {
+  flex: 1;
+  /* Let the description shrink (ellipsis) instead of the controls. */
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-right: 8px;
+  cursor: pointer;
+  user-select: none;
+}
+.chevron {
+  margin-top: 11px;
+  transition: transform 0.2s;
+  transform: rotate(-90deg);
+}
+.chevron.open {
+  transform: rotate(0deg);
 }
 .icons {
   display: flex;
   gap: 8px;
 }
-.info {
-  flex: 1;
-}
-.name {
-  font-size: 20px;
-  font-weight: 600;
-  margin-bottom: 6px;
-}
-.use {
-  margin-top: 8px;
-}
-.use-label {
-  font-size: 12px;
+.chevron,
+.icons,
+.order,
+.enabled {
+  flex-shrink: 0;
 }
 .order {
-  margin-right: 8px;
+  margin-top: 4px;
+}
+.enabled {
+  margin-top: 9px;
+}
+.info {
+  flex: 1;
+  min-width: 0;
+}
+.title {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  min-width: 0;
+}
+.name {
+  font-size: 18px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.version {
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.desc {
+  display: block;
+  font-size: 13px;
+}
+/* One line while collapsed; the full text shows when the card is open. */
+.desc.clamp {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Details and bar line up with the module name: chevron, icon and their
+   gaps. */
+.details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 8px 8px 0 98px;
+}
+.bar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 24px;
+  padding: 10px 8px 4px 98px;
+}
+.uninstall {
+  flex-shrink: 0;
+  margin-top: 4px;
+}
+.meta {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 12px;
+}
+.usage {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  font-size: 12px;
+}
+.usage-icon {
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+.small {
+  font-size: 12px;
 }
 </style>

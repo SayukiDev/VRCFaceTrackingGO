@@ -74,6 +74,14 @@ export function GetTheme() {
   return window['go']['app']['App']['GetTheme']();
 }
 
+export function GetTrackingAssignment() {
+  return window['go']['app']['App']['GetTrackingAssignment']();
+}
+
+export function InstallModule() {
+  return window['go']['app']['App']['InstallModule']();
+}
+
 export function InvokeMutationButton(arg1, arg2) {
   return window['go']['app']['App']['InvokeMutationButton'](arg1, arg2);
 }
@@ -156,4 +164,12 @@ export function SetOutputMode(arg1) {
 
 export function SetTheme(arg1) {
   return window['go']['app']['App']['SetTheme'](arg1);
+}
+
+export function SetTrackingAssignment(arg1, arg2) {
+  return window['go']['app']['App']['SetTrackingAssignment'](arg1, arg2);
+}
+
+export function UninstallModule(arg1) {
+  return window['go']['app']['App']['UninstallModule'](arg1);
 }

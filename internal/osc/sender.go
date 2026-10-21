@@ -1,6 +1,7 @@
 package osc
 
 import (
+	"encoding/binary"
 	"fmt"
 	"net"
 	"sync"
@@ -59,8 +60,13 @@ func (s *Sender) Connected() bool {
 	return s.conn != nil
 }
 
+// bundleHeader is "#bundle\0" followed by an 8 byte timetag.
+const bundleHeader = 16
+
 // Send packs messages into as many bundles as needed to stay under
-// maxDatagram bytes and sends them.
+// maxDatagram bytes and sends them. Each message is encoded once with
+// go-osc and framed directly, rather than encoding it again through
+// osc.Bundle.
 func (s *Sender) Send(messages []params.Message) error {
 	if len(messages) == 0 {
 		return nil
@@ -72,25 +78,23 @@ func (s *Sender) Send(messages []params.Message) error {
 		return nil
 	}
 
-	const bundleHeader = 16 // "#bundle\0" + timetag
-	bundle := osc.NewBundle(time.Now())
-	size := bundleHeader
-	sent := 0
-
+	buf := make([]byte, 0, maxDatagram)
+	newBundle := func() {
+		buf = append(buf[:0], "#bundle\x00"...)
+		buf = binary.BigEndian.AppendUint64(buf, osc.NewTimetag(time.Now()).TimeTag())
+	}
+	newBundle()
+	inBundle, sent := 0, 0
 	flush := func() error {
-		if len(bundle.Messages) == 0 {
+		if inBundle == 0 {
 			return nil
 		}
-		data, err := bundle.MarshalBinary()
-		if err != nil {
-			return fmt.Errorf("marshal bundle: %w", err)
-		}
-		if _, err := conn.Write(data); err != nil {
+		if _, err := conn.Write(buf); err != nil {
 			return fmt.Errorf("send bundle: %w", err)
 		}
-		sent += len(bundle.Messages)
-		bundle = osc.NewBundle(time.Now())
-		size = bundleHeader
+		sent += inBundle
+		inBundle = 0
+		newBundle()
 		return nil
 	}
 
@@ -106,17 +110,18 @@ func (s *Sender) Send(messages []params.Message) error {
 			continue
 		}
 		elementSize := 4 + len(encoded)
-		if size+elementSize > maxDatagram {
+		if bundleHeader+elementSize > maxDatagram {
+			s.logger.Error("OSC message too large to send, skipping", zap.String("address", m.Address))
+			continue
+		}
+		if len(buf)+elementSize > maxDatagram {
 			if err := flush(); err != nil {
 				return err
 			}
 		}
-		if elementSize+bundleHeader > maxDatagram {
-			s.logger.Error("OSC message too large to send, skipping", zap.String("address", m.Address))
-			continue
-		}
-		_ = bundle.Append(msg)
-		size += elementSize
+		buf = binary.BigEndian.AppendUint32(buf, uint32(len(encoded)))
+		buf = append(buf, encoded...)
+		inBundle++
 	}
 	if err := flush(); err != nil {
 		return err

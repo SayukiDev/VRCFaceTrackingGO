@@ -7,9 +7,9 @@ import (
 
 	"VRCFaceTracking/internal/logging"
 	"VRCFaceTracking/internal/oscquery"
+	"VRCFaceTracking/internal/router"
 	"VRCFaceTracking/internal/sender"
 	"VRCFaceTracking/internal/service"
-	"VRCFaceTracking/module/manager"
 )
 
 // Event names emitted to the frontend; keep in sync with
@@ -29,7 +29,7 @@ type emitter struct {
 
 func (e *emitter) OnLog(line logging.Line) { runtime.EventsEmit(e.ctx, eventLog, line) }
 
-func (e *emitter) OnModulesChanged(mods []manager.ModuleInfo) {
+func (e *emitter) OnModulesChanged(mods []router.ModuleInfo) {
 	runtime.EventsEmit(e.ctx, eventModules, mods)
 }
 

@@ -17,75 +17,6 @@ export namespace logging {
 
 }
 
-export namespace manager {
-	
-	export class ModuleInfo {
-	    id: string;
-	    name: string;
-	    active: boolean;
-	    usingEye: boolean;
-	    usingExpression: boolean;
-	    eyeActive: boolean;
-	    expressionActive: boolean;
-	    icons: string[];
-	
-	    static createFrom(source: any = {}) {
-	        return new ModuleInfo(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.active = source["active"];
-	        this.usingEye = source["usingEye"];
-	        this.usingExpression = source["usingExpression"];
-	        this.eyeActive = source["eyeActive"];
-	        this.expressionActive = source["expressionActive"];
-	        this.icons = source["icons"];
-	    }
-	}
-	export class Registered {
-	    id: string;
-	    name: string;
-	    icons: string[];
-	    supportsEye: boolean;
-	    supportsExpression: boolean;
-	    enabled: boolean;
-	    useEye: boolean;
-	    useExpression: boolean;
-	    loaded: boolean;
-	    active: boolean;
-	    usingEye: boolean;
-	    usingExpression: boolean;
-	    eyeActive: boolean;
-	    expressionActive: boolean;
-	
-	    static createFrom(source: any = {}) {
-	        return new Registered(source);
-	    }
-	
-	    constructor(source: any = {}) {
-	        if ('string' === typeof source) source = JSON.parse(source);
-	        this.id = source["id"];
-	        this.name = source["name"];
-	        this.icons = source["icons"];
-	        this.supportsEye = source["supportsEye"];
-	        this.supportsExpression = source["supportsExpression"];
-	        this.enabled = source["enabled"];
-	        this.useEye = source["useEye"];
-	        this.useExpression = source["useExpression"];
-	        this.loaded = source["loaded"];
-	        this.active = source["active"];
-	        this.usingEye = source["usingEye"];
-	        this.usingExpression = source["usingExpression"];
-	        this.eyeActive = source["eyeActive"];
-	        this.expressionActive = source["expressionActive"];
-	    }
-	}
-
-}
-
 export namespace metadata {
 	
 	export class AppInfo {
@@ -282,6 +213,101 @@ export namespace params {
 	        this.Address = source["Address"];
 	        this.Name = source["Name"];
 	        this.Type = source["Type"];
+	    }
+	}
+
+}
+
+export namespace router {
+	
+	export class Assignment {
+	    eye: string;
+	    expression: string;
+	
+	    static createFrom(source: any = {}) {
+	        return new Assignment(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.eye = source["eye"];
+	        this.expression = source["expression"];
+	    }
+	}
+	export class ModuleInfo {
+	    id: string;
+	    name: string;
+	    active: boolean;
+	    usingEye: boolean;
+	    usingExpression: boolean;
+	    eyeActive: boolean;
+	    expressionActive: boolean;
+	    stale: boolean;
+	    icons: string[];
+	
+	    static createFrom(source: any = {}) {
+	        return new ModuleInfo(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.active = source["active"];
+	        this.usingEye = source["usingEye"];
+	        this.usingExpression = source["usingExpression"];
+	        this.eyeActive = source["eyeActive"];
+	        this.expressionActive = source["expressionActive"];
+	        this.stale = source["stale"];
+	        this.icons = source["icons"];
+	    }
+	}
+	export class Registered {
+	    id: string;
+	    name: string;
+	    description: string;
+	    author: string;
+	    version: string;
+	    pageUrl: string;
+	    usageInstructions: string;
+	    icons: string[];
+	    supportsEye: boolean;
+	    supportsExpression: boolean;
+	    enabled: boolean;
+	    useEye: boolean;
+	    useExpression: boolean;
+	    loaded: boolean;
+	    active: boolean;
+	    usingEye: boolean;
+	    usingExpression: boolean;
+	    eyeActive: boolean;
+	    expressionActive: boolean;
+	
+	    static createFrom(source: any = {}) {
+	        return new Registered(source);
+	    }
+	
+	    constructor(source: any = {}) {
+	        if ('string' === typeof source) source = JSON.parse(source);
+	        this.id = source["id"];
+	        this.name = source["name"];
+	        this.description = source["description"];
+	        this.author = source["author"];
+	        this.version = source["version"];
+	        this.pageUrl = source["pageUrl"];
+	        this.usageInstructions = source["usageInstructions"];
+	        this.icons = source["icons"];
+	        this.supportsEye = source["supportsEye"];
+	        this.supportsExpression = source["supportsExpression"];
+	        this.enabled = source["enabled"];
+	        this.useEye = source["useEye"];
+	        this.useExpression = source["useExpression"];
+	        this.loaded = source["loaded"];
+	        this.active = source["active"];
+	        this.usingEye = source["usingEye"];
+	        this.usingExpression = source["usingExpression"];
+	        this.eyeActive = source["eyeActive"];
+	        this.expressionActive = source["expressionActive"];
 	    }
 	}
 

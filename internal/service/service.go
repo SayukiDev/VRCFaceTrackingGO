@@ -1,5 +1,5 @@
-// Package service wires the tracking pipeline together (modules, mixer,
-// sender, router, OSC and OSCQuery) and exposes the operations the UI
+// Package service wires the tracking pipeline together (module manager,
+// router, mixer, sender, OSC and OSCQuery) and exposes the operations the UI
 // layer needs, independent of any GUI framework.
 package service
 
@@ -12,13 +12,13 @@ import (
 
 	"VRCFaceTracking/internal/logging"
 	"VRCFaceTracking/internal/mixer"
+	"VRCFaceTracking/internal/module/manager"
 	"VRCFaceTracking/internal/osc"
 	"VRCFaceTracking/internal/oscquery"
 	"VRCFaceTracking/internal/router"
 	"VRCFaceTracking/internal/sender"
 	"VRCFaceTracking/internal/settings"
 	"VRCFaceTracking/internal/vrchat"
-	"VRCFaceTracking/module/manager"
 )
 
 const statsInterval = time.Second
@@ -27,7 +27,7 @@ const statsInterval = time.Second
 // goroutine; implementations must be cheap and non-blocking.
 type Listener interface {
 	OnLog(line logging.Line)
-	OnModulesChanged(modules []manager.ModuleInfo)
+	OnModulesChanged(modules []router.ModuleInfo)
 	OnAvatarChanged(avatar oscquery.AvatarInfo)
 	OnParametersChanged(stats sender.ParameterStats)
 	OnOscStats(status OscStatus)
@@ -44,11 +44,11 @@ type Service struct {
 	cancel context.CancelFunc
 
 	store     *settings.Store
-	manager   *manager.Manager
 	mixer     *mixer.Mixer
+	modules   *manager.Manager
+	router    *router.Router
 	transport *osc.Sender
 	sender    *sender.Sender
-	router    *router.Router
 	query     *oscquery.Service
 
 	messagesIn  atomic.Int64
@@ -83,22 +83,21 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.store = store
 	cfg := store.Get()
 
-	s.manager = manager.New(s.root)
-	s.manager.OnChange = listener.OnModulesChanged
-	if cfg.Modules != nil {
-		s.manager.SetConfig(cfg.Modules)
-	}
-
 	s.mixer = mixer.New(cfg.Mixer)
+	s.modules = manager.New(s.root, manager.DefaultDir(s.dataDir))
+	s.router = router.New(s.root, s.mixer, s.modules)
+	s.router.OnChange = listener.OnModulesChanged
+	if cfg.Modules != nil {
+		s.router.SetConfig(cfg.Modules)
+	}
+	s.applyTiming(cfg.Timing)
+
 	s.transport = osc.NewSender(s.root)
 	s.transport.OnDispatched = func(n int) { s.messagesOut.Add(int64(n)) }
 
-	s.sender = sender.New(s.root, s.manager, s.transport)
+	s.sender = sender.New(s.root, s.router, s.transport)
 	s.sender.OnParametersChanged = listener.OnParametersChanged
 	s.sender.SetOutputMode(cfg.Output)
-
-	s.router = router.New(s.manager, s.mixer, s.sender)
-	s.applyTiming(cfg.Timing)
 
 	s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
 	s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
@@ -109,7 +108,7 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
 
 	s.initialize()
-	go s.router.Run(s.ctx)
+	go s.router.Run(s.ctx, s.sender)
 	go s.statsLoop()
 	return nil
 }
@@ -135,14 +134,15 @@ func (s *Service) initialize() {
 	}
 
 	s.moduleConfigDirty.Store(false)
-	s.manager.Initialize(s.ctx, s.root)
+	s.modules.Scan(s.ctx)
+	s.router.Initialize(s.ctx)
 }
 
 // Reinitialize tears down the modules and network endpoints and brings
 // them back up. Most modules will not enjoy this.
 func (s *Service) Reinitialize() {
 	s.logger.Info("Reinitializing VRCFT...")
-	s.manager.Teardown()
+	s.router.Teardown()
 	_ = s.query.Close()
 	s.initialize()
 }
@@ -153,8 +153,8 @@ func (s *Service) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
-	if s.manager != nil {
-		s.manager.Teardown()
+	if s.router != nil {
+		s.router.Teardown()
 	}
 	if s.query != nil {
 		_ = s.query.Close()

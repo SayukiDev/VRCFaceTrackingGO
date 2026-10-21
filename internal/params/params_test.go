@@ -3,7 +3,7 @@ package params
 import (
 	"testing"
 
-	"VRCFaceTracking/module/adapter"
+	"VRCFaceTracking/internal/module/adapter"
 	"VRCFaceTracking/pkg/tracking"
 )
 

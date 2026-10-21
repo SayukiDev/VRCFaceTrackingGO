@@ -10,10 +10,10 @@ import (
 
 	"go.uber.org/zap"
 
+	"VRCFaceTracking/internal/module/adapter"
 	"VRCFaceTracking/internal/osc"
 	"VRCFaceTracking/internal/params"
 	"VRCFaceTracking/internal/vrchat"
-	"VRCFaceTracking/module/adapter"
 	"VRCFaceTracking/pkg/tracking"
 )
 
