@@ -1,0 +1,9 @@
+{
+  "name": "Demo",
+  "description": "Animates the face without any hardware, as an example of the Go SDK",
+  "author": "SayukiDev",
+  "version": "1.0.0",
+  "usageInstructions": "Activate the module and watch the avatar's jaw, smile, eyes and blinks move on their own",
+  "icons": [],
+  "platforms": ["windows", "linux", "darwin"]
+}

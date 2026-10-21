@@ -7,7 +7,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/sender"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
 )
 
 func TestStoreRoundTrip(t *testing.T) {

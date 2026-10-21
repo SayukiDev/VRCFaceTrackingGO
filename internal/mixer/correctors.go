@@ -1,6 +1,6 @@
 package mixer
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // CorrectorsConfig is the persisted state of Correctors.
 type CorrectorsConfig struct {

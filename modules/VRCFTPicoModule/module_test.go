@@ -10,8 +10,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/module/adapter"
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 func TestPacketSizes(t *testing.T) {

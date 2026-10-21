@@ -1,0 +1,17 @@
+[package]
+name = "vrcftgo-sdk"
+version = "0.1.0"
+edition = "2024"
+description = "SDK for VRCFaceTrackingGO tracking modules"
+license = "AGPL-3.0-only"
+repository = "https://github.com/SayukiDev/VRCFaceTrackingGO"
+
+[lib]
+name = "vrcftgo_sdk"
+
+[dependencies]
+base64 = "0.22"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tokio = { version = "1", features = ["io-std", "io-util", "macros", "rt", "time"] }
+

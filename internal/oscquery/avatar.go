@@ -2,7 +2,7 @@
 // endpoint VRChat expects and resolves the current avatar's parameters.
 package oscquery
 
-import "VRCFaceTrackingGo/internal/params"
+import "github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
 
 // AvatarInfo describes the currently loaded avatar.
 type AvatarInfo struct {

@@ -10,7 +10,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/params"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
 )
 
 // QueryParser resolves the avatar through VRChat's OSCQuery HTTP endpoint.

@@ -9,8 +9,8 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/module/adapter"
-	"VRCFaceTrackingGo/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
 )
 
 // ModuleInfo is the UI facing view of a loaded module.

@@ -3,7 +3,7 @@ package vrchat
 import (
 	"testing"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 func TestPayloadLayout(t *testing.T) {

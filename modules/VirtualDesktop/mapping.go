@@ -3,7 +3,7 @@ package main
 import (
 	"math"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // Conversion from OpenXR weights to Unified Expressions. Credit to

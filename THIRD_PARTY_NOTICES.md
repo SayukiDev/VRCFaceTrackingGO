@@ -12,6 +12,12 @@ the licenses that follow.
 - License: Apache License 2.0 (full text below)
 - Used in: the application (parameter definitions, OSC output, mutations), rewritten in Go.
 
+## VRCFT-ALVR
+
+- Source: https://github.com/alvr-org/VRCFT-ALVR
+- License: Apache License 2.0 (full text below)
+- Used in: `modules/ALVR`, rewritten in Go.
+
 ## VRCFT-ALVR-UE
 
 - Source: https://github.com/compdoge/VRCFT-ALVR-UE
@@ -31,8 +37,8 @@ The following projects are referenced for tracking data layouts and
 expression mappings. They do not publish a license.
 
 - VRCFTPicoModule: https://github.com/lonelyicer/VRCFTPicoModule (`modules/VRCFTPicoModule`)
-- SRanipalTrackingModule: https://github.com/VRCFaceTracking/SRanipalTrackingModule (`modules/GXRFT`)
-- VRCFaceTracking-QuestProOpenXR: https://github.com/regzo2/VRCFaceTracking-QuestProOpenXR (`modules/GXRFT`, `modules/VirtualDesktop`)
+- SRanipalTrackingModule: https://github.com/VRCFaceTracking/SRanipalTrackingModule (`modules/ALVR`, `modules/GXRFT`)
+- VRCFaceTracking-QuestProOpenXR: https://github.com/regzo2/VRCFaceTracking-QuestProOpenXR (`modules/ALVR`, `modules/GXRFT`, `modules/VirtualDesktop`)
 
 ## Trademarks
 
@@ -2003,7 +2009,7 @@ SOFTWARE.
 
 ## Apache License 2.0
 
-Applies to VRCFaceTracking and VRCFT-ALVR-UE.
+Applies to VRCFaceTracking, VRCFT-ALVR and VRCFT-ALVR-UE.
 
 ```
                                  Apache License

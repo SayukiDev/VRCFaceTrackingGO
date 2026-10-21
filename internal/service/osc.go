@@ -3,9 +3,9 @@ package service
 import (
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/osc"
-	"VRCFaceTrackingGo/internal/settings"
-	"VRCFaceTrackingGo/internal/vrchat"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/vrchat"
 )
 
 // OscStatus is the state of the OSC endpoints plus per-second counters.

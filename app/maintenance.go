@@ -6,9 +6,9 @@ import (
 
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"VRCFaceTrackingGo/internal/accent"
-	"VRCFaceTrackingGo/internal/logging"
-	"VRCFaceTrackingGo/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/accent"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
 )
 
 func (a *App) GetLogs() []logging.Line { return a.svc.Logs() }

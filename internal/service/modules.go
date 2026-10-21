@@ -6,11 +6,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/module/manager"
-	"VRCFaceTrackingGo/internal/oscquery"
-	"VRCFaceTrackingGo/internal/router"
-	"VRCFaceTrackingGo/internal/sender"
-	"VRCFaceTrackingGo/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
 )
 
 // Modules returns the loaded modules.

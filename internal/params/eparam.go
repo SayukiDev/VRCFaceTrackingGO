@@ -1,6 +1,6 @@
 package params
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // EParam ("everything param") bundles the bool, float and binary variants of
 // one logical parameter so an avatar can pick whichever encoding it uses.

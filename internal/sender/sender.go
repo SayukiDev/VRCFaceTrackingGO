@@ -10,11 +10,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/module/adapter"
-	"VRCFaceTrackingGo/internal/osc"
-	"VRCFaceTrackingGo/internal/params"
-	"VRCFaceTrackingGo/internal/vrchat"
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/vrchat"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 const nativeEyePrefix = "/tracking/eye/"

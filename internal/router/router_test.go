@@ -9,11 +9,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/mixer"
-	"VRCFaceTrackingGo/internal/module/adapter"
-	"VRCFaceTrackingGo/internal/module/manager"
-	"VRCFaceTrackingGo/internal/module/plugin"
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/mixer"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // fakeModule is an installed module whose start behaviour tests script.

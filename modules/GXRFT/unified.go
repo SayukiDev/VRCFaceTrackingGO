@@ -1,6 +1,6 @@
 package main
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // uniExprTail indexes the eye values ALVR appends after the raw Unified
 // Expressions weights in a "UniExpr" section.

@@ -9,9 +9,9 @@ import (
 	"github.com/wailsapp/wails/v2/pkg/options"
 	"github.com/wailsapp/wails/v2/pkg/runtime"
 
-	"VRCFaceTrackingGo/internal/logging"
-	"VRCFaceTrackingGo/internal/metadata"
-	"VRCFaceTrackingGo/internal/service"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/service"
 )
 
 // App is the object bound to the frontend. Every exported method is

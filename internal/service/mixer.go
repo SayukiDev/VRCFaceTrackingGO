@@ -1,8 +1,8 @@
 package service
 
 import (
-	"VRCFaceTrackingGo/internal/mixer"
-	"VRCFaceTrackingGo/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/mixer"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
 )
 
 // MixerEnabled reports whether the mixer stages are applied at all.

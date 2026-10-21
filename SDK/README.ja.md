@@ -1,10 +1,17 @@
-# モジュールプロトコル
+# モジュール SDK
 
-| [English](module-protocol.md) | **日本語** |
+| [English](README.md) | **日本語** |
 
 トラッキングモジュールは独立したプログラムです。VRCFaceTrackingGO は有効なモジュールを子プロセスとして起動し、その標準入出力を通して、小さなバイナリのリクエスト/レスポンス形式でやり取りします。
 
-リファレンス実装は [`internal/module/plugin`](../internal/module/plugin) です。`Serve` がモジュール側、`Client` がホスト側です。
+SDK がプロトコルのモジュール側を実装しているので、モジュールはトラッキングデータを用意するだけで済みます。
+
+| 言語 | SDK | 例 |
+|---|---|---|
+| Go | [`pkg/module`](../pkg/module)([ガイド](Golang/README.ja.md)) | [`Golang/example`](Golang/example) |
+| Rust | [`Rust`](Rust)(クレート `vrcftgo-sdk`、tokio) | [`Rust/examples/demo.rs`](Rust/examples/demo.rs) |
+
+このドキュメントの残りでは、SDK を使わずにモジュールを書くためのプロトコルそのものを説明します。リファレンス実装は [`pkg/module/plugin`](../pkg/module/plugin) です。`Serve` がモジュール側、`Client` がホスト側です。
 
 ## モジュールプログラム
 
@@ -131,27 +138,9 @@ Initialize では、ホストがこのモジュールにまだ必要としてい
 
 ホストは `level`、`logger`、`msg` とそれ以外のすべての項目をそのまま記録し直します。`error` より上のレベルは `error` に下げるので、モジュールがホストを panic させたり終了させたりすることはできません。JSON でない行(クラッシュ時のスタックトレースなど)は警告として記録されます。
 
-## Go でモジュールを書く
+## Go・Rust でモジュールを書く
 
-このリポジトリでは、モジュールは `modules/<id>` に置く `main` パッケージです。
-
-```go
-package main
-
-import "VRCFaceTrackingGo/internal/module/plugin"
-
-func main() { plugin.Serve(New()) }
-```
-
-`New` は `adapter.Module`([`internal/module/adapter`](../internal/module/adapter/module.go))を返します。`plugin.Serve` が、コマンドラインの処理、プロトコル、ログ、panic からの復帰を受け持ちます。メタデータはコードと同じフォルダの `metadata.json` に置き、`embed.FS` から `adapter.MustLoadMetadata` で読み込みます。ビルドスクリプトとインストーラーも同じファイルを読みます。特定の OS でしか動かないモジュールは、ここで `platforms` を指定してください。アイコンはこのファイルにファイル名で書き、PNG として埋め込みます。
-
-すべてのモジュールは `go run ./cmd/build` で、1 つだけなら次のコマンドでビルドできます。
-
-```sh
-go build -ldflags="-s -w" -o build/bin/modules/<id>.vfgmod ./modules/<id>
-```
-
-Go の `internal` の規則により、このリポジトリの外のコードはこれらのパッケージを import できません。外部で開発するモジュールは、次の節のとおり上記のプロトコルを自分で実装する必要があります。
+SDK を使ってください。[Go のガイド](Golang/README.ja.md)と [Rust のクレート](Rust/README.ja.md)を参照してください。
 
 ## ほかの言語でモジュールを書く
 

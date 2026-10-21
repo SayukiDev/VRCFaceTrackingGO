@@ -1,6 +1,6 @@
 package mixer
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // AdjustmentConfig is the persisted state of Adjustment. groups of shapes from a user chosen
 // Every range is remapped from (floor, ceil) onto 0..1.

@@ -6,7 +6,7 @@ package params
 import (
 	"strings"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // ValueType is the OSC argument type of a parameter.

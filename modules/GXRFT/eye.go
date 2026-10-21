@@ -3,7 +3,7 @@ package main
 import (
 	"math"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // normalizedGaze converts an eye orientation quaternion (x, y, z, w) into

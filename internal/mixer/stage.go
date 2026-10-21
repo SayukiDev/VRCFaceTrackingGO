@@ -5,7 +5,7 @@ package mixer
 import (
 	"fmt"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // Priority orders stages: preprocessors run first, postprocessors last.

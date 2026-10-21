@@ -1,13 +1,23 @@
-# Module Protocol
+# Module SDK
 
-| **English** | [日本語](module-protocol.ja.md) |
+| **English** | [日本語](README.ja.md) |
 
 Tracking modules are separate programs. VRCFaceTrackingGO starts each
 enabled module as a child process and talks to it over the child's
 standard streams with a small binary request/response protocol.
 
-The reference implementation is [`internal/module/plugin`](../internal/module/plugin):
-`Serve` is the module side, `Client` the host side.
+The SDKs implement the module side of the protocol, so a module only has
+to provide its tracking data:
+
+| Language | SDK | Example |
+|---|---|---|
+| Go | [`pkg/module`](../pkg/module) ([guide](Golang/README.md)) | [`Golang/example`](Golang/example) |
+| Rust | [`Rust`](Rust) (crate `vrcftgo-sdk`, tokio) | [`Rust/examples/demo.rs`](Rust/examples/demo.rs) |
+
+The rest of this document describes the protocol itself, for writing a
+module without an SDK. The reference implementation is
+[`pkg/module/plugin`](../pkg/module/plugin): `Serve` is the module side,
+`Client` the host side.
 
 ## Module program
 
@@ -177,36 +187,10 @@ above `error` are lowered to `error`, so a module cannot make the host
 panic or exit. Lines that are not JSON (for example a crash trace) are
 logged as warnings.
 
-## Writing a module in Go
+## Writing a module in Go or Rust
 
-Inside this repository a module is a `main` package under `modules/<id>`:
-
-```go
-package main
-
-import "VRCFaceTrackingGo/internal/module/plugin"
-
-func main() { plugin.Serve(New()) }
-```
-
-`New` returns an `adapter.Module`
-([`internal/module/adapter`](../internal/module/adapter/module.go)).
-`plugin.Serve` handles the command line, the protocol, logging and
-recovering from panics. Keep the metadata in `metadata.json` next to the
-code and load it with `adapter.MustLoadMetadata` from an `embed.FS`; the
-build script and the installer read the same file. Set `platforms` there
-when the module only works on some operating systems. Icons are listed by file name there and
-embedded as PNG.
-
-Build every module with `go run ./cmd/build`, or one of them with:
-
-```sh
-go build -ldflags="-s -w" -o build/bin/modules/<id>.vfgmod ./modules/<id>
-```
-
-Go's `internal` rule keeps code outside this repository from importing
-these packages. A module developed elsewhere has to implement the protocol
-above itself, as described in the next section.
+Use the SDKs: see the [Go guide](Golang/README.md) and the
+[Rust crate](Rust/README.md).
 
 ## Writing a module in another language
 

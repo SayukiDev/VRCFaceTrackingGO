@@ -6,8 +6,8 @@ import (
 
 	"github.com/hypebeast/go-osc/osc"
 
-	"VRCFaceTrackingGo/internal/params"
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // toOSC converts a parameter message into an OSC message.

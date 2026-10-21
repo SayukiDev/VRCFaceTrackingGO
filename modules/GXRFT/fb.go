@@ -3,7 +3,7 @@ package main
 import (
 	"math"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // fbShape indexes XR_FB_face_tracking(2) weights as forwarded by ALVR.

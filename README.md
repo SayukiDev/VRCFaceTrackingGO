@@ -21,11 +21,12 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 
 | Module | Hardware | Platforms | Based on |
 |---|---|---|---|
+| [ALVR](modules/ALVR) | Headsets with face tracking through [ALVR](https://github.com/alvr-org/ALVR) | Windows, Linux | [VRCFT-ALVR](https://github.com/alvr-org/VRCFT-ALVR) |
 | [GXRFT](modules/GXRFT) | Samsung Galaxy XR through [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) | Windows, Linux, macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
 | [VirtualDesktop](modules/VirtualDesktop) | Quest Pro etc. through Virtual Desktop | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
-Modules are standalone programs (`.vfgmod`). The installer can install the bundled ones; others are installed from the Modules page. See [docs/module-protocol.md](docs/module-protocol.md) to write your own.
+Modules are standalone programs (`.vfgmod`). The installer can install the bundled ones; others are installed from the Modules page. To write your own, see the [module SDK](SDK/README.md) for Go and Rust and the protocol.
 
 ## Requirements
 
@@ -66,7 +67,7 @@ This builds every module whose `metadata.json` lists the current OS into `build/
 |---|---|---|
 | `-app` | `true` | Build the application after the modules |
 | `-nsis` | `true` on Windows | Also build the installer (Windows only) |
-| `-install` | `false` | Copy the modules into the module folder (`%APPDATA%\VRCFaceTrackingGO\Modules` on Windows, see [docs/module-protocol.md](docs/module-protocol.md#module-program) for other OSes) |
+| `-install` | `false` | Copy the modules into the module folder (`%APPDATA%\VRCFaceTrackingGO\Modules` on Windows, see [SDK/README.md](SDK/README.md#module-program) for other OSes) |
 | `-tags` | | Build tags for `wails build`, e.g. `webkit2_41` for WebKitGTK 4.1 on Linux |
 
 For development, `wails dev` runs the application with hot reload.
@@ -84,6 +85,6 @@ VRCFaceTrackingGO, including the modules in [`modules`](modules), is licensed un
 
 This is a summary; the [license text](LICENSE) is authoritative.
 
-Modules are separate programs that talk to the application only through the [module protocol](docs/module-protocol.md). A module that you write yourself and that only implements this protocol, without using code from this repository, does not have to use the AGPL-3.0.
+Modules are separate programs that talk to the application only through the [module protocol](SDK/README.md). A module that you write yourself and that only implements this protocol, without using code from this repository, does not have to use the AGPL-3.0.
 
 Parts of the code are ported from projects under the Apache License 2.0 and the MIT License. See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for them and for the licenses of the bundled libraries.

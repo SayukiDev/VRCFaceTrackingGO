@@ -10,7 +10,7 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/params"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
 )
 
 // maxDatagram is the largest bundle we send in one datagram.

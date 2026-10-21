@@ -8,7 +8,7 @@ import (
 
 	"github.com/dlclark/regexp2"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // Binary encodes a float in [0, 1] (or [-1, 1] with the Negative flag) into

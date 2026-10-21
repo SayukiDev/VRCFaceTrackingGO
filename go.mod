@@ -1,4 +1,4 @@
-module VRCFaceTrackingGo
+module github.com/SayukiDev/VRCFaceTrackingGO
 
 go 1.25.0
 

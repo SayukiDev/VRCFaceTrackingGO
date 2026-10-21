@@ -20,9 +20,9 @@ import (
 	"runtime"
 	"strings"
 
-	"VRCFaceTrackingGo/internal/metadata"
-	"VRCFaceTrackingGo/internal/module/adapter"
-	"VRCFaceTrackingGo/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
 )
 
 const (

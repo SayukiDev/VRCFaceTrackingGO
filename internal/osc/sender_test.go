@@ -8,8 +8,8 @@ import (
 	"github.com/hypebeast/go-osc/osc"
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/params"
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/params"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 func TestSenderBundlesAndSplits(t *testing.T) {

@@ -1,6 +1,6 @@
 package main
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // Mapping inspired by
 // https://github.com/VRCFaceTracking/SRanipalTrackingModule/blob/master/SRanipalExtTrackingModule/SRanipalTrackingInterface.cs

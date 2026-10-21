@@ -1,5 +1,6 @@
-// Package adapter defines the contract a tracking module implements. Modules
-// are compiled into the host binary and registered in main.
+// Package adapter defines the contract a tracking module implements. A
+// module program passes its implementation to plugin.Serve; see the Go SDK
+// in SDK/Golang.
 package adapter
 
 import (
@@ -8,7 +9,7 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/pkg/tracking"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
 // State is the host-side lifecycle state of a module.

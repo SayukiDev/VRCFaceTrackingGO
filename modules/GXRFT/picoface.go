@@ -1,6 +1,6 @@
 package main
 
-import "VRCFaceTrackingGo/pkg/tracking"
+import "github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 
 // picoShape indexes the 72 ARKit-style weights of the PICO face tracking
 // extension as forwarded by ALVR.

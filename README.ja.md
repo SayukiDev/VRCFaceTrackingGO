@@ -21,11 +21,12 @@
 
 | モジュール | 対応機器 | 対応 OS | 移植元 |
 |---|---|---|---|
+| [ALVR](modules/ALVR) | [ALVR](https://github.com/alvr-org/ALVR) 経由のフェイストラッキング対応ヘッドセット | Windows、Linux | [VRCFT-ALVR](https://github.com/alvr-org/VRCFT-ALVR) |
 | [GXRFT](modules/GXRFT) | [gxr-root-ft](https://github.com/compdoge/gxr-root-ft) 経由の Samsung Galaxy XR | Windows、Linux、macOS | [VRCFT-ALVR-UE](https://github.com/compdoge/VRCFT-ALVR-UE) |
 | [VirtualDesktop](modules/VirtualDesktop) | Virtual Desktop 経由の Quest Pro など | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
-モジュールは独立したプログラム(`.vfgmod`)です。同梱のモジュールはインストーラーで、それ以外はアプリのモジュールページからインストールします。自作する場合は [docs/module-protocol.ja.md](docs/module-protocol.ja.md) を参照してください。
+モジュールは独立したプログラム(`.vfgmod`)です。同梱のモジュールはインストーラーで、それ以外はアプリのモジュールページからインストールします。自作する場合は、Go・Rust の SDK とプロトコルの説明がある[モジュール SDK](SDK/README.ja.md) を参照してください。
 
 ## 動作環境
 
@@ -66,7 +67,7 @@ go run ./cmd/build
 |---|---|---|
 | `-app` | `true` | モジュールの後にアプリをビルドする |
 | `-nsis` | Windows では `true` | インストーラーも作る(Windows のみ) |
-| `-install` | `false` | モジュールをモジュールフォルダにコピーする(Windows は `%APPDATA%\VRCFaceTrackingGO\Modules`、ほかの OS は [docs/module-protocol.ja.md](docs/module-protocol.ja.md#モジュールプログラム) を参照) |
+| `-install` | `false` | モジュールをモジュールフォルダにコピーする(Windows は `%APPDATA%\VRCFaceTrackingGO\Modules`、ほかの OS は [SDK/README.ja.md](SDK/README.ja.md#モジュールプログラム) を参照) |
 | `-tags` | | `wails build` に渡すビルドタグ(Linux で WebKitGTK 4.1 を使う場合は `webkit2_41` など) |
 
 開発中は `wails dev` でホットリロード付きで起動できます。
@@ -84,6 +85,6 @@ VRCFaceTrackingGO は、[`modules`](modules) 内のモジュールも含めて [
 
 上記は要約です。正式な条件は [LICENSE](LICENSE) の英語原文に従います。
 
-モジュールは、[モジュールプロトコル](docs/module-protocol.ja.md)だけでアプリとやり取りする別のプログラムです。このリポジトリのコードを使わず、このプロトコルを実装しただけの自作モジュールは、AGPL-3.0 にする必要はありません。
+モジュールは、[モジュールプロトコル](SDK/README.ja.md)だけでアプリとやり取りする別のプログラムです。このリポジトリのコードを使わず、このプロトコルを実装しただけの自作モジュールは、AGPL-3.0 にする必要はありません。
 
 コードの一部は Apache License 2.0 と MIT License のプロジェクトから移植しています。それらと同梱ライブラリのライセンスは [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) を参照してください。

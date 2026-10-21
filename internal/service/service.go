@@ -10,15 +10,15 @@ import (
 
 	"go.uber.org/zap"
 
-	"VRCFaceTrackingGo/internal/logging"
-	"VRCFaceTrackingGo/internal/mixer"
-	"VRCFaceTrackingGo/internal/module/manager"
-	"VRCFaceTrackingGo/internal/osc"
-	"VRCFaceTrackingGo/internal/oscquery"
-	"VRCFaceTrackingGo/internal/router"
-	"VRCFaceTrackingGo/internal/sender"
-	"VRCFaceTrackingGo/internal/settings"
-	"VRCFaceTrackingGo/internal/vrchat"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/mixer"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/vrchat"
 )
 
 const statsInterval = time.Second
