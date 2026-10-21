@@ -68,8 +68,8 @@ function format(v: number) {
   gap: 16px;
   padding: 10px 20px;
   margin: 1px 0;
-  border-radius: 2px;
-  background: rgba(127, 127, 127, 0.06);
+  border-radius: 4px;
+  background: var(--md-sys-color-surface-container);
 }
 .label {
   flex: 5;

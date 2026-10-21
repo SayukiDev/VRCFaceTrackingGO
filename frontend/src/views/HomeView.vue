@@ -86,8 +86,10 @@ async function reload() {
   gap: 16px;
 }
 .subtitle {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
   margin-bottom: 4px;
 }
 .dot {
@@ -95,7 +97,7 @@ async function reload() {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: orange;
+  background: var(--md-sys-color-warning);
   margin-right: 5px;
 }
 </style>

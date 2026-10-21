@@ -29,11 +29,11 @@ useEvent<logging.Line>(Events.log, (l) => {
 })
 
 const levelColors: Record<string, string> = {
-  WARN: '#FFFF23',
-  ERROR: '#DB2543',
-  FATAL: '#A70023',
-  DPANIC: '#A70023',
-  PANIC: '#A70023',
+  WARN: 'var(--md-sys-color-log-warn)',
+  ERROR: 'var(--md-sys-color-log-error)',
+  FATAL: 'var(--md-sys-color-log-fatal)',
+  DPANIC: 'var(--md-sys-color-log-fatal)',
+  PANIC: 'var(--md-sys-color-log-fatal)',
 }
 
 async function copy() {
@@ -49,8 +49,9 @@ async function save() {
 
 <template>
   <div class="output">
-    <div class="toolbar">
+    <Teleport defer to="#page-actions">
       <n-space align="center">
+        <n-text depth="3">{{ status }}</n-text>
         <n-button-group>
           <n-tooltip>
             <template #trigger>
@@ -65,9 +66,8 @@ async function save() {
             {{ t('output.save') }}
           </n-tooltip>
         </n-button-group>
-        <n-text depth="3">{{ status }}</n-text>
       </n-space>
-    </div>
+    </Teleport>
     <div class="log">
       <n-scrollbar ref="scroller">
         <pre class="lines"><div v-for="(l, i) in visible" :key="i" :style="{ color: levelColors[l.level] }">{{ l.message }}</div></pre>
@@ -80,19 +80,13 @@ async function save() {
 .output {
   display: flex;
   flex-direction: column;
-  height: calc(100vh - 110px);
-  gap: 16px;
-}
-.toolbar {
-  padding: 8px;
-  border-radius: 6px;
-  background: rgba(127, 127, 127, 0.08);
+  height: 100%;
 }
 .log {
   flex: 1;
   min-height: 0;
-  border-radius: 6px;
-  background: rgba(127, 127, 127, 0.08);
+  border-radius: 12px;
+  background: var(--md-sys-color-surface-container);
   padding: 10px;
   user-select: text;
 }

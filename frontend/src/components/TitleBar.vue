@@ -29,18 +29,22 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
 
 <template>
   <header class="titlebar" style="--wails-draggable: drag" @dblclick="toggleMaximise">
+    <div class="brand">
+      <img src="../assets/icon.png" alt="" class="app-icon" />
+      <span>VRCFaceTrackingGO</span>
+    </div>
     <div class="drag-area" />
     <div class="controls" style="--wails-draggable: no-drag" @dblclick.stop>
-      <button class="ctl" :title="$t('titlebar.minimise')" @click="WindowMinimise()">
+      <button class="ctl" :aria-label="$t('titlebar.minimise')" @click="WindowMinimise()">
         <n-icon :size="16"><Subtract24Regular /></n-icon>
       </button>
-      <button class="ctl" :title="maximised ? $t('titlebar.restore') : $t('titlebar.maximise')" @click="toggleMaximise">
+      <button class="ctl" :aria-label="maximised ? $t('titlebar.restore') : $t('titlebar.maximise')" @click="toggleMaximise">
         <n-icon :size="16">
           <SquareMultiple24Regular v-if="maximised" />
           <Maximize24Regular v-else />
         </n-icon>
       </button>
-      <button class="ctl close" :title="$t('titlebar.close')" @click="Quit()">
+      <button class="ctl close" :aria-label="$t('titlebar.close')" @click="Quit()">
         <n-icon :size="16"><Dismiss24Regular /></n-icon>
       </button>
     </div>
@@ -52,8 +56,23 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
   display: flex;
   align-items: center;
   justify-content: space-between;
-  height: 32px;
+  height: 40px;
   flex: none;
+}
+.brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-left: 16px;
+  color: var(--md-sys-color-on-surface-variant);
+  font-size: var(--md-sys-typescale-body-small-size);
+  line-height: var(--md-sys-typescale-body-small-line-height);
+  letter-spacing: var(--md-sys-typescale-body-small-tracking);
+  white-space: nowrap;
+}
+.app-icon {
+  width: 16px;
+  height: 16px;
 }
 .drag-area {
   flex: 1;
@@ -68,7 +87,7 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
   height: 100%;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--md-sys-color-on-surface-variant);
   cursor: default;
   display: inline-flex;
   align-items: center;
@@ -76,7 +95,7 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
   transition: background 0.1s;
 }
 .ctl:hover {
-  background: rgba(128, 128, 128, 0.2);
+  background: var(--md-sys-color-on-surface-hover);
 }
 .ctl.close:hover {
   background: #c42b1c;

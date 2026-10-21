@@ -2,6 +2,7 @@ package settings
 
 import (
 	"fmt"
+	"regexp"
 	"time"
 
 	"VRCFaceTracking/internal/mixer"
@@ -15,6 +16,12 @@ import (
 type Settings struct {
 	// Theme is the UI colour scheme: "light", "dark" or "system".
 	Theme string `json:"theme"`
+	// SeedColor is the "#RRGGBB" source colour the Material 3 colour scheme
+	// is generated from.
+	SeedColor string `json:"seedColor"`
+	// UseSystemAccent makes the Windows accent colour the seed instead of
+	// SeedColor.
+	UseSystemAccent bool `json:"useSystemAccent"`
 	// Locale is the UI language, or "" to follow the system.
 	Locale string            `json:"locale"`
 	OSC    osc.Target        `json:"osc"`
@@ -29,12 +36,26 @@ type Settings struct {
 // Default returns the settings used for anything missing from the file.
 func Default() Settings {
 	return Settings{
-		Theme:  "dark",
-		OSC:    osc.DefaultTarget(),
-		Output: sender.OutputParameters,
-		Timing: DefaultTiming(),
-		Mixer:  mixer.DefaultConfig(),
+		Theme:     "dark",
+		SeedColor: DefaultSeedColor,
+		OSC:       osc.DefaultTarget(),
+		Output:    sender.OutputParameters,
+		Timing:    DefaultTiming(),
+		Mixer:     mixer.DefaultConfig(),
 	}
+}
+
+// DefaultSeedColor is the pink the UI used before the scheme became configurable.
+const DefaultSeedColor = "#EC4899"
+
+var seedColorPattern = regexp.MustCompile(`^#[0-9A-Fa-f]{6}$`)
+
+// ValidateSeedColor checks c is a "#RRGGBB" colour.
+func ValidateSeedColor(c string) error {
+	if !seedColorPattern.MatchString(c) {
+		return fmt.Errorf("seed colour must be #RRGGBB, got %q", c)
+	}
+	return nil
 }
 
 const (

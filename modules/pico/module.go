@@ -66,7 +66,6 @@ func (m *Module) Metadata() adapter.Metadata {
 		Description:       "Provides face and eye tracking for the PICO 4 Pro / Enterprise through PICO Connect or the Streaming Assistant",
 		Author:            "SayukiDev",
 		Version:           "1.0.0",
-		PageURL:           "https://www.picoxr.com",
 		UsageInstructions: "Start PICO Connect (or the Streaming Assistant) and enable face tracking on the headset before activating this module",
 		Icons:             [][]byte{logo},
 	}

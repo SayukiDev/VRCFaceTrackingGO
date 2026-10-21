@@ -44,9 +44,15 @@ export function GetOutputMode():Promise<string>;
 
 export function GetParameterStats():Promise<sender.ParameterStats>;
 
+export function GetSeedColor():Promise<string>;
+
+export function GetSystemAccentColor():Promise<string>;
+
 export function GetTheme():Promise<string>;
 
 export function GetTrackingAssignment():Promise<router.Assignment>;
+
+export function GetUseSystemAccent():Promise<boolean>;
 
 export function InstallModule():Promise<string>;
 
@@ -90,8 +96,12 @@ export function SetOscTarget(arg1:osc.Target):Promise<void>;
 
 export function SetOutputMode(arg1:string):Promise<void>;
 
+export function SetSeedColor(arg1:string):Promise<void>;
+
 export function SetTheme(arg1:string):Promise<void>;
 
 export function SetTrackingAssignment(arg1:string,arg2:string):Promise<void>;
+
+export function SetUseSystemAccent(arg1:boolean):Promise<void>;
 
 export function UninstallModule(arg1:string):Promise<void>;

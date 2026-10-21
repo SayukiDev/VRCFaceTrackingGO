@@ -2,22 +2,29 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  NButton, NCollapse, NCollapseItem, NInput, NInputNumber, NSelect, NSpace, NSwitch, NText, useMessage,
+  NButton, NColorPicker, NCollapse, NCollapseItem, NInput, NInputNumber, NSelect, NSpace, NSwitch, NText, useMessage,
 } from 'naive-ui'
-import { ArrowRouting24Regular, Color24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
+import { Checkmark20Regular, ArrowRouting24Regular, Color24Regular, PaintBrush24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
 import {
   GetOscTarget, SetOscTarget, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
   ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
 } from '../../wailsjs/go/app/App'
 import { metadata, osc, settings } from '../../wailsjs/go/models'
-import { useTheme, type ThemeMode } from '../composables/useTheme'
+import { defaultSeed, useTheme, type ThemeMode } from '../composables/useTheme'
 import { useLocale, type LocaleMode } from '../i18n'
 import InfoCard from '../components/InfoCard.vue'
 
 const { t } = useI18n()
 const message = useMessage()
 
-const { mode, setMode } = useTheme()
+const { mode, setMode, seed, setSeed, saveSeed, useSystemAccent, setUseSystemAccent } = useTheme()
+// M3 baseline purple, a few hues around the wheel, and the default app pink.
+const seedSwatches = ['#6750A4', '#0061A4', '#006A6A', '#006E1C', '#6A5F00', '#9C4146', '#8B5000', defaultSeed]
+
+function pickSwatch(c: string) {
+  setSeed(c)
+  saveSeed()
+}
 const themeOptions = computed(() => [
   { label: t('settings.themeLight'), value: 'light' },
   { label: t('settings.themeDark'), value: 'dark' },
@@ -113,6 +120,40 @@ GetMetadata().then((v) => (meta.value = v))
       <template #aside>
         <n-select :value="mode" :options="themeOptions" style="width: 200px" @update:value="(v: ThemeMode) => setMode(v)" />
       </template>
+    </info-card>
+
+    <info-card :icon="PaintBrush24Regular">
+      <div class="header">{{ t('settings.seedColor') }}</div>
+      <n-text depth="3">{{ t('settings.seedColorDesc') }}</n-text>
+      <label class="accent-switch">
+        <n-switch :value="useSystemAccent" @update:value="setUseSystemAccent" />
+        <span>{{ t('settings.useSystemAccent') }}</span>
+      </label>
+      <div class="swatches" :class="{ disabled: useSystemAccent }">
+        <button
+          v-for="c in seedSwatches"
+          :key="c"
+          class="swatch"
+          :class="{ selected: c.toUpperCase() === seed.toUpperCase() }"
+          :style="{ background: c }"
+          :title="c"
+          :disabled="useSystemAccent"
+          @click="pickSwatch(c)"
+        >
+          <n-icon v-if="c.toUpperCase() === seed.toUpperCase()" :size="20"><checkmark20-regular /></n-icon>
+        </button>
+      </div>
+      <div class="custom-color">
+        <span class="custom-label">{{ t('settings.customColor') }}</span>
+        <n-color-picker
+          :value="seed"
+          :modes="['hex']"
+          :show-alpha="false"
+          :disabled="useSystemAccent"
+          @update:value="(v: string) => setSeed(v.toUpperCase())"
+          @update:show="(open: boolean) => !open && saveSeed()"
+        />
+      </div>
     </info-card>
 
     <info-card :icon="LocalLanguage24Regular">
@@ -243,7 +284,62 @@ GetMetadata().then((v) => (meta.value = v))
 
 <style scoped>
 .header {
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-title-small-size);
+  line-height: var(--md-sys-typescale-title-small-line-height);
+  font-weight: var(--md-sys-typescale-title-small-weight);
+  letter-spacing: var(--md-sys-typescale-title-small-tracking);
+}
+.accent-switch {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+  cursor: pointer;
+}
+.swatches {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 16px;
+}
+.swatches.disabled {
+  opacity: 0.38;
+}
+.swatch {
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  cursor: pointer;
+  /* Inner ring keeps light swatches visible on the card. */
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant);
+  transition: box-shadow 0.2s cubic-bezier(0.2, 0, 0, 1);
+}
+.swatch:disabled {
+  cursor: default;
+}
+.swatch:not(:disabled):hover {
+  box-shadow: inset 0 0 0 1px var(--md-sys-color-outline-variant), 0 0 0 4px var(--md-sys-color-on-surface-hover);
+}
+.swatch.selected {
+  box-shadow: 0 0 0 2px var(--md-sys-color-surface-container-low), 0 0 0 4px var(--md-sys-color-on-surface);
+}
+.custom-color {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+.custom-label {
+  flex: none;
+}
+.custom-color :deep(.n-color-picker) {
+  flex: 1;
 }
 .field-label {
   font-size: 12px;
@@ -251,7 +347,10 @@ GetMetadata().then((v) => (meta.value = v))
   margin-bottom: 4px;
 }
 .section {
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
   margin: 28px 0 4px 1px;
 }
 .links {

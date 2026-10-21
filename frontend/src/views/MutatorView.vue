@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
-import { NCollapse, NCollapseItem, NSwitch, NText } from 'naive-ui'
+import { NCard, NCollapseTransition, NIcon, NSwitch, NText } from 'naive-ui'
+import { ChevronDown20Regular } from '@vicons/fluent'
 import { GetMutations, SetMutationActive } from '../../wailsjs/go/app/App'
 import type { mixer } from '../../wailsjs/go/models'
 import MutationComponent from '../components/MutationComponent.vue'
@@ -11,6 +12,12 @@ const { mutationName, mutationDescription } = useMutationText()
 const mutations = ref<mixer.StageState[]>([])
 GetMutations().then((m) => (mutations.value = m))
 
+const expanded = ref(new Set<string>())
+
+function toggle(name: string) {
+  if (!expanded.value.delete(name)) expanded.value.add(name)
+}
+
 function setActive(m: mixer.StageState, v: boolean) {
   m.active = v
   void SetMutationActive(m.name, v)
@@ -18,30 +25,71 @@ function setActive(m: mixer.StageState, v: boolean) {
 </script>
 
 <template>
-  <n-collapse display-directive="show" arrow-placement="right">
-    <n-collapse-item v-for="m in mutations" :key="m.name" :name="m.name">
-      <template #header>
-        <div class="header" @click.stop>
-          <n-switch :value="m.active" @update:value="(v: boolean) => setActive(m, v)" />
-          <div class="text">
-            <div>{{ mutationName(m.name) }}</div>
+  <div class="cards">
+    <n-card v-for="m in mutations" :key="m.name" size="small">
+      <div class="row">
+        <div class="summary" @click="toggle(m.name)">
+          <n-icon class="chevron" :class="{ open: expanded.has(m.name) }" size="18"><chevron-down20-regular /></n-icon>
+          <div class="info">
+            <div class="name">{{ mutationName(m.name) }}</div>
             <n-text depth="3" class="desc">{{ mutationDescription(m.name, m.description) }}</n-text>
           </div>
         </div>
-      </template>
-      <mutation-component v-for="c in m.components" :key="c.name" :mutation="m.name" :component="c" />
-    </n-collapse-item>
-  </n-collapse>
+        <n-switch :value="m.active" @update:value="(v: boolean) => setActive(m, v)" />
+      </div>
+      <n-collapse-transition :show="expanded.has(m.name)">
+        <div class="details">
+          <mutation-component v-for="c in m.components" :key="c.name" :mutation="m.name" :component="c" />
+        </div>
+      </n-collapse-transition>
+    </n-card>
+  </div>
 </template>
 
 <style scoped>
-.header {
+.cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.row {
   display: flex;
   align-items: center;
-  gap: 20px;
-  padding: 12px 10px;
+  gap: 16px;
+  padding: 4px 8px;
+}
+.summary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+}
+.chevron {
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  transform: rotate(-90deg);
+}
+.chevron.open {
+  transform: rotate(0deg);
+}
+.info {
+  flex: 1;
+  min-width: 0;
+}
+.name {
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
 }
 .desc {
-  font-size: 13px;
+  display: block;
+  font-size: var(--md-sys-typescale-body-medium-size);
+  line-height: var(--md-sys-typescale-body-medium-line-height);
+}
+.details {
+  padding: 8px 8px 0;
 }
 </style>

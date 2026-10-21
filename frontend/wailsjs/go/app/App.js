@@ -70,12 +70,24 @@ export function GetParameterStats() {
   return window['go']['app']['App']['GetParameterStats']();
 }
 
+export function GetSeedColor() {
+  return window['go']['app']['App']['GetSeedColor']();
+}
+
+export function GetSystemAccentColor() {
+  return window['go']['app']['App']['GetSystemAccentColor']();
+}
+
 export function GetTheme() {
   return window['go']['app']['App']['GetTheme']();
 }
 
 export function GetTrackingAssignment() {
   return window['go']['app']['App']['GetTrackingAssignment']();
+}
+
+export function GetUseSystemAccent() {
+  return window['go']['app']['App']['GetUseSystemAccent']();
 }
 
 export function InstallModule() {
@@ -162,12 +174,20 @@ export function SetOutputMode(arg1) {
   return window['go']['app']['App']['SetOutputMode'](arg1);
 }
 
+export function SetSeedColor(arg1) {
+  return window['go']['app']['App']['SetSeedColor'](arg1);
+}
+
 export function SetTheme(arg1) {
   return window['go']['app']['App']['SetTheme'](arg1);
 }
 
 export function SetTrackingAssignment(arg1, arg2) {
   return window['go']['app']['App']['SetTrackingAssignment'](arg1, arg2);
+}
+
+export function SetUseSystemAccent(arg1) {
+  return window['go']['app']['App']['SetUseSystemAccent'](arg1);
 }
 
 export function UninstallModule(arg1) {

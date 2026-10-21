@@ -86,8 +86,10 @@ async function apply(newEye: string, newFace: string) {
   flex: 1;
 }
 .subtitle {
-  font-size: 15px;
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
   margin-bottom: 4px;
 }
 .field {

@@ -58,8 +58,10 @@ function toggle(id: string, value: boolean) {
   flex: 1;
 }
 .name {
-  font-size: 30px;
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-headline-small-size);
+  line-height: var(--md-sys-typescale-headline-small-line-height);
+  font-weight: var(--md-sys-typescale-headline-small-weight);
+  letter-spacing: var(--md-sys-typescale-headline-small-tracking);
   margin-bottom: 6px;
 }
 .inactive {

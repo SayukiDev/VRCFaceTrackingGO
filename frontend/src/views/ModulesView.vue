@@ -2,12 +2,12 @@
 import { ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import {
-  NAlert, NButton, NButtonGroup, NCard, NCheckbox, NCollapseTransition, NEmpty, NIcon, NImage, NPopconfirm, NSwitch,
+  NAlert, NButton, NButtonGroup, NCard, NCheckbox, NCollapseTransition, NEmpty, NFloatButton, NIcon, NImage, NPopconfirm, NSwitch,
   NTag, NText, NSpace, NTooltip, useMessage,
 } from 'naive-ui'
 import {
   Add24Regular, ArrowUp24Regular, ArrowDown24Regular, ArrowSync24Regular, ChevronDown20Regular, Delete24Regular,
-  Info16Regular, Open16Regular,
+  Info16Regular, Open16Regular, Person16Regular,
 } from '@vicons/fluent'
 import {
   GetModuleCatalog, GetModuleConfigDirty, InstallModule, OpenURL, ReloadModules, SetModuleEnabled, SetModuleOrder,
@@ -112,14 +112,35 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
 </script>
 
 <template>
-  <div class="stack">
-    <div class="tip">
-      <n-text depth="3">{{ t('modules.intro') }}</n-text>
-      <n-button :disabled="reloading" @click="install">
-        <template #icon><n-icon><add24-regular /></n-icon></template>
-        {{ t('modules.install') }}
-      </n-button>
-    </div>
+  <div class="stack with-fab">
+    <Teleport defer to="#page-actions">
+      <n-tooltip>
+        <template #trigger>
+          <n-button quaternary circle size="large" class="reload" :loading="reloading" :aria-label="t('modules.reload')" @click="reload">
+            <template #icon><n-icon :size="24"><arrow-sync24-regular /></n-icon></template>
+          </n-button>
+        </template>
+        {{ t('modules.reload') }}
+      </n-tooltip>
+    </Teleport>
+    <n-tooltip placement="left">
+      <template #trigger>
+        <n-float-button
+          type="primary"
+          shape="square"
+          :width="56"
+          :height="56"
+          :right="24"
+          :bottom="24"
+          :aria-label="t('modules.install')"
+          @click="!reloading && install()"
+        >
+          <n-icon :size="24"><add24-regular /></n-icon>
+        </n-float-button>
+      </template>
+      {{ t('modules.install') }}
+    </n-tooltip>
+    <n-text depth="3">{{ t('modules.intro') }}</n-text>
 
     <n-alert v-if="reloading" type="info" :title="t('modules.reloadingTitle')">
       {{ t('modules.reloadingBody') }}
@@ -163,20 +184,32 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
           <template #checked>{{ t('modules.enabled') }}</template>
           <template #unchecked>{{ t('modules.disabled') }}</template>
         </n-switch>
-        <n-popconfirm @positive-click="uninstall(m)">
+        <!-- A plain span is the tooltip trigger: Naive popovers cannot use
+             another popover component (the popconfirm) as their trigger. -->
+        <n-tooltip>
           <template #trigger>
-            <n-button quaternary type="error" class="uninstall" :title="t('modules.uninstall')" :disabled="reloading">
-              <template #icon><n-icon><delete24-regular /></n-icon></template>
-            </n-button>
+            <span class="uninstall">
+              <n-popconfirm @positive-click="uninstall(m)">
+                <template #trigger>
+                  <n-button quaternary type="error" :aria-label="t('modules.uninstall')" :disabled="reloading">
+                    <template #icon><n-icon><delete24-regular /></n-icon></template>
+                  </n-button>
+                </template>
+                {{ t('modules.uninstallConfirm', { name: m.name }) }}
+              </n-popconfirm>
+            </span>
           </template>
-          {{ t('modules.uninstallConfirm', { name: m.name }) }}
-        </n-popconfirm>
+          {{ t('modules.uninstall') }}
+        </n-tooltip>
       </div>
 
       <n-collapse-transition :show="expanded.has(m.id)">
         <div class="details">
           <div v-if="m.author || m.pageUrl" class="meta">
-            <n-text v-if="m.author" depth="3">{{ m.author }}</n-text>
+            <span v-if="m.author" class="author">
+              <n-icon :size="16"><person16-regular /></n-icon>
+              <n-text depth="3">{{ m.author }}</n-text>
+            </span>
             <n-button v-if="m.pageUrl" text type="primary" size="small" @click="OpenURL(m.pageUrl)">
               <template #icon><n-icon><open16-regular /></n-icon></template>
               {{ t('modules.website') }}
@@ -220,6 +253,15 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
 </template>
 
 <style scoped>
+/* 48px icon button with a 24px icon, matching the M3 minimum touch target. */
+.reload {
+  width: 48px;
+  height: 48px;
+}
+/* Keep the last card clear of the FAB (56px + 24px margin). */
+.with-fab {
+  padding-bottom: 80px;
+}
 .tip {
   display: flex;
   align-items: center;
@@ -280,8 +322,10 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
   min-width: 0;
 }
 .name {
-  font-size: 18px;
-  font-weight: 600;
+  font-size: var(--md-sys-typescale-title-medium-size);
+  line-height: var(--md-sys-typescale-title-medium-line-height);
+  font-weight: var(--md-sys-typescale-title-medium-weight);
+  letter-spacing: var(--md-sys-typescale-title-medium-tracking);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -316,6 +360,7 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
   padding: 10px 8px 4px 98px;
 }
 .uninstall {
+  display: inline-flex;
   flex-shrink: 0;
   margin-top: 4px;
 }
@@ -324,6 +369,12 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
   align-items: center;
   gap: 12px;
   font-size: 12px;
+}
+.author {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--md-sys-color-on-surface-variant);
 }
 .usage {
   display: flex;
