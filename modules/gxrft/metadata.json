@@ -1,0 +1,8 @@
+{
+  "name": "GXRFT",
+  "description": "Provides face and eye tracking forwarded over UDP in the ALVR VRCFaceTracking format",
+  "author": "SayukiDev",
+  "version": "1.0.0",
+  "usageInstructions": "Set \"Eye and face tracking\" to \"VRCFaceTracking\" in the streamer's settings before activating this module",
+  "icons": ["gxrft.png"]
+}

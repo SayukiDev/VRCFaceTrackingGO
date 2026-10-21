@@ -6,7 +6,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
 	"net"
@@ -19,8 +19,12 @@ import (
 	"VRCFaceTracking/pkg/tracking"
 )
 
-//go:embed gxrft.png
-var logo []byte
+// files holds metadata.json and the icons it names.
+//
+//go:embed metadata.json gxrft.png
+var files embed.FS
+
+var metadata = adapter.MustLoadMetadata(files, "metadata.json")
 
 const (
 	// port is where the ALVR server sends tracking data.
@@ -49,16 +53,7 @@ func New() *Module {
 
 func (m *Module) ID() string { return "gxrft" }
 
-func (m *Module) Metadata() adapter.Metadata {
-	return adapter.Metadata{
-		Name:              "GXRFT",
-		Description:       "Provides face and eye tracking forwarded over UDP in the ALVR VRCFaceTracking format",
-		Author:            "SayukiDev",
-		Version:           "1.0.0",
-		UsageInstructions: `Set "Eye and face tracking" to "VRCFaceTracking" in the streamer's settings before activating this module`,
-		Icons:             [][]byte{logo},
-	}
-}
+func (m *Module) Metadata() adapter.Metadata { return metadata }
 
 func (m *Module) Supported() adapter.Support {
 	return adapter.Support{Eye: true, Expression: true}

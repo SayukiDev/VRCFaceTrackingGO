@@ -6,7 +6,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"sync"
 	"time"
@@ -20,7 +20,6 @@ import (
 const (
 	bodyStateMapName   = "VirtualDesktop.BodyState"
 	bodyStateEventName = "VirtualDesktop.BodyStateEvent"
-	moduleName         = "Virtual Desktop"
 
 	// frameTimeout bounds one Update call. The Streamer signals at the
 	// headset's tracking rate, so a timeout only happens when nothing is
@@ -31,8 +30,12 @@ const (
 	silenceWarnAfter = 5 * time.Second
 )
 
-//go:embed logo256.png
-var logo []byte
+// files holds metadata.json and the icons it names.
+//
+//go:embed metadata.json logo256.png
+var files embed.FS
+
+var metadata = adapter.MustLoadMetadata(files, "metadata.json")
 
 // Module reads tracking data from Virtual Desktop.
 type Module struct {
@@ -54,16 +57,7 @@ func New() *Module { return &Module{} }
 
 func (m *Module) ID() string { return "virtualdesktop" }
 
-func (m *Module) Metadata() adapter.Metadata {
-	return adapter.Metadata{
-		Name:              moduleName,
-		Description:       "Provides face, eye and tongue tracking for the Quest Pro when using Virtual Desktop",
-		Author:            "SayukiDev",
-		Version:           "1.0.0",
-		UsageInstructions: "Make sure to install the Virtual Desktop Streamer version 1.30 or greater before activating this module",
-		Icons:             [][]byte{logo},
-	}
-}
+func (m *Module) Metadata() adapter.Metadata { return metadata }
 
 func (m *Module) Supported() adapter.Support {
 	return adapter.Support{Eye: true, Expression: true}

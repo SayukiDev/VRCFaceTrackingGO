@@ -5,7 +5,7 @@ package main
 
 import (
 	"context"
-	_ "embed"
+	"embed"
 	"errors"
 	"fmt"
 	"net"
@@ -18,8 +18,12 @@ import (
 	"VRCFaceTracking/pkg/tracking"
 )
 
-//go:embed pico.png
-var logo []byte
+// files holds metadata.json and the icons it names.
+//
+//go:embed metadata.json pico.png
+var files embed.FS
+
+var metadata = adapter.MustLoadMetadata(files, "metadata.json")
 
 const (
 	portCurrent = 29765
@@ -61,18 +65,14 @@ func (m *Module) ID() string { return "pico" }
 func (m *Module) Metadata() adapter.Metadata {
 	m.mu.Lock()
 	defer m.mu.Unlock()
-	return adapter.Metadata{
-		Name:              m.displayName(),
-		Description:       "Provides face and eye tracking for the PICO 4 Pro / Enterprise through PICO Connect or the Streaming Assistant",
-		Author:            "SayukiDev",
-		Version:           "1.0.0",
-		UsageInstructions: "Start PICO Connect (or the Streaming Assistant) and enable face tracking on the headset before activating this module",
-		Icons:             [][]byte{logo},
-	}
+	md := metadata
+	md.Name = m.displayName()
+	return md
 }
 
+// displayName appends the granted tracking and protocol to the base name.
 func (m *Module) displayName() string {
-	name := "PICO"
+	name := metadata.Name
 	switch {
 	case m.granted.Eye && m.granted.Expression:
 		name += " / Full FaceTracking"
