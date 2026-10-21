@@ -32,6 +32,10 @@ Unicode true
 ####
 ## Include the wails tools
 ####
+# Translated wails_tools.nsh messages, see languages.nsh.
+!define WAILS_WIN10_REQUIRED "$(WAILS_WIN10_REQUIRED)"
+!define WAILS_ARCHITECTURE_NOT_SUPPORTED "$(WAILS_ARCHITECTURE_NOT_SUPPORTED)"
+!define WAILS_INSTALL_WEBVIEW_DETAILPRINT "$(WAILS_INSTALL_WEBVIEW_DETAILPRINT)"
 !include "wails_tools.nsh"
 
 # The version information for this two must consist of 4 parts
@@ -65,7 +69,11 @@ ManifestDPIAware true
 
 !insertmacro MUI_UNPAGE_INSTFILES # Uinstalling page
 
-!insertmacro MUI_LANGUAGE "English" # Set the Language of the installer
+# The installer picks the language matching the Windows display language and
+# falls back to the first one.
+!insertmacro MUI_LANGUAGE "English"
+!insertmacro MUI_LANGUAGE "Japanese"
+!include "languages.nsh"
 
 ## The following two statements can be used to sign the installer and the uninstaller. The path to the binaries are provided in %1
 #!uninstfinalize 'signtool --file "%1"'
@@ -101,7 +109,6 @@ SectionEnd
 
 # Bundled modules go to %APPDATA%\VRCFaceTrackingGO\Modules of the user running
 # the installer, where the app scans for them (os.UserConfigDir()/<name>/Modules).
-# Build them into build\bin\modules before "wails build -nsis".
 # They are left in place on uninstall, like modules installed from the app.
 !macro installModule ID
     SetShellVarContext current
@@ -109,24 +116,18 @@ SectionEnd
     File "..\..\bin\modules\${ID}.vfgmod"
 !macroend
 
-SectionGroup /e "Modules" SecModules
-    Section "Virtual Desktop" SecModVirtualDesktop
-        !insertmacro installModule "virtualdesktop"
-    SectionEnd
-    Section "PICO" SecModPico
-        !insertmacro installModule "pico"
-    SectionEnd
-    Section "GXRFT" SecModGxrft
-        !insertmacro installModule "gxrft"
-    SectionEnd
+# modules.nsh (moduleSections, moduleDescriptions) is generated from the
+# modules' --info by "go run ./cmd/build", which also builds them.
+!include "modules.nsh"
+
+SectionGroup /e "$(NAME_SecModules)" SecModules
+    !insertmacro moduleSections
 SectionGroupEnd
 
 !insertmacro MUI_FUNCTION_DESCRIPTION_BEGIN
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecApp} "The ${INFO_PRODUCTNAME} application."
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecModules} "Tracking modules. They can also be installed or removed later from the Modules page."
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecModVirtualDesktop} "Face, eye and tongue tracking for the Quest Pro when using Virtual Desktop."
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecModPico} "Face and eye tracking for the PICO 4 Pro / Enterprise through PICO Connect or the Streaming Assistant."
-    !insertmacro MUI_DESCRIPTION_TEXT ${SecModGxrft} "Face and eye tracking forwarded over UDP in the ALVR VRCFaceTracking format."
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecApp} "$(DESC_SecApp)"
+    !insertmacro MUI_DESCRIPTION_TEXT ${SecModules} "$(DESC_SecModules)"
+    !insertmacro moduleDescriptions
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Section "uninstall"

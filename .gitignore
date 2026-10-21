@@ -8,3 +8,5 @@ frontend/dist
 /.idea/vcs.xml
 /.idea/VRCFaceTracking.iml
 /temp
+/build/windows/installer/modules.nsh
+*.exe
