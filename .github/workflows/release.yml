@@ -22,12 +22,24 @@ jobs:
         include:
           - os: windows-latest
             platform: windows-amd64
+            arch: amd64
+          # Windows needs no cgo, so arm64 is cross-compiled on x64.
+          - os: windows-latest
+            platform: windows-arm64
+            arch: arm64
           - os: ubuntu-24.04
             platform: linux-amd64
+            arch: amd64
             # Ubuntu 24.04 ships WebKitGTK 4.1 only.
+            tags: webkit2_41
+          # WebKitGTK needs cgo, so arm64 is built on an arm64 runner.
+          - os: ubuntu-24.04-arm
+            platform: linux-arm64
+            arch: arm64
             tags: webkit2_41
           - os: macos-latest
             platform: darwin-arm64
+            arch: arm64
     runs-on: ${{ matrix.os }}
     defaults:
       run:
@@ -64,13 +76,13 @@ jobs:
           echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
 
       - name: Build
-        run: go run ./cmd/build -tags "${{ matrix.tags }}"
+        run: go run ./cmd/build -arch "${{ matrix.arch }}" -tags "${{ matrix.tags }}"
 
       - name: Pack (Windows)
         if: runner.os == 'Windows'
         shell: pwsh
         run: |
-          Compress-Archive -Path "build/bin/$env:APP_NAME-amd64-installer.exe", THIRD_PARTY_NOTICES.md -DestinationPath $env:ZIP_NAME
+          Compress-Archive -Path "build/bin/$env:APP_NAME-${{ matrix.arch }}-installer.exe", THIRD_PARTY_NOTICES.md -DestinationPath $env:ZIP_NAME
 
       - name: Pack (Linux)
         if: runner.os == 'Linux'

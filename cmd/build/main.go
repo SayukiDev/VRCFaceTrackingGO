@@ -8,7 +8,7 @@
 // "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod, writes
 // the installer's module sections (build/windows/installer/modules.nsh)
 // from their metadata.json, and then runs "wails build". The NSIS installer (-nsis)
-// is only built on Windows.
+// is only built on Windows, one per architecture (-arch).
 package main
 
 import (
@@ -47,6 +47,7 @@ func run() error {
 	nsis := flag.Bool("nsis", runtime.GOOS == "windows", "also build the NSIS installer (needs -app, Windows only)")
 	install := flag.Bool("install", false, "copy the built modules into the current user's module folder")
 	tags := flag.String("tags", "", "build tags for wails build (e.g. webkit2_41 for WebKitGTK 4.1 on Linux)")
+	arch := flag.String("arch", runtime.GOARCH, "target architecture (GOARCH: amd64 or arm64) for the modules and the application")
 	flag.Parse()
 
 	raw, err := os.ReadFile(metadataFile)
@@ -57,8 +58,11 @@ func run() error {
 	if *nsis && runtime.GOOS != "windows" {
 		return fmt.Errorf("the NSIS installer can only be built on Windows")
 	}
+	if *install && *arch != runtime.GOARCH {
+		return fmt.Errorf("-install needs modules for this machine's architecture (%s), not %s", runtime.GOARCH, *arch)
+	}
 
-	modules, err := buildModules()
+	modules, err := buildModules(*arch)
 	if err != nil {
 		return err
 	}
@@ -70,7 +74,7 @@ func run() error {
 	if !*app {
 		return nil
 	}
-	args := []string{"build"}
+	args := []string{"build", "-platform", runtime.GOOS + "/" + *arch}
 	if *tags != "" {
 		args = append(args, "-tags", *tags)
 	}
@@ -92,8 +96,8 @@ type module struct {
 }
 
 // buildModules builds every modules/<id> that is a main package and whose
-// metadata.json supports the current OS.
-func buildModules() ([]module, error) {
+// metadata.json supports the current OS, for the architecture arch.
+func buildModules(arch string) ([]module, error) {
 	entries, err := os.ReadDir(modulesDir)
 	if err != nil {
 		return nil, err
@@ -116,9 +120,11 @@ func buildModules() ([]module, error) {
 			fmt.Printf("Skipping module %s (platforms: %s)\n", id, strings.Join(meta.Platforms, ", "))
 			continue
 		}
-		out := filepath.Join(moduleOutDir, id+plugin.HostSuffix)
+		out := filepath.Join(moduleOutDir, id+plugin.PlatformSuffix(runtime.GOOS, arch))
 		fmt.Printf("Building module %s -> %s\n", id, out)
-		if err := runCmd("go", "build", "-ldflags="+moduleLDFlags, "-o", out, "./"+modulesDir+"/"+id); err != nil {
+		build := exec.Command("go", "build", "-ldflags="+moduleLDFlags, "-o", out, "./"+modulesDir+"/"+id)
+		build.Env = append(os.Environ(), "GOARCH="+arch)
+		if err := runExec(build); err != nil {
 			return nil, fmt.Errorf("build module %s: %w", id, err)
 		}
 		built = append(built, module{id: id, path: out, meta: meta})
@@ -186,7 +192,10 @@ func sectionID(id string) string {
 }
 
 func runCmd(name string, args ...string) error {
-	cmd := exec.Command(name, args...)
+	return runExec(exec.Command(name, args...))
+}
+
+func runExec(cmd *exec.Cmd) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 	return cmd.Run()
