@@ -2,7 +2,7 @@
   "name": "Virtual Desktop",
   "description": "Provides face, eye and tongue tracking for the Quest Pro when using Virtual Desktop",
   "author": "SayukiDev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "usageInstructions": "Make sure to install the Virtual Desktop Streamer version 1.30 or greater before activating this module",
   "icons": ["logo256.png"],
   "platforms": ["windows"]

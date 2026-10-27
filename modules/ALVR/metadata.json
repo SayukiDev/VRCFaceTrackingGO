@@ -2,7 +2,7 @@
   "name": "ALVR",
   "description": "Provides face and eye tracking forwarded by ALVR",
   "author": "SayukiDev",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "usageInstructions": "Set \"Eye and face tracking\" to \"VRCFaceTracking\" in the ALVR dashboard, then reconnect the client if necessary",
   "icons": ["alvr.png"],
   "platforms": ["windows", "linux"]
