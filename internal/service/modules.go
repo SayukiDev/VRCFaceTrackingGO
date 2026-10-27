@@ -47,12 +47,19 @@ func (s *Service) ModuleConfigDirty() bool { return s.moduleConfigDirty.Load() }
 // ReloadModules re-initialises the modules with the current list in the
 // background. Listener.OnModulesChanged fires when it is done.
 func (s *Service) ReloadModules() {
-	s.moduleConfigDirty.Store(false)
 	s.logger.Info("Reloading modules...")
-	go func() {
+	s.loadModules()
+}
+
+// loadModules rescans the installed modules and starts the enabled ones in
+// the background, so slow modules never hold up the caller (or the window
+// at startup). Listener.OnModulesChanged fires when it is done.
+func (s *Service) loadModules() {
+	s.moduleConfigDirty.Store(false)
+	s.loading.Go(func() {
 		s.modules.Scan(s.ctx)
 		s.router.Initialize(s.ctx)
-	}()
+	})
 }
 
 // TrackingAssignment returns the manual eye / expression module choice.

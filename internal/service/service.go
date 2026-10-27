@@ -60,6 +60,8 @@ type Service struct {
 	messagesOut atomic.Int64
 
 	moduleConfigDirty atomic.Bool
+	// loading tracks the background module loads started by loadModules.
+	loading sync.WaitGroup
 
 	listener Listener
 }
@@ -126,10 +128,7 @@ func (s *Service) initialize() {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
 	}
 	s.startQuery()
-
-	s.moduleConfigDirty.Store(false)
-	s.modules.Scan(s.ctx)
-	s.router.Initialize(s.ctx)
+	s.loadModules()
 }
 
 // Reinitialize tears down the modules and network endpoints and brings
@@ -147,6 +146,9 @@ func (s *Service) Stop() {
 	if s.cancel != nil {
 		s.cancel()
 	}
+	// A module that finishes starting after the teardown would be left
+	// running, so let the cancelled loads return first.
+	s.loading.Wait()
 	if s.router != nil {
 		s.router.Teardown()
 	}
