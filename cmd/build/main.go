@@ -12,7 +12,8 @@
 // common:update:build-assets", and then builds the application with the
 // Wails v3 CLI ("wails3 build", or "wails3 package" for the NSIS installer
 // and the macOS app bundle). The NSIS installer (-nsis) is only built on Windows,
-// one per architecture (-arch).
+// one per architecture (-arch). The Linux packages (-linux-packages: AppImage,
+// deb, rpm and Arch Linux) are only built on Linux.
 package main
 
 import (
@@ -50,6 +51,7 @@ func run() error {
 	app := flag.Bool("app", true, "build the application with wails after the modules")
 	assets := flag.Bool("assets", true, "regenerate the build assets from build/config.yml before building the application (overwrites manual edits to them)")
 	nsis := flag.Bool("nsis", runtime.GOOS == "windows", "also build the NSIS installer (needs -app, Windows only)")
+	linuxPackages := flag.Bool("linux-packages", false, "also build the AppImage and the deb, rpm and Arch Linux packages (needs -app, Linux only)")
 	install := flag.Bool("install", false, "copy the built modules into the current user's module folder")
 	tags := flag.String("tags", "", "extra build tags for the application (e.g. gtk3 for GTK3 and WebKitGTK 4.1 on Linux)")
 	arch := flag.String("arch", runtime.GOARCH, "target architecture (GOARCH: amd64 or arm64) for the modules and the application")
@@ -62,6 +64,9 @@ func run() error {
 	metadata.Init(raw)
 	if *nsis && runtime.GOOS != "windows" {
 		return fmt.Errorf("the NSIS installer can only be built on Windows")
+	}
+	if *linuxPackages && runtime.GOOS != "linux" {
+		return fmt.Errorf("the Linux packages can only be built on Linux")
 	}
 	if *install && *arch != runtime.GOARCH {
 		return fmt.Errorf("-install needs modules for this machine's architecture (%s), not %s", runtime.GOARCH, *arch)
@@ -87,7 +92,8 @@ func run() error {
 		}
 	}
 	// "wails3 package" builds the application and then packages it: the NSIS
-	// installer on Windows, the .app bundle on macOS.
+	// installer on Windows, the .app bundle on macOS, the AppImage and the
+	// deb, rpm and Arch Linux packages on Linux.
 	cmd := "build"
 	if *nsis {
 		if err := writeNSISInclude(modules); err != nil {
@@ -95,7 +101,7 @@ func run() error {
 		}
 		cmd = "package"
 	}
-	if runtime.GOOS == "darwin" {
+	if runtime.GOOS == "darwin" || *linuxPackages {
 		cmd = "package"
 	}
 	args := []string{cmd, "GOARCH=" + *arch}

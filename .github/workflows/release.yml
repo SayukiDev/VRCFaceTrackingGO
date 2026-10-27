@@ -2,6 +2,8 @@
 # one ZIP per platform to it:
 #   Windows:       the installer (which bundles the modules) and THIRD_PARTY_NOTICES.md
 #   Linux / macOS: the application, the modules built for that OS and THIRD_PARTY_NOTICES.md
+# Linux also gets the AppImage and the deb, rpm and Arch Linux packages,
+# which hold the application only (no modules).
 name: Release
 
 on:
@@ -75,7 +77,7 @@ jobs:
           echo "C:\Program Files (x86)\NSIS" >> "$GITHUB_PATH"
 
       - name: Build
-        run: go run ./cmd/build -arch "${{ matrix.arch }}" -tags "${{ matrix.tags }}"
+        run: go run ./cmd/build -arch "${{ matrix.arch }}" -tags "${{ matrix.tags }}" ${{ runner.os == 'Linux' && '-linux-packages' || '' }}
 
       - name: Pack (Windows)
         if: runner.os == 'Windows'
@@ -91,6 +93,12 @@ jobs:
           cp build/bin/modules/*.vfgmod dist/modules/ 2>/dev/null || true
           rmdir dist/modules 2>/dev/null || true
           (cd dist && zip -r "../$ZIP_NAME" .)
+          mkdir packages
+          base="$APP_NAME-${{ github.event.release.tag_name }}-${{ matrix.platform }}"
+          cp "build/bin/$APP_NAME.deb" "packages/$base.deb"
+          cp "build/bin/$APP_NAME.rpm" "packages/$base.rpm"
+          cp "build/bin/$APP_NAME.pkg.tar.zst" "packages/$base.pkg.tar.zst"
+          cp build/bin/*.AppImage "packages/$base.AppImage"
 
       - name: Pack (macOS)
         if: runner.os == 'macOS'
@@ -107,3 +115,9 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: gh release upload "${{ github.event.release.tag_name }}" "$ZIP_NAME" --clobber
+
+      - name: Upload the Linux packages to the release
+        if: runner.os == 'Linux'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release upload "${{ github.event.release.tag_name }}" packages/* --clobber

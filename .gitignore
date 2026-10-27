@@ -11,6 +11,8 @@ frontend/dist
 /build/windows/nsis/modules.nsh
 /build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
 /build/linux/appimage/build
+/build/linux/appimage/VRCFaceTrackingGO*
+/build/linux/VRCFaceTrackingGO.desktop
 .task
 *.syso
 *.exe
