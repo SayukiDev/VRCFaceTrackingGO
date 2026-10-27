@@ -1,0 +1,55 @@
+# nfpm configuration for the deb, rpm and Arch Linux packages
+# (https://nfpm.goreleaser.com). The Linux Taskfile uses this file rather
+# than nfpm.yaml next to it: "wails3 task common:update:build-assets" (run by
+# cmd/build) regenerates nfpm.yaml from the Wails template on every build.
+#
+# Paths are relative to the repository root. VERSION and GOARCH are set by
+# the Linux Taskfile (VERSION from info.version in build/config.yml).
+
+# deb and Arch Linux package names must be lowercase.
+name: "vrcfacetrackinggo"
+arch: ${GOARCH}
+platform: "linux"
+version: ${VERSION}
+release: "1"
+section: "utils"
+priority: "optional"
+maintainer: "SayukiDev <161200388+SayukiDev@users.noreply.github.com>"
+description: "VRChat OSC face tracking app"
+vendor: "SayukiDev"
+homepage: "https://github.com/SayukiDev/VRCFaceTrackingGO"
+license: "AGPL-3.0-only"
+
+contents:
+  - src: "./build/bin/VRCFaceTrackingGO"
+    dst: "/usr/bin/VRCFaceTrackingGO"
+  - src: "./build/appicon.png"
+    dst: "/usr/share/icons/hicolor/128x128/apps/VRCFaceTrackingGO.png"
+  - src: "./build/linux/VRCFaceTrackingGO.desktop"
+    dst: "/usr/share/applications/VRCFaceTrackingGO.desktop"
+  - src: "./LICENSE"
+    dst: "/usr/share/licenses/vrcfacetrackinggo/LICENSE"
+  - src: "./THIRD_PARTY_NOTICES.md"
+    dst: "/usr/share/doc/vrcfacetrackinggo/THIRD_PARTY_NOTICES.md"
+
+# GTK 4 + WebKitGTK 6.0 (Ubuntu 24.04+ / Debian 13+). Builds with -tags gtk3
+# need libgtk-3-0 / libwebkit2gtk-4.1-0 (gtk3 / webkit2gtk4.1, gtk3 /
+# webkit2gtk-4.1) instead.
+depends:
+  - libgtk-4-1
+  - libwebkitgtk-6.0-4
+
+overrides:
+  # Fedora / RHEL / AlmaLinux / Rocky Linux
+  rpm:
+    depends:
+      - gtk4
+      - webkitgtk6.0
+  archlinux:
+    depends:
+      - gtk4
+      - webkitgtk-6.0
+
+scripts:
+  postinstall: "./build/linux/nfpm/scripts/postinstall.sh"
+  postremove: "./build/linux/nfpm/scripts/postremove.sh"
