@@ -1,10 +1,42 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
-import { NIcon } from 'naive-ui'
+import { h, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { NCheckbox, NIcon, useDialog } from 'naive-ui'
 import { Subtract24Regular, Maximize24Regular, SquareMultiple24Regular, Dismiss24Regular } from '@vicons/fluent'
-import { Application, Window } from '@wailsio/runtime'
+import { Window } from '@wailsio/runtime'
+import { CloseAllWindows, GetHideTrayNotice, SetHideTrayNotice } from '@go/app/app'
 
+const { t } = useI18n()
+const dialog = useDialog()
 const maximised = ref(false)
+
+// close tells the user that the application keeps running in the tray,
+// unless they opted out, and then closes every window.
+async function close() {
+  if (await GetHideTrayNotice().catch(() => false)) {
+    void CloseAllWindows()
+    return
+  }
+  const hide = ref(false)
+  dialog.info({
+    title: t('titlebar.trayNotice.title'),
+    content: () =>
+      h('div', [
+        h('p', t('titlebar.trayNotice.body')),
+        h(
+          NCheckbox,
+          { checked: hide.value, 'onUpdate:checked': (v: boolean) => (hide.value = v) },
+          () => t('titlebar.trayNotice.dontShowAgain'),
+        ),
+      ]),
+    positiveText: t('titlebar.trayNotice.ok'),
+    negativeText: t('titlebar.trayNotice.cancel'),
+    onPositiveClick: () => {
+      if (hide.value) void SetHideTrayNotice(true)
+      void CloseAllWindows()
+    },
+  })
+}
 
 async function refresh() {
   try {
@@ -43,7 +75,7 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
           <Maximize24Regular v-else />
         </n-icon>
       </button>
-      <button class="ctl close" :aria-label="$t('titlebar.close')" @click="Application.Quit()">
+      <button class="ctl close" :aria-label="$t('titlebar.close')" @click="close">
         <n-icon :size="16"><Dismiss24Regular /></n-icon>
       </button>
     </div>

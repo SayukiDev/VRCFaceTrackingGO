@@ -21,6 +21,9 @@ var assets embed.FS
 //go:embed build/config.yml
 var metadataBytes []byte
 
+//go:embed build/appicon.png
+var trayIcon []byte
+
 func init() {
 	metadata.Init(metadataBytes)
 	metadataBytes = nil
@@ -36,32 +39,23 @@ func main() {
 func run() error {
 	// A second instance hands over to the running one inside application.New
 	// and exits before the services start, so everything that touches the
-	// data or log directory happens in ui.ServiceStartup.
-	ui := app.New()
-
+	// data or log directory happens in App.ServiceStartup.
 	wails := application.New(application.Options{
 		Name:        metadata.Info.Name,
 		Description: metadata.Info.Info.Description,
-		Services:    []application.Service{application.NewService(ui)},
 		Assets: application.AssetOptions{
 			Handler: application.AssetFileServerFS(assets),
 		},
-		SingleInstance: app.SingleInstance(ui, singleInstanceID),
+		SingleInstance: app.SingleInstance(singleInstanceID),
 		Mac: application.MacOptions{
-			ApplicationShouldTerminateAfterLastWindowClosed: true,
+			ApplicationShouldTerminateAfterLastWindowClosed: false,
+		},
+		Windows: application.WindowsOptions{
+			DisableQuitOnLastWindowClosed: true,
+		},
+		Linux: application.LinuxOptions{
+			DisableQuitOnLastWindowClosed: true,
 		},
 	})
-
-	wails.Window.NewWithOptions(application.WebviewWindowOptions{
-		Name:             app.MainWindow,
-		Title:            metadata.Info.Name,
-		Width:            1200,
-		Height:           860,
-		MinWidth:         800,
-		MinHeight:        500,
-		Frameless:        true,
-		BackgroundColour: application.NewRGBA(24, 24, 28, 255),
-	})
-
-	return wails.Run()
+	return app.Run(app.New(wails), trayIcon)
 }

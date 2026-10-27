@@ -6,6 +6,13 @@ const ja: typeof en = {
     maximise: '最大化',
     restore: '元に戻す',
     close: '閉じる',
+    trayNotice: {
+      title: 'バックグラウンドで動作を続けます',
+      body: 'ウィンドウを閉じても VRCFaceTrackingGO は動作し続けます。画面右下のタスクバーにあるアイコン（見当たらない場合は「^」の中）をクリックすると再表示でき、右クリックして「Quit」を選ぶと終了します。',
+      dontShowAgain: '今後は表示しない',
+      ok: 'OK',
+      cancel: 'キャンセル',
+    },
   },
   nav: {
     home: 'ホーム',

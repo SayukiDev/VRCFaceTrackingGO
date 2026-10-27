@@ -23,8 +23,11 @@ type Settings struct {
 	// SeedColor.
 	UseSystemAccent bool `json:"useSystemAccent"`
 	// Locale is the UI language, or "" to follow the system.
-	Locale string     `json:"locale"`
-	OSC    osc.Target `json:"osc"`
+	Locale string `json:"locale"`
+	// HideTrayNotice skips the notice that closing the window keeps the
+	// application running in the tray.
+	HideTrayNotice bool       `json:"hideTrayNotice"`
+	OSC            osc.Target `json:"osc"`
 	// OSCMode is how VRChat and the loaded avatar are found.
 	OSCMode osc.Mode          `json:"oscMode"`
 	Output  sender.OutputMode `json:"output"`

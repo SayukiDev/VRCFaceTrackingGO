@@ -40,6 +40,14 @@ import * as service$0 from "../internal/service/models.js";
 import * as settings$0 from "../internal/settings/models.js";
 
 /**
+ * CloseAllWindows closes every window, which sends the application to the
+ * tray.
+ */
+export function CloseAllWindows(): $CancellablePromise<void> {
+    return $Call.ByID(965784456);
+}
+
+/**
  * CopyLogs puts the full log into the clipboard.
  */
 export function CopyLogs(): $CancellablePromise<void> {
@@ -58,6 +66,10 @@ export function GetAvatar(): $CancellablePromise<oscquery$0.AvatarInfo> {
     return $Call.ByID(3446081217).then(($result: any) => {
         return $$createType0($result);
     });
+}
+
+export function GetHideTrayNotice(): $CancellablePromise<boolean> {
+    return $Call.ByID(1784054860);
 }
 
 /**
@@ -207,6 +219,10 @@ export function SaveLogs(): $CancellablePromise<string> {
 
 export function SetAllParametersRelevant(v: boolean): $CancellablePromise<void> {
     return $Call.ByID(3688800286, v);
+}
+
+export function SetHideTrayNotice(hide: boolean): $CancellablePromise<void> {
+    return $Call.ByID(2549756912, hide);
 }
 
 export function SetLocale(locale: string): $CancellablePromise<void> {

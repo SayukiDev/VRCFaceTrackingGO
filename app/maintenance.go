@@ -73,6 +73,12 @@ func (a *App) SetLocale(locale string) {
 	a.svc.Store().Update(func(s *settings.Settings) { s.Locale = locale })
 }
 
+func (a *App) GetHideTrayNotice() bool { return a.svc.Store().Get().HideTrayNotice }
+
+func (a *App) SetHideTrayNotice(hide bool) {
+	a.svc.Store().Update(func(s *settings.Settings) { s.HideTrayNotice = hide })
+}
+
 func (a *App) ResetVRCFT() error { return a.svc.ScheduleReset() }
 
 func (a *App) ResetAvatarConfigs() error { return a.svc.ResetAvatarConfigs() }

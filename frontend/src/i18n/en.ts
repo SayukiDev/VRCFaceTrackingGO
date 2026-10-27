@@ -4,6 +4,13 @@ export default {
     maximise: 'Maximize',
     restore: 'Restore',
     close: 'Close',
+    trayNotice: {
+      title: 'Still running in the background',
+      body: 'VRCFaceTrackingGO keeps running after its window is closed. Click its icon at the bottom right of the taskbar (under "^" if you cannot see it) to open it again, or right-click the icon and choose "Quit" to exit.',
+      dontShowAgain: "Don't show this again",
+      ok: 'OK',
+      cancel: 'Cancel',
+    },
   },
   nav: {
     home: 'Home',
