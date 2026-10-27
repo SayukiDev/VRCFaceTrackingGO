@@ -66,8 +66,10 @@ pub trait Module: Send {
     ) -> impl Future<Output = Result<Support>> + Send;
 
     /// Writes the current state into `data`, which keeps its values between
-    /// calls. Wait a few milliseconds at most for fresh data; an error only
-    /// skips this frame.
+    /// calls, and returns at once. Receive from the device in a task spawned
+    /// by `initialize` and keep only the newest values; reading the device
+    /// here lets data pile up when it sends faster than the host asks. An
+    /// error only skips this frame.
     fn update(&mut self, data: &mut TrackingData) -> impl Future<Output = Result<()>> + Send;
 
     /// Releases the device.

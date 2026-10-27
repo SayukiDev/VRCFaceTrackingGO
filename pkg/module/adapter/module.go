@@ -81,8 +81,10 @@ type Module interface {
 	// kinds of tracking the host still needs; the returned Support states what
 	// the module will actually provide.
 	Initialize(ctx context.Context, logger *zap.Logger, avail Support) (Support, error)
-	// Update blocks until fresh data is available (or a short timeout) and
-	// writes it into data.
+	// Update writes the latest values into data and returns at once. Receive
+	// from the device in the background and keep only the newest values;
+	// reading the device here lets data pile up when it sends faster than
+	// the host asks.
 	Update(ctx context.Context, data *tracking.TrackingData) error
 	Teardown() error
 }

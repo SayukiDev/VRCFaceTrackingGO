@@ -62,8 +62,11 @@ fn main() {
 
 - `initialize` returns the subset of `avail` the module will provide;
   `serve` drops anything outside it.
-- `update` should wait a few milliseconds at most for fresh data. An error
-  only skips the frame.
+- `update` should return at once with the latest state. Receive from the
+  device in a task spawned by `initialize`, keep only the newest values,
+  and copy them out in `update`; reading the device in `update` lets data
+  pile up when the device sends faster than the host asks. An error only
+  skips the frame.
 - Log with the `Logger` passed to `initialize`; it writes JSON lines to
   stderr, which the host forwards to its log. **Never print to stdout**: it
   carries the protocol.

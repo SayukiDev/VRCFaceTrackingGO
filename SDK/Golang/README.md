@@ -38,7 +38,10 @@ go get github.com/SayukiDev/VRCFaceTrackingGO@latest
    - `Initialize` opens the device. `avail` is what the host still needs;
      return the subset the module will provide.
    - `Update` writes the current state into `data`, which keeps its values
-     between calls. Wait a few milliseconds at most for fresh data.
+     between calls, and returns at once. Receive from the device in a
+     goroutine started by `Initialize`, keep only the newest values, and
+     copy them out in `Update`; reading the device in `Update` lets data
+     pile up when the device sends faster than the host asks.
    - `Teardown` releases the device.
    - Log with the `logger` passed to `Initialize`; it is forwarded to the
      host's log. Never write to stdout.

@@ -9,7 +9,7 @@
 //! # then copy target/release/examples/demo(.exe) to DemoRust.<os>.<arch>.vfgmod
 //! ```
 
-use std::time::{Duration, Instant};
+use std::time::Instant;
 
 use serde_json::json;
 use vrcftgo_sdk::{
@@ -59,9 +59,9 @@ impl Module for Demo {
         Ok(avail)
     }
 
-    // A real module would wait a few milliseconds for fresh device data.
+    // A real module would copy the newest values its receiving task stored,
+    // without waiting.
     async fn update(&mut self, data: &mut TrackingData) -> Result<()> {
-        tokio::time::sleep(Duration::from_millis(5)).await;
         let t = self.start.elapsed().as_secs_f64();
 
         if self.granted.expression {

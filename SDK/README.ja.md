@@ -164,7 +164,7 @@ SDK を使ってください。[Go のガイド](Golang/README.ja.md)と [Rust �
 - レスポンスを書くたびに標準出力を **flush** する。ホストは届くまで待ち続けます。
 - 標準出力にはレスポンス以外を絶対に書かない。ログやライブラリの出力は標準エラー出力に送る。
 - トラッキングデータのバッファはセッション中 1 つだけ持ち、上記の初期値で始めて、Update のたびにその場で更新する。
-- Update はすぐに返す。新しいデータを待つのは長くても数ミリ秒にとどめ、その時点の状態を返す。5 秒応答がないとハングとみなされます。
+- Update には最新の状態ですぐに応答する。デバイスからの受信はバックグラウンド(別スレッドやデバイス側のイベント)で行い、一番新しい値だけを保持する。Update の中でデバイスを読むと、デバイスの送信がホストの要求より速いときにデータが溜まって遅れます。5 秒応答がないとハングとみなされます。
 - Teardown でデバイスを解放し、標準入力が EOF になったら終了する。
 
 ### 例 (Python)
@@ -229,7 +229,7 @@ def main():
             log("info", "Initialized", granted=granted)
             ok(out, bytes([granted]))
         elif op == b"U":
-            # Read the device here and write the weights, e.g. JawOpen:
+            # Copy in the newest values your receiving thread stored, e.g. JawOpen:
             # data[SHAPES + 22] = jaw_open
             ok(out, struct.pack(f"<{FLOATS}f", *data))
         elif op == b"T":

@@ -32,10 +32,9 @@ const (
 	// discoveryTimeout bounds how long Initialize waits for the first
 	// packet; the original module waited forever and froze the host.
 	discoveryTimeout = 5 * time.Second
-	readTimeout      = 100 * time.Millisecond
-	// timeoutWarnEvery is the number of consecutive read timeouts before
-	// a warning is logged (600 * 100ms = 60s).
-	timeoutWarnEvery = 600
+	// silenceWarnAfter is how long the stream may be silent before a
+	// warning is logged.
+	silenceWarnAfter = 60 * time.Second
 
 	maxDatagram = 4096
 )
@@ -44,21 +43,21 @@ const (
 type Module struct {
 	logger *zap.Logger
 
-	mu       sync.Mutex
-	conn     *net.UDPConn
-	legacy   bool
-	granted  adapter.Support
-	timeouts int
-	mapper   mapper
-	buf      []byte
+	conn *net.UDPConn
+	done chan struct{}
+	// mapper is owned by the receive goroutine.
+	mapper mapper
+
+	mu      sync.Mutex
+	legacy  bool
+	granted adapter.Support
+	latest  tracking.TrackingData
 }
 
 var _ adapter.Module = (*Module)(nil)
 
 // New creates a module.
-func New() *Module {
-	return &Module{buf: make([]byte, maxDatagram)}
-}
+func New() *Module { return &Module{} }
 
 func (m *Module) ID() string { return "VRCFTPicoModule" }
 
@@ -100,14 +99,60 @@ func (m *Module) Initialize(ctx context.Context, logger *zap.Logger, avail adapt
 		return adapter.Support{}, err
 	}
 	want := adapter.Support{Eye: true, Expression: true}
-	m.mu.Lock()
-	m.conn, m.legacy, m.granted = conn, legacy, want
-	m.timeouts = 0
-	m.mapper = mapper{}
-	m.mu.Unlock()
-
+	m.start(conn, legacy, want)
 	m.logger.Info("Using port", zap.Int("port", conn.LocalAddr().(*net.UDPAddr).Port), zap.Bool("legacy", legacy))
 	return want, nil
+}
+
+func (m *Module) start(conn *net.UDPConn, legacy bool, granted adapter.Support) {
+	m.mu.Lock()
+	m.legacy, m.granted = legacy, granted
+	m.latest = *tracking.NewTrackingData()
+	m.mu.Unlock()
+	m.conn = conn
+	m.mapper = mapper{}
+	m.done = make(chan struct{})
+	go m.receive(legacy, granted)
+}
+
+// receive applies every packet to the latest values until the connection
+// is closed, so no backlog builds up however fast the headset sends.
+func (m *Module) receive(legacy bool, granted adapter.Support) {
+	defer close(m.done)
+	buf := make([]byte, maxDatagram)
+	for {
+		_ = m.conn.SetReadDeadline(time.Now().Add(silenceWarnAfter))
+		n, err := m.conn.Read(buf)
+		if err != nil {
+			var netErr net.Error
+			switch {
+			case errors.Is(err, net.ErrClosed):
+				return
+			case errors.As(err, &netErr) && netErr.Timeout():
+				m.logger.Warn("Receive data timed out")
+			default:
+				m.logger.Warn("Receive failed", zap.Error(err))
+			}
+			continue
+		}
+
+		w, err := parsePacket(buf[:n], legacy)
+		if errors.Is(err, errNotFaceData) {
+			continue
+		}
+		if err != nil {
+			m.logger.Debug("Ignoring malformed packet", zap.Error(err))
+			continue
+		}
+		m.mu.Lock()
+		if granted.Eye {
+			updateEye(&m.latest, w)
+		}
+		if granted.Expression {
+			m.mapper.updateExpression(&m.latest, w)
+		}
+		m.mu.Unlock()
+	}
 }
 
 type discovered struct {
@@ -176,63 +221,26 @@ func deadlineOf(ctx context.Context) time.Time {
 	return time.Now().Add(discoveryTimeout)
 }
 
-// Update reads one datagram with a short deadline so a silent headset never
-// blocks the caller.
-func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// Update writes the latest received values into data without waiting.
+func (m *Module) Update(_ context.Context, data *tracking.TrackingData) error {
 	if m.conn == nil {
 		return errors.New("VRCFTPicoModule: module not initialised")
 	}
-
-	deadline := time.Now().Add(readTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
-		deadline = d
-	}
-	_ = m.conn.SetReadDeadline(deadline)
-
-	n, _, err := m.conn.ReadFromUDP(m.buf)
-	if err != nil {
-		var netErr net.Error
-		if errors.As(err, &netErr) && netErr.Timeout() {
-			m.timeouts++
-			if m.timeouts >= timeoutWarnEvery {
-				m.logger.Warn("Receive data timed out")
-				m.timeouts = 0
-			}
-			return nil
-		}
-		if errors.Is(err, net.ErrClosed) {
-			return nil
-		}
-		return fmt.Errorf("VRCFTPicoModule: receive: %w", err)
-	}
-	m.timeouts = 0
-
-	w, err := parsePacket(m.buf[:n], m.legacy)
-	if err != nil {
-		if errors.Is(err, errNotFaceData) {
-			return nil
-		}
-		return err
-	}
-	if m.granted.Eye {
-		updateEye(data, w)
-	}
-	if m.granted.Expression {
-		m.mapper.updateExpression(data, w)
-	}
+	m.mu.Lock()
+	data.CopyFrom(&m.latest)
+	m.mu.Unlock()
 	return nil
 }
 
 func (m *Module) Teardown() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.conn == nil {
 		return nil
 	}
 	err := m.conn.Close()
+	<-m.done
 	m.conn = nil
+	m.mu.Lock()
 	m.granted = adapter.Support{}
+	m.mu.Unlock()
 	return err
 }

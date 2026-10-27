@@ -12,7 +12,6 @@ import (
 	"fmt"
 	"net"
 	"sync"
-	"time"
 
 	"go.uber.org/zap"
 
@@ -31,7 +30,6 @@ const (
 	// port is where the ALVR server sends tracking data.
 	port = 0xA1F7
 
-	readTimeout = 100 * time.Millisecond
 	maxDatagram = 4096
 )
 
@@ -39,18 +37,17 @@ const (
 type Module struct {
 	logger *zap.Logger
 
-	mu      sync.Mutex
-	conn    *net.UDPConn
-	buf     []byte
-	unknown map[string]bool
+	conn *net.UDPConn
+	done chan struct{}
+
+	mu     sync.Mutex
+	latest tracking.TrackingData
 }
 
 var _ adapter.Module = (*Module)(nil)
 
 // New returns an uninitialised ALVR module.
-func New() *Module {
-	return &Module{buf: make([]byte, maxDatagram)}
-}
+func New() *Module { return &Module{} }
 
 func (m *Module) ID() string { return "ALVR" }
 
@@ -60,8 +57,8 @@ func (m *Module) Supported() adapter.Support {
 	return adapter.Support{Eye: true, Expression: true}
 }
 
-// Initialize binds the UDP port. ALVR and the host can start in any order,
-// so it does not wait for data.
+// Initialize binds the UDP port and starts receiving in the background.
+// ALVR and the host can start in any order, so it does not wait for data.
 func (m *Module) Initialize(_ context.Context, logger *zap.Logger, avail adapter.Support) (adapter.Support, error) {
 	m.logger = logger.Named("ALVR")
 
@@ -69,55 +66,62 @@ func (m *Module) Initialize(_ context.Context, logger *zap.Logger, avail adapter
 	if err != nil {
 		return adapter.Support{}, fmt.Errorf("ALVR: listen on port %d: %w", port, err)
 	}
-
-	m.mu.Lock()
-	defer m.mu.Unlock()
-	m.conn = conn
-	m.unknown = make(map[string]bool)
+	m.start(conn)
 	m.logger.Info("Listening for tracking data", zap.Int("port", port))
 	return avail, nil
 }
 
-// Update reads one datagram with a short deadline so a silent ALVR never
-// blocks the caller.
-func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+func (m *Module) start(conn *net.UDPConn) {
+	m.conn = conn
+	m.latest = *tracking.NewTrackingData()
+	m.done = make(chan struct{})
+	go m.receive()
+}
+
+// receive applies every datagram to the latest values until the connection
+// is closed, so no backlog builds up however fast ALVR sends.
+func (m *Module) receive() {
+	defer close(m.done)
+	buf := make([]byte, maxDatagram)
+	unknown := make(map[string]bool)
+	for {
+		n, err := m.conn.Read(buf)
+		if errors.Is(err, net.ErrClosed) {
+			return
+		}
+		if err != nil {
+			m.logger.Warn("Receive failed", zap.Error(err))
+			continue
+		}
+
+		sections, prefix := parsePacket(buf[:n])
+		if prefix != "" && !unknown[prefix] {
+			unknown[prefix] = true
+			m.logger.Error("Unrecognized prefix", zap.String("prefix", prefix))
+		}
+		m.mu.Lock()
+		apply(sections, &m.latest)
+		m.mu.Unlock()
+	}
+}
+
+// Update writes the latest received values into data without waiting.
+func (m *Module) Update(_ context.Context, data *tracking.TrackingData) error {
 	if m.conn == nil {
 		return errors.New("ALVR: module not initialised")
 	}
-
-	deadline := time.Now().Add(readTimeout)
-	if d, ok := ctx.Deadline(); ok && d.Before(deadline) {
-		deadline = d
-	}
-	_ = m.conn.SetReadDeadline(deadline)
-
-	n, _, err := m.conn.ReadFromUDP(m.buf)
-	if err != nil {
-		var netErr net.Error
-		if errors.As(err, &netErr) && netErr.Timeout() || errors.Is(err, net.ErrClosed) {
-			return nil
-		}
-		return fmt.Errorf("ALVR: receive: %w", err)
-	}
-
-	sections, unknown := parsePacket(m.buf[:n])
-	if unknown != "" && !m.unknown[unknown] {
-		m.unknown[unknown] = true
-		m.logger.Error("Unrecognized prefix", zap.String("prefix", unknown))
-	}
-	apply(sections, data)
+	m.mu.Lock()
+	data.CopyFrom(&m.latest)
+	m.mu.Unlock()
 	return nil
 }
 
 func (m *Module) Teardown() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.conn == nil {
 		return nil
 	}
 	err := m.conn.Close()
+	<-m.done
 	m.conn = nil
 	return err
 }

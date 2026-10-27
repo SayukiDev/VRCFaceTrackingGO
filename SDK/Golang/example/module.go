@@ -54,8 +54,8 @@ func (m *Module) Initialize(_ context.Context, logger *zap.Logger, avail adapter
 	return avail, nil
 }
 
-// Update writes the current state into data. A real module would wait a
-// few milliseconds for fresh device data here.
+// Update writes the current state into data. A real module would copy the
+// newest values its receiving goroutine stored, without waiting.
 func (m *Module) Update(_ context.Context, data *tracking.TrackingData) error {
 	t := time.Since(m.start).Seconds()
 

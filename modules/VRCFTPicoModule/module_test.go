@@ -145,20 +145,38 @@ func TestInitializeAndUpdateWithStream(t *testing.T) {
 	}
 }
 
-// Update must return promptly when the stream goes silent.
-func TestUpdateReturnsOnSilence(t *testing.T) {
+// A burst sent faster than Update is called must not queue up: Update
+// returns the last packet at once.
+func TestUpdateReturnsNewestPacket(t *testing.T) {
 	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	m := &Module{conn: conn, logger: zap.NewNop(), buf: make([]byte, maxDatagram)}
+	m := &Module{logger: zap.NewNop()}
+	m.start(conn, false, adapter.Support{Expression: true})
 	defer m.Teardown()
 
-	start := time.Now()
-	if err := m.Update(context.Background(), tracking.NewTrackingData()); err != nil {
+	sender, err := net.DialUDP("udp4", nil, conn.LocalAddr().(*net.UDPAddr))
+	if err != nil {
 		t.Fatal(err)
 	}
-	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+	defer sender.Close()
+	for _, v := range []float32{0.1, 0.5, 0.9} {
+		if _, err := sender.Write(encodeFacePacket(t, false, func(b *packetBody) { b.BlendShapeWeight[jawOpen] = v })); err != nil {
+			t.Fatal(err)
+		}
+	}
+	time.Sleep(200 * time.Millisecond) // let the receiver drain the burst
+
+	start := time.Now()
+	data := tracking.NewTrackingData()
+	if err := m.Update(context.Background(), data); err != nil {
+		t.Fatal(err)
+	}
+	if elapsed := time.Since(start); elapsed > 50*time.Millisecond {
 		t.Fatalf("Update blocked for %s", elapsed)
+	}
+	if got := data.Shapes[tracking.JawOpen].Weight; got != 0.9 {
+		t.Fatalf("JawOpen = %v, want the last packet's 0.9", got)
 	}
 }

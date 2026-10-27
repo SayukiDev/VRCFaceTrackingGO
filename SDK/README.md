@@ -227,8 +227,10 @@ Checklist:
   output to stderr.
 - Keep one tracking data buffer for the whole session, start it with the
   initial values above, and update it in place on every Update.
-- Return from Update quickly: wait for fresh data for a few milliseconds at
-  most, then answer with the current state. 5 seconds without an answer
+- Answer Update at once with the latest state. Receive from the device in
+  the background (a thread, or the device's own events) and keep only the
+  newest values; reading the device inside Update lets data pile up when
+  the device sends faster than the host asks. 5 seconds without an answer
   counts as a hang.
 - Release the device on Teardown, and exit when stdin reaches EOF.
 
@@ -294,7 +296,7 @@ def main():
             log("info", "Initialized", granted=granted)
             ok(out, bytes([granted]))
         elif op == b"U":
-            # Read the device here and write the weights, e.g. JawOpen:
+            # Copy in the newest values your receiving thread stored, e.g. JawOpen:
             # data[SHAPES + 22] = jaw_open
             ok(out, struct.pack(f"<{FLOATS}f", *data))
         elif op == b"T":

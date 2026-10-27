@@ -10,7 +10,6 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
@@ -97,51 +96,88 @@ func TestUnifiedExpr(t *testing.T) {
 	}
 }
 
-func TestInitializeAndUpdateWithStream(t *testing.T) {
-	m := New()
-	if _, err := m.Initialize(context.Background(), zap.NewNop(), adapter.Support{Eye: true, Expression: true}); err != nil {
-		t.Fatal(err)
-	}
-	defer m.Teardown()
-
-	sender, err := net.DialUDP("udp4", nil, &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1), Port: port})
+// startOnFreePort receives on a free port, so the tests do not clash with a
+// running app that holds the real one. It returns a sender aimed at it.
+func startOnFreePort(t *testing.T) (*Module, *net.UDPConn) {
+	t.Helper()
+	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
 	if err != nil {
 		t.Fatal(err)
 	}
-	defer sender.Close()
+	m := &Module{logger: zap.NewNop()}
+	m.start(conn)
+	t.Cleanup(func() { m.Teardown() })
 
-	face := make([]float32, picoCount)
-	face[picoJawOpen] = 0.9
-	if _, err := sender.Write(encodeSection(nil, "FacePico", face)); err != nil {
+	sender, err := net.DialUDP("udp4", nil, conn.LocalAddr().(*net.UDPAddr))
+	if err != nil {
 		t.Fatal(err)
 	}
+	t.Cleanup(func() { sender.Close() })
+	return m, sender
+}
 
+// waitForJaw calls Update until JawOpen is want.
+func waitForJaw(t *testing.T, m *Module, want float32) {
+	t.Helper()
 	data := tracking.NewTrackingData()
 	deadline := time.Now().Add(2 * time.Second)
-	for data.Shapes[tracking.JawOpen].Weight != 0.9 {
+	for data.Shapes[tracking.JawOpen].Weight != want {
 		if time.Now().After(deadline) {
-			t.Fatal("never received jaw value")
+			t.Fatalf("JawOpen = %v, want %v", data.Shapes[tracking.JawOpen].Weight, want)
 		}
+		time.Sleep(time.Millisecond)
 		if err := m.Update(context.Background(), data); err != nil {
 			t.Fatal(err)
 		}
 	}
 }
 
-// Update must return promptly when ALVR is silent.
-func TestUpdateReturnsOnSilence(t *testing.T) {
-	conn, err := net.ListenUDP("udp4", &net.UDPAddr{IP: net.IPv4(127, 0, 0, 1)})
-	if err != nil {
+func TestUpdateWithStream(t *testing.T) {
+	m, sender := startOnFreePort(t)
+	face := make([]float32, picoCount)
+	face[picoJawOpen] = 0.9
+	if _, err := sender.Write(encodeSection(nil, "FacePico", face)); err != nil {
 		t.Fatal(err)
 	}
-	m := &Module{conn: conn, logger: zap.NewNop(), buf: make([]byte, maxDatagram)}
-	defer m.Teardown()
+	waitForJaw(t, m, 0.9)
+}
 
+// A burst sent faster than Update is called must not queue up: Update
+// returns the last packet at once.
+func TestUpdateReturnsNewestPacket(t *testing.T) {
+	m, sender := startOnFreePort(t)
+	face := make([]float32, picoCount)
+	const n = 100
+	for i := 1; i <= n; i++ {
+		face[picoJawOpen] = float32(i) / n
+		if _, err := sender.Write(encodeSection(nil, "FacePico", face)); err != nil {
+			t.Fatal(err)
+		}
+	}
+	time.Sleep(200 * time.Millisecond) // let the receiver drain the burst
+	data := tracking.NewTrackingData()
+	if err := m.Update(context.Background(), data); err != nil {
+		t.Fatal(err)
+	}
+	if got := data.Shapes[tracking.JawOpen].Weight; got != 1 {
+		t.Fatalf("JawOpen = %v, want the last packet's 1", got)
+	}
+}
+
+// Update must not wait for data while the sender is silent.
+func TestUpdateDoesNotWait(t *testing.T) {
+	m, _ := startOnFreePort(t)
 	start := time.Now()
 	if err := m.Update(context.Background(), tracking.NewTrackingData()); err != nil {
 		t.Fatal(err)
 	}
-	if elapsed := time.Since(start); elapsed > 500*time.Millisecond {
+	if elapsed := time.Since(start); elapsed > 50*time.Millisecond {
 		t.Fatalf("Update blocked for %s", elapsed)
+	}
+}
+
+func TestUpdateBeforeInitialize(t *testing.T) {
+	if err := New().Update(context.Background(), tracking.NewTrackingData()); err == nil {
+		t.Fatal("expected an error before Initialize")
 	}
 }

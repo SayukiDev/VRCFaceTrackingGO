@@ -21,7 +21,7 @@ const (
 	bodyStateMapName   = "VirtualDesktop.BodyState"
 	bodyStateEventName = "VirtualDesktop.BodyStateEvent"
 
-	// frameTimeout bounds one Update call. The Streamer signals at the
+	// frameTimeout bounds one wait for a frame. The Streamer signals at the
 	// headset's tracking rate, so a timeout only happens when nothing is
 	// being forwarded.
 	frameTimeout = 50 * time.Millisecond
@@ -39,15 +39,19 @@ var metadata = adapter.MustLoadMetadata(files, "metadata.json")
 
 // Module reads tracking data from Virtual Desktop.
 type Module struct {
-	logger *zap.Logger
-
-	mu      sync.Mutex
+	logger  *zap.Logger
 	shm     *sharedState
 	granted adapter.Support
+	stop    chan struct{}
+	done    chan struct{}
 
+	// Owned by the receive goroutine.
 	tracking     bool
 	lastFrameAt  time.Time
 	silenceAlert bool
+
+	mu     sync.Mutex
+	latest tracking.TrackingData
 }
 
 var _ adapter.Module = (*Module)(nil)
@@ -72,43 +76,60 @@ func (m *Module) Initialize(_ context.Context, logger *zap.Logger, avail adapter
 		return adapter.Support{}, err
 	}
 
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	m.shm = shm
 	m.granted = avail
 	m.tracking = false
 	m.lastFrameAt = time.Now()
 	m.silenceAlert = false
+	m.latest = *tracking.NewTrackingData()
+	m.stop, m.done = make(chan struct{}), make(chan struct{})
+	go m.receive()
 	return m.granted, nil
 }
 
-// Update waits for the next frame (bounded by frameTimeout) and converts
-// it. Without a frame it only refreshes the tracking status.
-func (m *Module) Update(ctx context.Context, data *tracking.TrackingData) error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
+// receive converts every frame into the latest values until stop is
+// closed. Without a frame it only refreshes the tracking status.
+func (m *Module) receive() {
+	defer close(m.done)
+	for {
+		select {
+		case <-m.stop:
+			return
+		default:
+		}
+
+		gotFrame, err := m.shm.waitFrame(frameTimeout)
+		if err != nil {
+			m.logger.Warn("Waiting for a frame failed", zap.Error(err))
+			select {
+			case <-m.stop:
+				return
+			case <-time.After(frameTimeout):
+			}
+			continue
+		}
+
+		state := m.shm.snapshot()
+		if !gotFrame {
+			m.setTracking(state.anyValid())
+			continue
+		}
+		m.lastFrameAt = time.Now()
+		m.mu.Lock()
+		tracked := m.convert(&state, &m.latest)
+		m.mu.Unlock()
+		m.setTracking(tracked)
+	}
+}
+
+// Update writes the latest converted frame into data without waiting.
+func (m *Module) Update(_ context.Context, data *tracking.TrackingData) error {
 	if m.shm == nil {
 		return errors.New("VirtualDesktop: module not initialised")
 	}
-
-	timeout := frameTimeout
-	if d, ok := ctx.Deadline(); ok {
-		if remaining := time.Until(d); remaining < timeout {
-			timeout = max(remaining, 0)
-		}
-	}
-	gotFrame, err := m.shm.waitFrame(timeout)
-	if err != nil {
-		return err
-	}
-
-	state := m.shm.snapshot()
-	if !gotFrame {
-		m.setTracking(state.anyValid())
-		return nil
-	}
-	m.lastFrameAt = time.Now()
-	m.setTracking(m.convert(&state, data))
+	m.mu.Lock()
+	data.CopyFrom(&m.latest)
+	m.mu.Unlock()
 	return nil
 }
 
@@ -154,11 +175,11 @@ func (m *Module) setTracking(active bool) {
 }
 
 func (m *Module) Teardown() error {
-	m.mu.Lock()
-	defer m.mu.Unlock()
 	if m.shm == nil {
 		return nil
 	}
+	close(m.stop)
+	<-m.done
 	err := m.shm.close()
 	m.shm = nil
 	m.granted = adapter.Support{}
