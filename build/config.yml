@@ -1,0 +1,66 @@
+# This file contains the configuration for this project.
+# When you update `info` or `fileAssociations`, run `wails3 task common:update:build-assets` to update the assets.
+# Note that this will overwrite any changes you have made to the assets.
+version: '3'
+
+# The application reads this file at runtime too (embedded by main.go, see
+# internal/metadata): name, author and the info block below. name is the
+# data/log folder name and must match APP_NAME in Taskfile.yml.
+name: "VRCFaceTrackingGO"
+author:
+  name: "SayukiDev"
+  email: "161200388+SayukiDev@users.noreply.github.com"
+
+# This information is used to generate the build assets.
+info:
+  companyName: "SayukiDev" # The name of the company
+  productName: "VRCFaceTrackingGO" # The name of the application
+  productIdentifier: "com.sayukidev.vrcfacetrackinggo" # The unique product identifier
+  description: "VRChat OSC face tracking app" # The application description
+  copyright: "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0." # Copyright text
+  comments: "VRChat OSC face tracking app" # Comments
+  version: "0.0.2" # The application version
+  # Links shown on the About page (not used by the build assets).
+  repository: "https://github.com/SayukiDev/VRCFaceTrackingGO"
+  noticesUrl: "https://github.com/SayukiDev/VRCFaceTrackingGO/blob/master/THIRD_PARTY_NOTICES.md"
+  issuesUrl: "https://github.com/SayukiDev/VRCFaceTrackingGO/issues/new/choose"
+
+# Dev mode configuration
+dev_mode:
+  root_path: .
+  log_level: warn
+  debounce: 1000
+  ignore:
+    dir:
+      - .git
+      - node_modules
+      - frontend
+      - build
+      - modules
+      - SDK
+      - temp
+    file:
+      - .DS_Store
+      - .gitignore
+      - .gitkeep
+      - "*_test.go"
+    watched_extension:
+      - "*.go"
+      - "*.js" # Watch for changes to JS/TS files included using the //wails:include directive.
+      - "*.ts" # The frontend directory will be excluded entirely by the setting above.
+    git_ignore: true
+  executes:
+    - cmd: wails3 build DEV=true
+      type: blocking
+    - cmd: wails3 task common:dev:frontend
+      type: background
+      # The standard frontend task waits up to 60s for HTTP 200 from
+      # FRONTEND_DEVSERVER_URL before starting the app. Override if needed;
+      # custom background commands can opt in with the same readiness block.
+      # readiness:
+      #   http: "http://localhost:5173/"
+      #   timeout: "60s"
+      #   interval: "200ms"
+    - cmd: wails3 task run
+      type: primary
+      exit_policy: shutdown

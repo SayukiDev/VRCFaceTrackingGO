@@ -1,11 +1,11 @@
 import { onBeforeUnmount, ref, type Ref } from 'vue'
-import { EventsOn } from '../../wailsjs/runtime/runtime'
+import { Events as WailsEvents } from '@wailsio/runtime'
 
 /**
  * Subscribes to a Wails event for the lifetime of the component.
  */
 export function useEvent<T>(name: string, handler: (data: T) => void): void {
-  const off = EventsOn(name, handler as (data: any) => void)
+  const off = WailsEvents.On(name, (ev) => handler(ev.data as T))
   onBeforeUnmount(off)
 }
 

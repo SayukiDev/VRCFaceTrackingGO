@@ -1,10 +1,9 @@
 package app
 
 import (
+	"errors"
 	"path/filepath"
 	"time"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/accent"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
@@ -14,16 +13,25 @@ import (
 func (a *App) GetLogs() []logging.Line { return a.svc.Logs() }
 
 // CopyLogs puts the full log into the clipboard.
-func (a *App) CopyLogs() error { return runtime.ClipboardSetText(a.ctx, a.svc.LogText()) }
+func (a *App) CopyLogs() error {
+	if !a.app.Clipboard.SetText(a.svc.LogText()) {
+		return errors.New("could not write to the clipboard")
+	}
+	return nil
+}
 
 // SaveLogs asks for a destination and writes the full log there. It returns
 // the chosen file name, or "" when cancelled.
 func (a *App) SaveLogs() (string, error) {
-	path, err := runtime.SaveFileDialog(a.ctx, runtime.SaveDialogOptions{
-		DefaultFilename: "VRCFaceTrackingGO-" + time.Now().Format("2006-01-02-15-04") + ".txt",
-		Filters:         []runtime.FileFilter{{DisplayName: "Plain Text", Pattern: "*.txt"}},
-	})
-	if err != nil || path == "" {
+	path, err := a.app.Dialog.SaveFile().
+		SetFilename("VRCFaceTrackingGO-"+time.Now().Format("2006-01-02-15-04")+".txt").
+		AddFilter("Plain Text", "*.txt").
+		PromptForSingleSelection()
+	// Cancelling returns an empty path together with an error.
+	if path == "" {
+		return "", nil
+	}
+	if err != nil {
 		return "", err
 	}
 	if err := a.svc.SaveLogs(path); err != nil {

@@ -44,7 +44,7 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 ### Linux
 
 - x64
-- GTK 3 and WebKitGTK 4.1 (`libgtk-3-0t64` and `libwebkit2gtk-4.1-0` on Ubuntu 24.04 or later)
+- GTK 4 and WebKitGTK 6.0 (`libgtk-4-1` and `libwebkitgtk-6.0-4` on Ubuntu 24.04 or later)
 - Limits:
   - Only modules that support Linux can be used.
   - VRChat's OSC setting is not turned on automatically, and the OSC mode cannot read avatar config files, so it sends every parameter. Use the OSCQuery mode to send only the current avatar's parameters.
@@ -52,7 +52,7 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 
 ### macOS
 
-- A Mac with Apple silicon (arm64), macOS 11 or later
+- A Mac with Apple silicon (arm64), macOS 12 or later
 - The app is not signed; open it with right click → Open the first time.
 - Limits:
   - Only modules that support macOS can be used.
@@ -61,7 +61,7 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 
 ## Build
 
-Prerequisites: Go 1.25+, Node.js, the [Wails v2 CLI](https://wails.io/docs/gettingstarted/installation) and [NSIS](https://nsis.sourceforge.io) for the installer.
+Prerequisites: Go 1.26+, Node.js, the [Wails v3 CLI](https://v3.wails.io/quick-start/installation/) (`go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`) and [NSIS](https://nsis.sourceforge.io) for the installer. On Linux, also `libgtk-4-dev` and `libwebkitgtk-6.0-dev`.
 
 ```sh
 go run ./cmd/build
@@ -74,9 +74,9 @@ This builds every module whose `metadata.json` lists the current OS into `build/
 | `-app` | `true` | Build the application after the modules |
 | `-nsis` | `true` on Windows | Also build the installer (Windows only) |
 | `-install` | `false` | Copy the modules into the module folder (`%APPDATA%\VRCFaceTrackingGO\Modules` on Windows, see [SDK/README.md](SDK/README.md#module-program) for other OSes) |
-| `-tags` | | Build tags for `wails build`, e.g. `webkit2_41` for WebKitGTK 4.1 on Linux |
+| `-tags` | | Extra build tags for the application, e.g. `gtk3` for GTK 3 and WebKitGTK 4.1 on Linux |
 
-For development, `wails dev` runs the application with hot reload.
+For development, `wails3 dev` runs the application with hot reload. Other tasks (`wails3 task --list`) are defined in `Taskfile.yml` and `build/`; the application metadata (name, version, About links) lives in `build/config.yml`, and after changing it run `wails3 task common:update:build-assets`.
 
 Publishing a GitHub release runs [`.github/workflows/release.yml`](.github/workflows/release.yml), which builds on Windows, Linux and macOS and attaches a ZIP for each to the release.
 

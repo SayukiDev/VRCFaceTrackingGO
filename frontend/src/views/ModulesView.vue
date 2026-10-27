@@ -12,8 +12,8 @@ import {
 import {
   GetModuleCatalog, GetModuleConfigDirty, InstallModule, OpenURL, ReloadModules, SetModuleEnabled, SetModuleOrder,
   SetModuleUse, UninstallModule,
-} from '../../wailsjs/go/app/App'
-import type { router } from '../../wailsjs/go/models'
+} from '@go/app/app'
+import type * as router from '@go/internal/router'
 import { Events, useEvent } from '../composables/useBackend'
 
 const { t } = useI18n()

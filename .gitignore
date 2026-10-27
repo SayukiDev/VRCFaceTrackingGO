@@ -8,5 +8,9 @@ frontend/dist
 /.idea/vcs.xml
 /.idea/VRCFaceTracking.iml
 /temp
-/build/windows/installer/modules.nsh
+/build/windows/nsis/modules.nsh
+/build/windows/nsis/MicrosoftEdgeWebview2Setup.exe
+/build/linux/appimage/build
+.task
+*.syso
 *.exe

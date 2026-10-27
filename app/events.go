@@ -1,9 +1,7 @@
 package app
 
 import (
-	"context"
-
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
@@ -24,23 +22,23 @@ const (
 
 // emitter implements service.Listener by emitting Wails events.
 type emitter struct {
-	ctx context.Context
+	app *application.App
 }
 
-func (e *emitter) OnLog(line logging.Line) { runtime.EventsEmit(e.ctx, eventLog, line) }
+func (e *emitter) OnLog(line logging.Line) { e.app.Event.Emit(eventLog, line) }
 
 func (e *emitter) OnModulesChanged(mods []router.ModuleInfo) {
-	runtime.EventsEmit(e.ctx, eventModules, mods)
+	e.app.Event.Emit(eventModules, mods)
 }
 
 func (e *emitter) OnAvatarChanged(info oscquery.AvatarInfo) {
-	runtime.EventsEmit(e.ctx, eventAvatar, info)
+	e.app.Event.Emit(eventAvatar, info)
 }
 
 func (e *emitter) OnParametersChanged(stats sender.ParameterStats) {
-	runtime.EventsEmit(e.ctx, eventParameters, stats)
+	e.app.Event.Emit(eventParameters, stats)
 }
 
 func (e *emitter) OnOscStats(status service.OscStatus) {
-	runtime.EventsEmit(e.ctx, eventOscStats, status)
+	e.app.Event.Emit(eventOscStats, status)
 }

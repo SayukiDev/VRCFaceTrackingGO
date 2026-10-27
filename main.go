@@ -5,10 +5,7 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/wailsapp/wails/v2"
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/options/assetserver"
-	"github.com/wailsapp/wails/v2/pkg/options/windows"
+	"github.com/wailsapp/wails/v3/pkg/application"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/app"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
@@ -21,7 +18,7 @@ const singleInstanceID = "a9309d2e-6bc4-46f3-9592-f0cb6979885b"
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed wails.json
+//go:embed build/config.yml
 var metadataBytes []byte
 
 func init() {
@@ -37,29 +34,34 @@ func main() {
 }
 
 func run() error {
-	// A second instance hands over to the running one inside wails.Run and
-	// exits before OnStartup, so everything that touches the data or log
-	// directory happens in ui.Startup.
+	// A second instance hands over to the running one inside application.New
+	// and exits before the services start, so everything that touches the
+	// data or log directory happens in ui.ServiceStartup.
 	ui := app.New()
 
-	return wails.Run(&options.App{
-		Title:     metadata.Info.Name,
-		Width:     1200,
-		Height:    860,
-		MinWidth:  800,
-		MinHeight: 500,
-		AssetServer: &assetserver.Options{
-			Assets: assets,
+	wails := application.New(application.Options{
+		Name:        metadata.Info.Name,
+		Description: metadata.Info.Info.Description,
+		Services:    []application.Service{application.NewService(ui)},
+		Assets: application.AssetOptions{
+			Handler: application.AssetFileServerFS(assets),
 		},
-		BackgroundColour:   &options.RGBA{R: 24, G: 24, B: 28, A: 1},
-		SingleInstanceLock: app.SingleInstanceLock(ui, singleInstanceID),
-		OnStartup:          ui.Startup,
-		OnShutdown:         ui.Shutdown,
-		Bind:               []any{ui},
-		Frameless:          true,
-		Windows: &windows.Options{
-			WebviewIsTransparent: false,
-			WindowIsTranslucent:  false,
+		SingleInstance: app.SingleInstance(ui, singleInstanceID),
+		Mac: application.MacOptions{
+			ApplicationShouldTerminateAfterLastWindowClosed: true,
 		},
 	})
+
+	wails.Window.NewWithOptions(application.WebviewWindowOptions{
+		Name:             app.MainWindow,
+		Title:            metadata.Info.Name,
+		Width:            1200,
+		Height:           860,
+		MinWidth:         800,
+		MinHeight:        500,
+		Frameless:        true,
+		BackgroundColour: application.NewRGBA(24, 24, 28, 255),
+	})
+
+	return wails.Run()
 }

@@ -3,7 +3,7 @@ import { createI18n } from 'vue-i18n'
 import { enUS, jaJP, dateEnUS, dateJaJP } from 'naive-ui'
 import en from './en'
 import ja from './ja'
-import { GetLocale, SetLocale } from '../../wailsjs/go/app/App'
+import { GetLocale, SetLocale } from '@go/app/app'
 
 export type Locale = 'en' | 'ja'
 /** LocaleMode is what the user picks: a language or "follow the system". */

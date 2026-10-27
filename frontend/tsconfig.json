@@ -11,8 +11,11 @@
     "isolatedModules": true,
     "esModuleInterop": true,
     "lib": ["ESNext", "DOM"],
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "paths": {
+      "@go/*": ["./bindings/github.com/SayukiDev/VRCFaceTrackingGO/*"]
+    }
   },
-  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "wailsjs/**/*.d.ts", "wailsjs/go/models.ts"],
+  "include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue", "bindings/**/*.ts"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }

@@ -1,8 +1,6 @@
 package app
 
 import (
-	"github.com/wailsapp/wails/v2/pkg/runtime"
-
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
@@ -37,11 +35,15 @@ func (a *App) GetModuleConfigDirty() bool { return a.svc.ModuleConfigDirty() }
 // InstallModule asks for a module program and installs it. It returns the
 // installed module's name, or "" when cancelled.
 func (a *App) InstallModule() (string, error) {
-	path, err := runtime.OpenFileDialog(a.ctx, runtime.OpenDialogOptions{
-		Title:   "Install module",
-		Filters: []runtime.FileFilter{{DisplayName: "VRCFaceTracking module (*" + plugin.HostSuffix + ")", Pattern: "*" + plugin.HostSuffix}},
-	})
-	if err != nil || path == "" {
+	path, err := a.app.Dialog.OpenFile().
+		SetTitle("Install module").
+		AddFilter("VRCFaceTracking module (*"+plugin.HostSuffix+")", "*"+plugin.HostSuffix).
+		PromptForSingleSelection()
+	// Cancelling returns an empty path together with an error.
+	if path == "" {
+		return "", nil
+	}
+	if err != nil {
 		return "", err
 	}
 	info, err := a.svc.InstallModule(a.ctx, path)

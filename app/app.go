@@ -6,35 +6,37 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/wailsapp/wails/v2/pkg/options"
-	"github.com/wailsapp/wails/v2/pkg/runtime"
+	"github.com/wailsapp/wails/v3/pkg/application"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/service"
 )
 
-// App is the object bound to the frontend. Every exported method is
-// callable from JavaScript.
+// MainWindow is the name of the application window.
+const MainWindow = "main"
+
+// App is the service bound to the frontend. Every exported method except
+// the Wails lifecycle hooks is callable from JavaScript.
 type App struct {
 	ctx context.Context
+	app *application.App
 	svc *service.Service
 }
 
-// New creates the binding object. The service is created in Startup.
+// New creates the binding object. The service is created in ServiceStartup.
 func New() *App { return &App{} }
 
-// Startup is the Wails OnStartup hook. It only runs in the first instance.
-func (a *App) Startup(ctx context.Context) {
+// ServiceStartup is the Wails service startup hook. It only runs in the
+// first instance. Returning an error makes application.Run fail.
+func (a *App) ServiceStartup(ctx context.Context, _ application.ServiceOptions) error {
 	a.ctx = ctx
+	a.app = application.Get()
 	if err := a.start(ctx); err != nil {
-		_, _ = runtime.MessageDialog(ctx, runtime.MessageDialogOptions{
-			Type:    runtime.ErrorDialog,
-			Title:   metadata.Info.Name,
-			Message: err.Error(),
-		})
-		runtime.Quit(ctx)
+		a.app.Dialog.Error().SetTitle(metadata.Info.Name).SetMessage(err.Error()).Show()
+		return err
 	}
+	return nil
 }
 
 func (a *App) start(ctx context.Context) error {
@@ -50,37 +52,45 @@ func (a *App) start(ctx context.Context) error {
 		return err
 	}
 	a.svc = service.New(logger, logBuf, dataDir)
-	if err := a.svc.Start(ctx, &emitter{ctx: ctx}); err != nil {
+	if err := a.svc.Start(ctx, &emitter{app: a.app}); err != nil {
 		return fmt.Errorf("service failed to start: %w", err)
 	}
 	return nil
 }
 
-// Shutdown is the Wails OnShutdown hook.
-func (a *App) Shutdown(context.Context) {
+// ServiceShutdown is the Wails service shutdown hook.
+func (a *App) ServiceShutdown() error {
 	if a.svc != nil {
 		a.svc.Stop()
 	}
+	return nil
 }
 
-// SingleInstanceLock makes a second launch bring a's window to the front
+// SingleInstance makes a second launch bring a's window to the front
 // instead of starting another instance. It is a function rather than a
 // method so Wails does not bind it to the frontend.
-func SingleInstanceLock(a *App, uniqueID string) *options.SingleInstanceLock {
-	return &options.SingleInstanceLock{
-		UniqueId:               uniqueID,
+func SingleInstance(a *App, uniqueID string) *application.SingleInstanceOptions {
+	return &application.SingleInstanceOptions{
+		UniqueID:               uniqueID,
 		OnSecondInstanceLaunch: a.onSecondInstanceLaunch,
 	}
 }
 
-func (a *App) onSecondInstanceLaunch(options.SecondInstanceData) {
-	if a.ctx == nil {
+// onSecondInstanceLaunch runs on its own goroutine; window methods are safe
+// to call from there.
+func (a *App) onSecondInstanceLaunch(application.SecondInstanceData) {
+	if a.app == nil {
 		return
 	}
-	runtime.WindowUnminimise(a.ctx)
-	runtime.WindowShow(a.ctx)
+	w, ok := a.app.Window.GetByName(MainWindow)
+	if !ok {
+		return
+	}
+	w.Restore()
+	w.Show()
+	w.Focus()
 }
 
 func (a *App) GetMetadata() metadata.Metadata { return metadata.Info }
 
-func (a *App) OpenURL(url string) { runtime.BrowserOpenURL(a.ctx, url) }
+func (a *App) OpenURL(url string) error { return a.app.Browser.OpenURL(url) }

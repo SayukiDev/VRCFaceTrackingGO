@@ -1,0 +1,13 @@
+[Desktop Entry]
+Version=1.0
+Name=VRCFaceTrackingGO
+Comment=VRChat OSC face tracking app
+# The Exec line includes %u to pass the URL to the application
+Exec=/usr/local/bin/VRCFaceTrackingGO %u
+Terminal=false
+Type=Application
+Icon=VRCFaceTrackingGO
+Categories=Utility;
+StartupWMClass=VRCFaceTrackingGO
+
+ 

@@ -44,7 +44,7 @@
 ### Linux
 
 - x64
-- GTK 3 と WebKitGTK 4.1(Ubuntu 24.04 以降なら `libgtk-3-0t64` と `libwebkit2gtk-4.1-0`)
+- GTK 4 と WebKitGTK 6.0(Ubuntu 24.04 以降なら `libgtk-4-1` と `libwebkitgtk-6.0-4`)
 - 制限:
   - Linux に対応したモジュールしか使用できません。
   - VRChat の OSC 設定を自動で有効にしません。また、OSC モードではアバター設定ファイルを読めないため、すべてのパラメーターを送信します。現在のアバターのパラメーターだけを送るには OSCQuery モードを使ってください。
@@ -52,7 +52,7 @@
 
 ### macOS
 
-- Apple シリコン(arm64)の Mac、macOS 11 以降
+- Apple シリコン(arm64)の Mac、macOS 12 以降
 - 署名していないため、初回は右クリックの「開く」から起動してください。
 - 制限:
   - macOS に対応したモジュールしか使用できません。
@@ -61,7 +61,7 @@
 
 ## ビルド
 
-必要なもの: Go 1.25 以降、Node.js、[Wails v2 CLI](https://wails.io/docs/gettingstarted/installation)、インストーラーを作る場合は [NSIS](https://nsis.sourceforge.io)。
+必要なもの: Go 1.26 以降、Node.js、[Wails v3 CLI](https://v3.wails.io/ja/quick-start/installation/)(`go install github.com/wailsapp/wails/v3/cmd/wails3@v3.0.0`)、インストーラーを作る場合は [NSIS](https://nsis.sourceforge.io)。Linux では `libgtk-4-dev` と `libwebkitgtk-6.0-dev` も必要です。
 
 ```sh
 go run ./cmd/build
@@ -74,9 +74,9 @@ go run ./cmd/build
 | `-app` | `true` | モジュールの後にアプリをビルドする |
 | `-nsis` | Windows では `true` | インストーラーも作る(Windows のみ) |
 | `-install` | `false` | モジュールをモジュールフォルダにコピーする(Windows は `%APPDATA%\VRCFaceTrackingGO\Modules`、ほかの OS は [SDK/README.ja.md](SDK/README.ja.md#モジュールプログラム) を参照) |
-| `-tags` | | `wails build` に渡すビルドタグ(Linux で WebKitGTK 4.1 を使う場合は `webkit2_41` など) |
+| `-tags` | | アプリに追加するビルドタグ(Linux で GTK 3 と WebKitGTK 4.1 を使う場合は `gtk3` など) |
 
-開発中は `wails dev` でホットリロード付きで起動できます。
+開発中は `wails3 dev` でホットリロード付きで起動できます。その他のタスク(`wails3 task --list`)は `Taskfile.yml` と `build/` にあります。アプリのメタデータ(名前・バージョン・About のリンク)は `build/config.yml` にあり、変更したら `wails3 task common:update:build-assets` を実行してください。
 
 GitHub でリリースを公開すると [`.github/workflows/release.yml`](.github/workflows/release.yml) が動き、Windows・Linux・macOS でビルドして、それぞれの ZIP をリリースに添付します。
 

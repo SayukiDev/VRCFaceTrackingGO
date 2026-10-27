@@ -2,22 +2,21 @@
 import { onMounted, onUnmounted, ref } from 'vue'
 import { NIcon } from 'naive-ui'
 import { Subtract24Regular, Maximize24Regular, SquareMultiple24Regular, Dismiss24Regular } from '@vicons/fluent'
-import { WindowMinimise, WindowToggleMaximise, WindowIsMaximised, Quit } from '../../wailsjs/runtime/runtime'
+import { Application, Window } from '@wailsio/runtime'
 
 const maximised = ref(false)
 
 async function refresh() {
   try {
-    maximised.value = await WindowIsMaximised()
+    maximised.value = await Window.IsMaximised()
   } catch {
     // runtime unavailable (e.g. plain browser dev) — ignore
   }
 }
 
 function toggleMaximise() {
-  WindowToggleMaximise()
   // The runtime does not emit a maximise event; re-query after the change.
-  setTimeout(refresh, 50)
+  Window.ToggleMaximise().then(refresh, () => {})
 }
 
 onMounted(() => {
@@ -35,7 +34,7 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
     </div>
     <div class="drag-area" />
     <div class="controls" style="--wails-draggable: no-drag" @dblclick.stop>
-      <button class="ctl" :aria-label="$t('titlebar.minimise')" @click="WindowMinimise()">
+      <button class="ctl" :aria-label="$t('titlebar.minimise')" @click="Window.Minimise()">
         <n-icon :size="16"><Subtract24Regular /></n-icon>
       </button>
       <button class="ctl" :aria-label="maximised ? $t('titlebar.restore') : $t('titlebar.maximise')" @click="toggleMaximise">
@@ -44,7 +43,7 @@ onUnmounted(() => window.removeEventListener('resize', refresh))
           <Maximize24Regular v-else />
         </n-icon>
       </button>
-      <button class="ctl close" :aria-label="$t('titlebar.close')" @click="Quit()">
+      <button class="ctl close" :aria-label="$t('titlebar.close')" @click="Application.Quit()">
         <n-icon :size="16"><Dismiss24Regular /></n-icon>
       </button>
     </div>

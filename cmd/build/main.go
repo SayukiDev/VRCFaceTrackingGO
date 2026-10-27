@@ -6,9 +6,11 @@
 //
 // It builds every modules/<id> whose metadata.json lists the current OS in
 // "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod, writes
-// the installer's module sections (build/windows/installer/modules.nsh)
-// from their metadata.json, and then runs "wails build". The NSIS installer (-nsis)
-// is only built on Windows, one per architecture (-arch).
+// the installer's module sections (build/windows/nsis/modules.nsh)
+// from their metadata.json, and then builds the application with the Wails
+// v3 CLI ("wails3 build", or "wails3 package" for the NSIS installer and the
+// macOS app bundle). The NSIS installer (-nsis) is only built on Windows,
+// one per architecture (-arch).
 package main
 
 import (
@@ -30,8 +32,8 @@ const (
 	modulesDir         = "modules"
 	moduleMetadataFile = "metadata.json"
 	moduleOutDir       = "build/bin/modules"
-	nsisInclude        = "build/windows/installer/modules.nsh"
-	metadataFile       = "wails.json"
+	nsisInclude        = "build/windows/nsis/modules.nsh"
+	metadataFile       = "build/config.yml"
 	moduleLDFlags      = "-s -w"
 )
 
@@ -46,7 +48,7 @@ func run() error {
 	app := flag.Bool("app", true, "build the application with wails after the modules")
 	nsis := flag.Bool("nsis", runtime.GOOS == "windows", "also build the NSIS installer (needs -app, Windows only)")
 	install := flag.Bool("install", false, "copy the built modules into the current user's module folder")
-	tags := flag.String("tags", "", "build tags for wails build (e.g. webkit2_41 for WebKitGTK 4.1 on Linux)")
+	tags := flag.String("tags", "", "extra build tags for the application (e.g. gtk3 for GTK3 and WebKitGTK 4.1 on Linux)")
 	arch := flag.String("arch", runtime.GOARCH, "target architecture (GOARCH: amd64 or arm64) for the modules and the application")
 	flag.Parse()
 
@@ -74,17 +76,23 @@ func run() error {
 	if !*app {
 		return nil
 	}
-	args := []string{"build", "-platform", runtime.GOOS + "/" + *arch}
-	if *tags != "" {
-		args = append(args, "-tags", *tags)
-	}
+	// "wails3 package" builds the application and then packages it: the NSIS
+	// installer on Windows, the .app bundle on macOS.
+	cmd := "build"
 	if *nsis {
 		if err := writeNSISInclude(modules); err != nil {
 			return err
 		}
-		args = append(args, "-nsis")
+		cmd = "package"
 	}
-	return runCmd("wails", args...)
+	if runtime.GOOS == "darwin" {
+		cmd = "package"
+	}
+	args := []string{cmd, "GOARCH=" + *arch}
+	if *tags != "" {
+		args = append(args, "EXTRA_TAGS="+*tags)
+	}
+	return runCmd("wails3", args...)
 }
 
 // module is one built module program. Its ID is the directory name, which

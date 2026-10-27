@@ -2,8 +2,8 @@ import { computed, ref, watchEffect } from 'vue'
 import { darkTheme } from 'naive-ui'
 import {
   GetSeedColor, GetSystemAccentColor, GetTheme, GetUseSystemAccent, SetSeedColor, SetTheme, SetUseSystemAccent,
-} from '../../wailsjs/go/app/App'
-import { WindowSetBackgroundColour } from '../../wailsjs/runtime/runtime'
+} from '@go/app/app'
+import { Window } from '@wailsio/runtime'
 import { cssVariables, generatePalette, themeOverrides as md3Overrides } from '../theme/md3'
 
 export type ThemeMode = 'light' | 'dark' | 'system'
@@ -58,7 +58,7 @@ watchEffect(() => {
   root.style.colorScheme = isDark.value ? 'dark' : 'light'
   const s = palette.value.surfaceContainer
   try {
-    WindowSetBackgroundColour((s >> 16) & 255, (s >> 8) & 255, s & 255, 255)
+    Window.SetBackgroundColour((s >> 16) & 255, (s >> 8) & 255, s & 255, 255).catch(() => {})
   } catch {
     // runtime unavailable (e.g. plain browser dev) — ignore
   }

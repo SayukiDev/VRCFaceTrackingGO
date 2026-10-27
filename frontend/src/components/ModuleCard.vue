@@ -1,8 +1,8 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { NCard, NImage, NSwitch, NTag, NText } from 'naive-ui'
-import type { router } from '../../wailsjs/go/models'
-import { SetModuleActive } from '../../wailsjs/go/app/App'
+import type * as router from '@go/internal/router'
+import { SetModuleActive } from '@go/app/app'
 
 defineProps<{ module: router.ModuleInfo }>()
 const { t } = useI18n()

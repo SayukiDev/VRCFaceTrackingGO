@@ -2,8 +2,8 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NCard, NSelect, NText, useMessage, type SelectOption } from 'naive-ui'
-import { GetModuleCatalog, GetTrackingAssignment, SetTrackingAssignment } from '../../wailsjs/go/app/App'
-import type { router } from '../../wailsjs/go/models'
+import { GetModuleCatalog, GetTrackingAssignment, SetTrackingAssignment } from '@go/app/app'
+import type * as router from '@go/internal/router'
 import { Events, useEvent } from '../composables/useBackend'
 
 // Manual choice of the eye and face module. It is not saved: the next

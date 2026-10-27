@@ -8,8 +8,10 @@ import { Checkmark20Regular, ArrowRouting24Regular, Color24Regular, PaintBrush24
 import {
   GetOscTarget, SetOscTarget, GetOscMode, SetOscMode, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
   ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
-} from '../../wailsjs/go/app/App'
-import { metadata, osc, settings } from '../../wailsjs/go/models'
+} from '@go/app/app'
+import * as metadata from '@go/internal/metadata'
+import * as osc from '@go/internal/osc'
+import * as settings from '@go/internal/settings'
 import { defaultSeed, useTheme, type ThemeMode } from '../composables/useTheme'
 import { useLocale, type LocaleMode } from '../i18n'
 import { usePlatform } from '../composables/usePlatform'
@@ -127,7 +129,7 @@ async function resetAvatarConfigs() {
   }
 }
 
-const meta = ref<metadata.Metadata>(new metadata.Metadata({ name: 'VRCFaceTrackingGO', author: {}, info: {} }))
+const meta = ref<metadata.Metadata>(new metadata.Metadata({ name: 'VRCFaceTrackingGO' }))
 GetMetadata().then((v) => (meta.value = v))
 </script>
 

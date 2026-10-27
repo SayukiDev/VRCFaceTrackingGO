@@ -3,8 +3,8 @@ import { computed, nextTick, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NButton, NButtonGroup, NIcon, NScrollbar, NSpace, NText, NTooltip, type ScrollbarInst } from 'naive-ui'
 import { Copy24Regular, Save24Regular } from '@vicons/fluent'
-import { GetLogs, CopyLogs, SaveLogs } from '../../wailsjs/go/app/App'
-import type { logging } from '../../wailsjs/go/models'
+import { GetLogs, CopyLogs, SaveLogs } from '@go/app/app'
+import type * as logging from '@go/internal/logging'
 import { Events, useEvent } from '../composables/useBackend'
 
 const { t } = useI18n()

@@ -1,12 +1,12 @@
 import { computed, ref } from 'vue'
-import { Environment } from '../../wailsjs/runtime/runtime'
+import { System } from '@wailsio/runtime'
 
 // platform is the backend's GOOS ("windows", "linux", "darwin"). VRChat and
 // avatar detection and the system accent colour only exist on Windows.
 const platform = ref('windows')
 try {
-  Environment()
-    .then((e) => (platform.value = e.platform))
+  System.Environment()
+    .then((e) => (platform.value = e.OS))
     .catch(() => {})
 } catch {
   // runtime unavailable (e.g. plain browser dev) — assume Windows

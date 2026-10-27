@@ -1,15 +1,15 @@
 {
 	"fixed": {
-		"file_version": "{{.Info.ProductVersion}}"
+		"file_version": "0.0.2"
 	},
 	"info": {
-		"0000": {
-			"ProductVersion": "{{.Info.ProductVersion}}",
-			"CompanyName": "{{.Info.CompanyName}}",
-			"FileDescription": "{{.Info.ProductName}}",
-			"LegalCopyright": "{{.Info.Copyright}}",
-			"ProductName": "{{.Info.ProductName}}",
-			"Comments": "{{.Info.Comments}}"
+		"0409": {
+			"ProductVersion": "0.0.2",
+			"CompanyName": "SayukiDev",
+			"FileDescription": "VRChat OSC face tracking app",
+			"LegalCopyright": "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0.",
+			"ProductName": "VRCFaceTrackingGO",
+			"Comments": "VRChat OSC face tracking app"
 		}
 	}
 }

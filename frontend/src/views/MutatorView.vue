@@ -2,8 +2,8 @@
 import { ref } from 'vue'
 import { NCard, NCollapseTransition, NIcon, NSwitch, NText } from 'naive-ui'
 import { ChevronDown20Regular } from '@vicons/fluent'
-import { GetMutations, SetMutationActive } from '../../wailsjs/go/app/App'
-import type { mixer } from '../../wailsjs/go/models'
+import { GetMutations, SetMutationActive } from '@go/app/app'
+import type * as mixer from '@go/internal/mixer'
 import MutationComponent from '../components/MutationComponent.vue'
 import { useMutationText } from '../i18n'
 
