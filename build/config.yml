@@ -15,8 +15,8 @@ author:
 info:
   companyName: "SayukiDev" # The name of the company
   productName: "VRCFaceTrackingGO" # The name of the application
-  productIdentifier: "com.sayukidev.vrcfacetrackinggo" # The unique product identifier
-  description: "VRChat OSC face tracking app" # The application description
+  productIdentifier: "love.sayuki.vrcfacetrackinggo" # The unique product identifier
+  description: "VRCFaceTrackingGO" # The application description
   copyright: "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0." # Copyright text
   comments: "VRChat OSC face tracking app" # Comments
   version: "0.0.2" # The application version
