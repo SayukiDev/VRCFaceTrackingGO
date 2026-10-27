@@ -150,8 +150,13 @@ tasks:
     cmds:
       - cp "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}" "{{.APP_NAME}}"
       - cp ../../appicon.png "{{.APP_NAME}}.png"
-      # Writes <name>-<x86_64|aarch64>.AppImage to BIN_DIR.
+      # Writes <lowercased name>-<arch>.AppImage to BIN_DIR; rename it to
+      # match the other packages.
       - wails3 generate appimage -binary "{{.APP_NAME}}" -icon "{{.APP_NAME}}.png" -desktopfile "../{{.APP_NAME}}.desktop" -outputdir "{{.ROOT_DIR}}/{{.BIN_DIR}}" -builddir "{{.ROOT_DIR}}/build/linux/appimage/build"
+      - mv "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{lower .APP_NAME}}-{{.APPIMAGE_ARCH}}.AppImage" "{{.ROOT_DIR}}/{{.BIN_DIR}}/{{.APP_NAME}}-{{.APPIMAGE_ARCH}}.AppImage"
+    vars:
+      # wails3 generate appimage names the file after the host architecture.
+      APPIMAGE_ARCH: '{{if eq ARCH "arm64"}}aarch64{{else}}x86_64{{end}}'
 
   generate:deb:
     summary: Creates a deb package from the built binary
