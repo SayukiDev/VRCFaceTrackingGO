@@ -19,7 +19,6 @@ import (
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/vrchat"
 )
 
 const statsInterval = time.Second
@@ -52,12 +51,10 @@ type Service struct {
 	sender    *sender.Sender
 	query     *oscquery.Service
 
-	// relevanceMu guards the two reasons for sending every parameter.
+	// relevanceMu guards forceRelevant.
 	relevanceMu sync.Mutex
 	// forceRelevant is the user's (or /vrcft/settings/forceRelevant) choice.
 	forceRelevant bool
-	// avatarUnresolved is set while the OSC mode cannot resolve the avatar.
-	avatarUnresolved bool
 
 	messagesIn  atomic.Int64
 	messagesOut atomic.Int64
@@ -107,15 +104,11 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.sender.OnParametersChanged = listener.OnParametersChanged
 	s.sender.SetOutputMode(cfg.Output)
 
-	// The config file folder is only known on Windows; elsewhere config
-	// lookups fail and the OSC mode falls back to sending every parameter.
-	s.query = oscquery.NewService(s.root, vrchat.OSCDirectory())
+	s.query = oscquery.NewService(s.root)
 	s.query.OnAvatarChanged = func(info oscquery.AvatarInfo) {
 		s.sender.SetDefinitions(info.Parameters)
-		s.setAvatarUnresolved(false)
 		listener.OnAvatarChanged(info)
 	}
-	s.query.OnAvatarUnresolved = func() { s.setAvatarUnresolved(true) }
 	s.query.OnForceRelevant = s.SetAllParametersRelevant
 	s.query.OnMessageReceived = func() { s.messagesIn.Add(1) }
 
@@ -125,13 +118,9 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	return nil
 }
 
-// initialize is the restartable part of Start: VRChat checks, network
-// endpoints and modules.
+// initialize is the restartable part of Start: network endpoints and
+// modules.
 func (s *Service) initialize() {
-	if vrchat.Supported {
-		s.ensureOSCEnabled()
-	}
-
 	target := s.Target()
 	if err := s.transport.SetTarget(target.Address, target.OutPort); err != nil {
 		s.logger.Warn("Failed to bind to sender endpoint", zap.Error(err))
@@ -141,22 +130,6 @@ func (s *Service) initialize() {
 	s.moduleConfigDirty.Store(false)
 	s.modules.Scan(s.ctx)
 	s.router.Initialize(s.ctx)
-}
-
-// ensureOSCEnabled turns VRChat's OSC setting on if it was off.
-func (s *Service) ensureOSCEnabled() {
-	changed, err := vrchat.ForceEnableOSC()
-	if err != nil {
-		s.logger.Warn("Could not verify VRChat OSC setting", zap.Error(err))
-		return
-	}
-	if !changed {
-		return
-	}
-	s.logger.Warn("VRCFT detected OSC was disabled and automatically enabled it.")
-	if vrchat.IsRunning() {
-		s.logger.Error("However, VRChat was running while this change was made.\nIf parameters do not update, please restart VRChat or manually enable OSC yourself in your avatar's expressions menu.")
-	}
 }
 
 // Reinitialize tears down the modules and network endpoints and brings

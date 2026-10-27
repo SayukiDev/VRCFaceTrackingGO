@@ -1,8 +1,8 @@
 import { computed, ref } from 'vue'
 import { System } from '@wailsio/runtime'
 
-// platform is the backend's GOOS ("windows", "linux", "darwin"). VRChat and
-// avatar detection and the system accent colour only exist on Windows.
+// platform is the backend's GOOS ("windows", "linux", "darwin"). Only the
+// system accent colour is Windows-specific.
 const platform = ref('windows')
 try {
   System.Environment()

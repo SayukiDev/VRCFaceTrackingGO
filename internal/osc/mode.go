@@ -7,8 +7,7 @@ const (
 	// ModeOSCQuery discovers VRChat through OSCQuery, negotiates the ports
 	// and reads the loaded avatar's parameters from it.
 	ModeOSCQuery Mode = "oscquery"
-	// ModeOSC uses the configured ports only. The avatar's parameters come
-	// from VRChat's OSC config files where they can be found; otherwise
+	// ModeOSC uses the configured ports only. The avatar is not resolved, so
 	// every parameter is sent.
 	ModeOSC Mode = "osc"
 )

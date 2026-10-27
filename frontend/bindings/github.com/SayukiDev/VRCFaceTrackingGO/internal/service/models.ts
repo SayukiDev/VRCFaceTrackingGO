@@ -22,12 +22,6 @@ export class OscStatus {
     "messagesOut": number;
     "allRelevant": boolean;
 
-    /**
-     * AvatarUnresolved is set when the OSC mode sends every parameter
-     * because the loaded avatar could not be resolved.
-     */
-    "avatarUnresolved": boolean;
-
     /** Creates a new OscStatus instance. */
     constructor($$source: Partial<OscStatus> = {}) {
         if (!("mode" in $$source)) {
@@ -53,9 +47,6 @@ export class OscStatus {
         }
         if (!("allRelevant" in $$source)) {
             this["allRelevant"] = false;
-        }
-        if (!("avatarUnresolved" in $$source)) {
-            this["avatarUnresolved"] = false;
         }
 
         Object.assign(this, $$source);

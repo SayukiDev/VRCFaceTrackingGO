@@ -21,8 +21,7 @@ export enum Mode {
     ModeOSCQuery = "oscquery",
 
     /**
-     * ModeOSC uses the configured ports only. The avatar's parameters come
-     * from VRChat's OSC config files where they can be found; otherwise
+     * ModeOSC uses the configured ports only. The avatar is not resolved, so
      * every parameter is sent.
      */
     ModeOSC = "osc",

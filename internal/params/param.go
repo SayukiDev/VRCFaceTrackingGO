@@ -20,21 +20,6 @@ const (
 	TypeString
 )
 
-// ValueTypeFromConfig maps the VRChat avatar config "type" string.
-func ValueTypeFromConfig(s string) ValueType {
-	switch s {
-	case "Bool":
-		return TypeBool
-	case "Float":
-		return TypeFloat
-	case "Int":
-		return TypeInt
-	case "String":
-		return TypeString
-	}
-	return TypeUnknown
-}
-
 // ValueTypeFromOSCTag maps an OSC type tag character.
 func ValueTypeFromOSCTag(tag byte) ValueType {
 	switch tag {
@@ -50,8 +35,8 @@ func ValueTypeFromOSCTag(tag byte) ValueType {
 	return TypeUnknown
 }
 
-// Definition is a parameter exposed by the avatar (from the OSC config file
-// or OSCQuery).
+// Definition is a parameter exposed by the avatar, as read through
+// OSCQuery.
 type Definition struct {
 	Address string
 	Name    string

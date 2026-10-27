@@ -6,6 +6,7 @@ import { PlugConnected24Regular, Person24Regular, ArrowSync24Regular } from '@vi
 import { GetModules, GetOscStatus, GetAvatar, GetParameterStats, ReloadModules } from '@go/app/app'
 import type * as router from '@go/internal/router'
 import type * as service from '@go/internal/service'
+import { Mode as OscMode } from '@go/internal/osc'
 import type * as oscquery from '@go/internal/oscquery'
 import type * as sender from '@go/internal/sender'
 import { Events, useBackendState, useEvent } from '../composables/useBackend'
@@ -69,7 +70,7 @@ async function reload() {
 
     <info-card :icon="Person24Regular">
       <div class="subtitle">{{ t('home.avatarStatus') }}</div>
-      <div v-if="osc?.avatarUnresolved"><n-text depth="3">{{ t('home.noAvatarDetection') }}</n-text></div>
+      <div v-if="osc?.mode === OscMode.ModeOSC"><n-text depth="3">{{ t('home.noAvatarDetection') }}</n-text></div>
       <template v-else>
         <div><n-text depth="3">{{ avatar?.name ?? t('home.loading') }}</n-text></div>
         <div><n-text depth="3">{{ avatar?.id ?? t('home.loading') }}</n-text></div>

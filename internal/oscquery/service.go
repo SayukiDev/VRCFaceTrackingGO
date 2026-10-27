@@ -14,55 +14,47 @@ import (
 )
 
 // Service ties discovery, the HTTP server, the OSC receiver and the avatar
-// parsers together. It owns the "which avatar is loaded" state.
+// parser together. It owns the "which avatar is loaded" state.
 type Service struct {
 	logger    *zap.Logger
 	discovery *Discovery
 	server    *Server
 	receiver  *osc.Receiver
-	files     *FileParser
 	query     *QueryParser
 
-	mu           sync.Mutex
-	target       osc.Target
-	avatar       AvatarInfo
-	lastAvatarID string
-	listenPort   int
+	mu         sync.Mutex
+	target     osc.Target
+	avatar     AvatarInfo
+	listenPort int
 	// discover is set in the OSCQuery mode, where the receive port is only
 	// bound once VRChat is discovered.
 	discover bool
 
 	// OnAvatarChanged fires when a new avatar definition was resolved.
 	OnAvatarChanged func(AvatarInfo)
-	// OnAvatarUnresolved fires when the loaded avatar could not be
-	// resolved.
-	OnAvatarUnresolved func()
 	// OnForceRelevant fires for the /vrcft/settings/forceRelevant endpoint.
 	OnForceRelevant func(bool)
 	// OnMessageReceived fires for every incoming OSC message.
 	OnMessageReceived func()
 }
 
-func NewService(logger *zap.Logger, oscDir string) *Service {
-	files := NewFileParser(logger, oscDir)
+func NewService(logger *zap.Logger) *Service {
 	s := &Service{
 		logger:    logger.Named("OscQueryService"),
 		discovery: NewDiscovery(logger),
 		server:    NewServer(logger),
-		files:     files,
 		query:     NewQueryParser(logger),
 		avatar:    NullAvatar("Loading...", "Loading..."),
 	}
 	s.receiver = osc.NewReceiver(logger, s.handleMessage)
 	s.discovery.OnClientDiscovered = s.clientDiscovered
-	s.server.OnHostInfoQueried = func() { s.resolve("") }
+	s.server.OnHostInfoQueried = s.resolve
 	return s
 }
 
 // Start begins mDNS discovery of VRChat's OSCQuery service if discover is
 // set, binding a receive port only once VRChat is found. Otherwise it binds
-// the legacy receive port and the avatar is only resolved from the legacy
-// config files.
+// the legacy receive port and the avatar is never resolved.
 func (s *Service) Start(ctx context.Context, target osc.Target, discover bool) error {
 	s.logger.Debug("OSC Service Initializing")
 	s.mu.Lock()
@@ -156,35 +148,24 @@ func (s *Service) clientDiscovered(endpoint *net.TCPAddr) {
 	if err := s.discovery.Advertise(instance, httpPort, port); err != nil {
 		s.logger.Error("Failed to advertise OSCQuery services", zap.Error(err))
 	}
-	s.resolve("")
+	s.resolve()
 }
 
-// resolve re-reads the avatar definition, through OSCQuery when available
-// and the legacy config file otherwise.
-func (s *Service) resolve(avatarID string) {
-	var info AvatarInfo
-	var err error
-	if ep := s.discovery.Endpoint(); ep != nil {
-		info, err = s.query.Parse(ep)
-	} else {
-		if avatarID == "" {
-			s.mu.Lock()
-			avatarID = s.lastAvatarID
-			s.mu.Unlock()
-		}
-		info, err = s.files.Parse(avatarID)
+// resolve re-reads the avatar definition through OSCQuery. It does nothing
+// until VRChat has been discovered.
+func (s *Service) resolve() {
+	ep := s.discovery.Endpoint()
+	if ep == nil {
+		return
 	}
+	info, err := s.query.Parse(ep)
 	if err != nil {
 		s.logger.Debug("Avatar not resolved", zap.Error(err))
-		if fn := s.OnAvatarUnresolved; fn != nil {
-			fn()
-		}
 		return
 	}
 
 	s.mu.Lock()
 	s.avatar = info
-	s.lastAvatarID = info.ID
 	fn := s.OnAvatarChanged
 	s.mu.Unlock()
 	if fn != nil {
@@ -198,14 +179,7 @@ func (s *Service) handleMessage(msg *goosc.Message) {
 	}
 	switch msg.Address {
 	case "/avatar/change":
-		if len(msg.Arguments) > 0 {
-			if id, ok := msg.Arguments[0].(string); ok {
-				s.mu.Lock()
-				s.lastAvatarID = id
-				s.mu.Unlock()
-				go s.resolve(id)
-			}
-		}
+		go s.resolve()
 	case "/vrcft/settings/forceRelevant":
 		if len(msg.Arguments) > 0 {
 			if v, ok := msg.Arguments[0].(bool); ok && s.OnForceRelevant != nil {

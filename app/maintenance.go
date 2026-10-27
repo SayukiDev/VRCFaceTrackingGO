@@ -80,5 +80,3 @@ func (a *App) SetHideTrayNotice(hide bool) {
 }
 
 func (a *App) ResetVRCFT() error { return a.svc.ScheduleReset() }
-
-func (a *App) ResetAvatarConfigs() error { return a.svc.ResetAvatarConfigs() }

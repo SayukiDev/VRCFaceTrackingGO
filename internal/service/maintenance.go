@@ -5,10 +5,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"go.uber.org/zap"
-
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/vrchat"
 )
 
 // resetMarker is created by ScheduleReset and consumed by
@@ -31,16 +28,6 @@ func ApplyResetIfRequested(dataDir string) error {
 func (s *Service) ScheduleReset() error {
 	s.logger.Info("Resetting VRCFT...")
 	return os.WriteFile(filepath.Join(s.dataDir, resetMarker), nil, 0o644)
-}
-
-// ResetAvatarConfigs deletes VRChat's generated OSC avatar configs.
-func (s *Service) ResetAvatarConfigs() error {
-	s.logger.Info("Resetting VRChat avatar configuration...")
-	if err := vrchat.ResetAvatarConfigs(); err != nil {
-		s.logger.Error("Failed to reset VRChat avatar configuration!", zap.Error(err))
-		return err
-	}
-	return nil
 }
 
 // Logs returns every buffered log line.

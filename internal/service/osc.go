@@ -19,26 +19,19 @@ type OscStatus struct {
 	MessagesIn  int      `json:"messagesIn"`
 	MessagesOut int      `json:"messagesOut"`
 	AllRelevant bool     `json:"allRelevant"`
-	// AvatarUnresolved is set when the OSC mode sends every parameter
-	// because the loaded avatar could not be resolved.
-	AvatarUnresolved bool `json:"avatarUnresolved"`
 }
 
 // OscStatus returns the current status and resets the message counters.
 func (s *Service) OscStatus() OscStatus {
-	s.relevanceMu.Lock()
-	unresolved := s.avatarUnresolved
-	s.relevanceMu.Unlock()
 	return OscStatus{
-		Mode:             s.OSCMode(),
-		ListenPort:       s.query.ListenPort(),
-		SendPort:         s.Target().OutPort,
-		Connected:        s.transport.Connected(),
-		OscQuery:         s.query.OSCQueryActive(),
-		MessagesIn:       int(s.messagesIn.Swap(0)),
-		MessagesOut:      int(s.messagesOut.Swap(0)),
-		AllRelevant:      s.sender.AllRelevant(),
-		AvatarUnresolved: unresolved,
+		Mode:        s.OSCMode(),
+		ListenPort:  s.query.ListenPort(),
+		SendPort:    s.Target().OutPort,
+		Connected:   s.transport.Connected(),
+		OscQuery:    s.query.OSCQueryActive(),
+		MessagesIn:  int(s.messagesIn.Swap(0)),
+		MessagesOut: int(s.messagesOut.Swap(0)),
+		AllRelevant: s.sender.AllRelevant(),
 	}
 }
 
@@ -82,31 +75,20 @@ func (s *Service) SetOSCMode(m osc.Mode) error {
 }
 
 // startQuery starts receiving OSC in the configured mode. Only the OSCQuery
-// mode discovers VRChat; the OSC mode sends every parameter until an
-// avatar config file is found.
+// mode discovers VRChat and resolves the avatar; the OSC mode sends every
+// parameter.
 func (s *Service) startQuery() {
-	mode := s.OSCMode()
-	s.setAvatarUnresolved(mode == osc.ModeOSC)
-	if err := s.query.Start(s.ctx, s.Target(), mode == osc.ModeOSCQuery); err != nil {
+	s.applyRelevance()
+	if err := s.query.Start(s.ctx, s.Target(), s.OSCMode() == osc.ModeOSCQuery); err != nil {
 		s.logger.Error("OSCQuery service failed to start", zap.Error(err))
 	}
 }
 
-// setAvatarUnresolved records whether the avatar is unknown. Only the OSC
-// mode falls back to sending every parameter; the OSCQuery mode waits for
-// VRChat instead.
-func (s *Service) setAvatarUnresolved(v bool) {
-	s.relevanceMu.Lock()
-	s.avatarUnresolved = v && s.OSCMode() == osc.ModeOSC
-	s.relevanceMu.Unlock()
-	s.applyRelevance()
-}
-
-// applyRelevance sends every parameter when the user asked for it or the
-// avatar could not be resolved.
+// applyRelevance sends every parameter when the user asked for it or in the
+// OSC mode, which does not know the avatar's parameters.
 func (s *Service) applyRelevance() {
 	s.relevanceMu.Lock()
-	all := s.forceRelevant || s.avatarUnresolved
+	all := s.forceRelevant || s.OSCMode() == osc.ModeOSC
 	s.relevanceMu.Unlock()
 	s.sender.SetAllRelevant(all)
 }

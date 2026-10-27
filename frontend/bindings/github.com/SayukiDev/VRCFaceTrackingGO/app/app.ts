@@ -201,10 +201,6 @@ export function ReloadModules(): $CancellablePromise<void> {
     return $Call.ByID(4063442750);
 }
 
-export function ResetAvatarConfigs(): $CancellablePromise<void> {
-    return $Call.ByID(2743600317);
-}
-
 export function ResetVRCFT(): $CancellablePromise<void> {
     return $Call.ByID(3499805078);
 }

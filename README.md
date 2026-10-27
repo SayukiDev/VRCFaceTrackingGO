@@ -2,7 +2,7 @@
 
 | **English** | [日本語](README.ja.md) |
 
-A Go reimplementation of [VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) for Windows, built with [Wails](https://wails.io) and Vue. Linux and macOS are supported with [some limits](#linux).
+A Go reimplementation of [VRCFaceTracking](https://github.com/benaclejames/VRCFaceTracking) for Windows, Linux and macOS, built with [Wails](https://wails.io) and Vue.
 
 It receives eye and face tracking from tracking modules and sends it to VRChat over OSC, either as Unified Expressions (v2) avatar parameters, through VRChat's native eye tracking, or both.
 
@@ -12,7 +12,7 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 ## Features
 
 - Unified Expressions (v2) and head parameters
-- OSCQuery or plain OSC: OSCQuery finds VRChat and sends only the parameters of the current avatar; plain OSC uses fixed ports and sends every parameter when the avatar is unknown
+- OSCQuery or plain OSC: OSCQuery finds VRChat and sends only the parameters of the current avatar; plain OSC uses fixed ports and always sends every parameter
 - VRChat native eye tracking output
 - Mutations: parameter adjustment, Unified correctors and the data filter
 - Modules run as separate processes and restart automatically when they crash
@@ -20,7 +20,7 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 - Module priority, per module eye / expression selection and manual assignment
 - Material Design 3 UI with light / dark themes and a configurable accent colour
 - English and Japanese
-- Multi-platform: Windows, Linux and macOS ([with limits](#linux) outside Windows)
+- Multi-platform: Windows, Linux and macOS work the same, apart from [a few differences](#platform-differences)
 
 ## Modules
 
@@ -36,6 +36,8 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 
 ## Requirements
 
+On every OS, OSC must be enabled in VRChat (Action Menu → Options → OSC → Enabled). The app does not change VRChat's settings.
+
 ### Windows
 
 - Windows 10 or later (x64)
@@ -45,19 +47,19 @@ Modules are standalone programs (`.vfgmod`). The installer can install the bundl
 
 - x64
 - GTK 4 and WebKitGTK 6.0 (`libgtk-4-1` and `libwebkitgtk-6.0-4` on Ubuntu 24.04 or later)
-- Limits:
-  - Only modules that support Linux can be used.
-  - VRChat's OSC setting is not turned on automatically, and the OSC mode cannot read avatar config files, so it sends every parameter. Use the OSCQuery mode to send only the current avatar's parameters.
-  - The system accent colour option is not available.
 
 ### macOS
 
 - A Mac with Apple silicon (arm64), macOS 12 or later
 - The app is not signed; open it with right click → Open the first time.
-- Limits:
-  - Only modules that support macOS can be used.
-  - VRChat's OSC setting is not turned on automatically, and the OSC mode cannot read avatar config files, so it sends every parameter. Use the OSCQuery mode to send only the current avatar's parameters.
-  - The system accent colour option is not available.
+
+### Platform differences
+
+The app works the same on every OS, except for:
+
+- Modules: each module only runs on the OSes in its [Platforms](#modules) column, because it depends on the software it reads tracking from.
+- System accent colour: the option to follow the OS accent colour is only available on Windows.
+- Installer: only the Windows release contains an installer; on Linux and macOS, unpack the release ZIP and run the app directly.
 
 ## Build
 

@@ -7,7 +7,7 @@ import {
 import { Checkmark20Regular, ArrowRouting24Regular, Color24Regular, PaintBrush24Regular, LocalLanguage24Regular, PlugConnected24Regular, Send24Regular, Timer24Regular, Warning24Regular, Info24Regular } from '@vicons/fluent'
 import {
   GetOscTarget, SetOscTarget, GetOscMode, SetOscMode, GetAllParametersRelevant, SetAllParametersRelevant, ForceReInit, ResetVRCFT,
-  ResetAvatarConfigs, GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
+  GetMetadata, OpenURL, GetModuleTiming, SetModuleTiming, GetOutputMode, SetOutputMode,
 } from '@go/app/app'
 import * as metadata from '@go/internal/metadata'
 import * as osc from '@go/internal/osc'
@@ -21,7 +21,7 @@ const { t } = useI18n()
 const message = useMessage()
 
 const { mode, setMode, seed, setSeed, saveSeed, useSystemAccent, setUseSystemAccent } = useTheme()
-// The system accent colour and VRChat / avatar detection only exist on Windows.
+// The system accent colour only exists on Windows.
 const { isWindows } = usePlatform()
 // M3 baseline purple, a few hues around the wheel, and the default app pink.
 const seedSwatches = ['#6750A4', '#0061A4', '#006A6A', '#006E1C', '#6A5F00', '#9C4146', '#8B5000', defaultSeed]
@@ -118,15 +118,6 @@ function setAllRelevant(v: boolean) {
 async function resetVRCFT() {
   await ResetVRCFT()
   message.info(t('settings.resetVRCFTDone'))
-}
-
-async function resetAvatarConfigs() {
-  try {
-    await ResetAvatarConfigs()
-    message.success(t('settings.resetAvatarDone'))
-  } catch (e) {
-    message.error(String(e))
-  }
 }
 
 const meta = ref<metadata.Metadata>(new metadata.Metadata({ name: 'VRCFaceTrackingGO' }))
@@ -286,11 +277,6 @@ GetMetadata().then((v) => (meta.value = v))
             <div class="header">{{ t('settings.resetVRCFT') }}</div>
             <n-text depth="3">{{ t('settings.resetVRCFTDesc') }}</n-text>
             <template #aside><n-button :disabled="!gremlin" @click="resetVRCFT">{{ t('settings.reset') }}</n-button></template>
-          </info-card>
-          <info-card v-if="isWindows">
-            <div class="header">{{ t('settings.resetAvatar') }}</div>
-            <n-text depth="3">{{ t('settings.resetAvatarDesc') }}</n-text>
-            <template #aside><n-button :disabled="!gremlin" @click="resetAvatarConfigs">{{ t('settings.reset') }}</n-button></template>
           </info-card>
         </div>
       </n-collapse-item>
