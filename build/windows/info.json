@@ -1,15 +1,15 @@
 {
 	"fixed": {
-		"file_version": "0.0.2"
+		"file_version": "0.0.6"
 	},
 	"info": {
 		"0409": {
-			"ProductVersion": "0.0.2",
+			"ProductVersion": "0.0.6",
 			"CompanyName": "SayukiDev",
 			"FileDescription": "VRCFaceTrackingGO",
 			"LegalCopyright": "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0.",
 			"ProductName": "VRCFaceTrackingGO",
-			"Comments": "VRCFaceTrackingGO"
+			"Comments": "VRChat OSC face tracking app"
 		}
 	}
 }

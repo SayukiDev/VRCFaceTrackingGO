@@ -6,11 +6,11 @@
 name: "VRCFaceTrackingGO"
 arch: ${GOARCH}
 platform: "linux"
-version: "0.0.2"
+version: "0.0.6"
 section: "default"
 priority: "extra"
 maintainer: ${GIT_COMMITTER_NAME} <${GIT_COMMITTER_EMAIL}>
-description: "VRChat OSC face tracking app"
+description: "VRCFaceTrackingGO"
 vendor: "SayukiDev"
 homepage: "https://wails.io"
 license: "MIT"

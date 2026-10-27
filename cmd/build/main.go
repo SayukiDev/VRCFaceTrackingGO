@@ -7,9 +7,11 @@
 // It builds every modules/<id> whose metadata.json lists the current OS in
 // "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod, writes
 // the installer's module sections (build/windows/nsis/modules.nsh)
-// from their metadata.json, and then builds the application with the Wails
-// v3 CLI ("wails3 build", or "wails3 package" for the NSIS installer and the
-// macOS app bundle). The NSIS installer (-nsis) is only built on Windows,
+// from their metadata.json, regenerates the build assets (version info,
+// manifests, installer defines) from build/config.yml with "wails3 task
+// common:update:build-assets", and then builds the application with the
+// Wails v3 CLI ("wails3 build", or "wails3 package" for the NSIS installer
+// and the macOS app bundle). The NSIS installer (-nsis) is only built on Windows,
 // one per architecture (-arch).
 package main
 
@@ -46,6 +48,7 @@ func main() {
 
 func run() error {
 	app := flag.Bool("app", true, "build the application with wails after the modules")
+	assets := flag.Bool("assets", true, "regenerate the build assets from build/config.yml before building the application (overwrites manual edits to them)")
 	nsis := flag.Bool("nsis", runtime.GOOS == "windows", "also build the NSIS installer (needs -app, Windows only)")
 	install := flag.Bool("install", false, "copy the built modules into the current user's module folder")
 	tags := flag.String("tags", "", "extra build tags for the application (e.g. gtk3 for GTK3 and WebKitGTK 4.1 on Linux)")
@@ -75,6 +78,13 @@ func run() error {
 	}
 	if !*app {
 		return nil
+	}
+	if *assets {
+		// The task passes -config and -name; without them the assets get
+		// the CLI's placeholder values ("My Product", version 0.1.0).
+		if err := runCmd("wails3", "task", "common:update:build-assets"); err != nil {
+			return fmt.Errorf("update build assets: %w", err)
+		}
 	}
 	// "wails3 package" builds the application and then packages it: the NSIS
 	// installer on Windows, the .app bundle on macOS.

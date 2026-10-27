@@ -11,15 +11,15 @@
 		<key>CFBundleIconName</key>
 		<string>appicon</string>
 		<key>CFBundleIdentifier</key>
-		<string>com.sayukidev.vrcfacetrackinggo</string>
+		<string>love.sayuki.vrcfacetrackinggo</string>
 		<key>CFBundleName</key>
 		<string>VRCFaceTrackingGO</string>
 		<key>CFBundlePackageType</key>
 		<string>APPL</string>
 		<key>CFBundleShortVersionString</key>
-		<string>0.0.2</string>
+		<string>0.0.6</string>
 		<key>CFBundleVersion</key>
-		<string>0.0.2</string>
+		<string>0.0.6</string>
 		<key>LSMinimumSystemVersion</key>
 		<string>12.0.0</string>
 		<key>NSAppTransportSecurity</key>
