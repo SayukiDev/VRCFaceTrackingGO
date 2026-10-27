@@ -19,7 +19,7 @@ info:
   description: "VRCFaceTrackingGO" # The application description
   copyright: "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0." # Copyright text
   comments: "VRChat OSC face tracking app" # Comments
-  version: "0.0.7" # The application version
+  version: "0.0.8" # The application version
   # Links shown on the About page (not used by the build assets).
   repository: "https://github.com/SayukiDev/VRCFaceTrackingGO"
   noticesUrl: "https://github.com/SayukiDev/VRCFaceTrackingGO/blob/master/THIRD_PARTY_NOTICES.md"
