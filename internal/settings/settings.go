@@ -5,8 +5,8 @@ import (
 	"regexp"
 	"time"
 
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/mixer"
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"

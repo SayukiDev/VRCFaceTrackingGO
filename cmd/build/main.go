@@ -25,8 +25,8 @@ import (
 	"runtime"
 	"strings"
 
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )

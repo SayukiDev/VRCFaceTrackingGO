@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"sync"
 	"time"
 
@@ -64,6 +65,9 @@ func Start(path, source string, logger *zap.Logger) (*Client, error) {
 		args = append(args, "--"+SourceFlag+"="+source)
 	}
 	cmd := exec.Command(path, args...)
+	// Files shipped next to the program (a module folder) resolve relative
+	// to it.
+	cmd.Dir = filepath.Dir(path)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = inR, outW, errW
 	prepare(cmd)
 	err = cmd.Start()

@@ -39,7 +39,7 @@ func (a *App) GetModuleConfigDirty() bool { return a.svc.ModuleConfigDirty() }
 func (a *App) InstallModule() (string, error) {
 	path, err := a.app.Dialog.OpenFile().
 		SetTitle("Install module").
-		AddFilter("VRCFaceTracking module (*"+plugin.HostSuffix+")", "*"+plugin.HostSuffix).
+		AddFilter("VRCFaceTracking module (*"+plugin.HostSuffix+", *"+plugin.HostFolderSuffix+")", "*"+plugin.HostSuffix+";*"+plugin.HostFolderSuffix).
 		PromptForSingleSelection()
 	// Cancelling returns an empty path together with an error.
 	if path == "" {

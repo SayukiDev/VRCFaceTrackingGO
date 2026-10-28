@@ -1,6 +1,7 @@
 package manager
 
 import (
+	"archive/zip"
 	"context"
 	"errors"
 	"os"
@@ -25,6 +26,8 @@ const (
 	childDriverEnv = "VRCFT_MANAGER_TEST_DRIVER"
 	childFailEnv   = "VRCFT_MANAGER_TEST_FAIL"
 	childMarkerEnv = "VRCFT_MANAGER_TEST_MARKER"
+	// childFileEnv names a file Initialize needs in its working directory.
+	childFileEnv = "VRCFT_MANAGER_TEST_FILE"
 )
 
 func TestMain(m *testing.M) {
@@ -49,6 +52,11 @@ func (t *testModule) ID() string                 { return t.id }
 func (t *testModule) Metadata() adapter.Metadata { return adapter.Metadata{Name: "Module " + t.id} }
 func (t *testModule) Supported() adapter.Support { return adapter.Support{Eye: true, Expression: true} }
 func (t *testModule) Initialize(_ context.Context, _ *zap.Logger, avail adapter.Support) (adapter.Support, error) {
+	if name := os.Getenv(childFileEnv); name != "" {
+		if _, err := os.Stat(name); err != nil {
+			return adapter.Support{}, err
+		}
+	}
 	return avail, nil
 }
 func (t *testModule) Update(_ context.Context, d *tracking.TrackingData) error {
@@ -274,6 +282,107 @@ func TestDriverModules(t *testing.T) {
 	}
 	if got := ids(m.Installed()); len(got) != 1 || got[0] != "solo" {
 		t.Fatalf("after uninstall = %v", got)
+	}
+}
+
+// folder creates dir/name as an installed module folder with the given ID:
+// the test binary as its entry program and a data file next to it.
+func folder(t *testing.T, dir, name, id string) string {
+	t.Helper()
+	root := filepath.Join(dir, name)
+	if err := os.Mkdir(root, 0o755); err != nil {
+		t.Fatal(err)
+	}
+	program(t, root, plugin.FolderEntry, id)
+	if err := os.WriteFile(filepath.Join(root, "data.txt"), []byte("x"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return root
+}
+
+// archive creates dir/name as a module archive (zip) of such a folder.
+func archive(t *testing.T, dir, name, id string) string {
+	t.Helper()
+	root := folder(t, t.TempDir(), "content", id)
+	path := filepath.Join(dir, name)
+	f, err := os.Create(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	w := zip.NewWriter(f)
+	if err := w.AddFS(os.DirFS(root)); err != nil {
+		t.Fatal(err)
+	}
+	if err := w.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Close(); err != nil {
+		t.Fatal(err)
+	}
+	return path
+}
+
+func TestModuleFolder(t *testing.T) {
+	dir := t.TempDir()
+	m := New(zap.NewNop(), dir)
+	ctx := context.Background()
+	t.Setenv(childFileEnv, "data.txt")
+
+	folder(t, dir, "other"+plugin.PlatformFolderSuffix("plan9", "mips"), "ignored")
+	folder(t, dir, "custom"+plugin.HostFolderSuffix, "alpha")
+	if got := ids(m.Scan(ctx)); len(got) != 1 || got[0] != "alpha" {
+		t.Fatalf("scan = %v", got)
+	}
+
+	// The program runs inside its folder, so it finds data.txt.
+	inst, err := m.Start(ctx, "alpha", adapter.Support{Expression: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	inst.Stop()
+
+	// An archive is extracted into a folder named after the ID.
+	src := archive(t, t.TempDir(), "download"+plugin.HostFolderSuffix, "alpha")
+	if desc, err := m.Inspect(ctx, src); err != nil || desc.ID != "alpha" {
+		t.Fatalf("inspect = %+v, %v", desc, err)
+	}
+	if _, err := m.Install(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	installed := filepath.Join(dir, "alpha"+plugin.HostFolderSuffix)
+	if _, err := os.Stat(filepath.Join(installed, "data.txt")); err != nil {
+		t.Fatalf("archive not extracted: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "custom"+plugin.HostFolderSuffix)); !errors.Is(err, os.ErrNotExist) {
+		t.Fatalf("old folder not removed: %v", err)
+	}
+	if info, _ := m.Info("alpha"); info.Path != filepath.Join(installed, plugin.FolderEntry) {
+		t.Fatalf("path = %s", info.Path)
+	}
+	// Installing again replaces the folder in place.
+	if _, err := m.Install(ctx, src); err != nil {
+		t.Fatal(err)
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 2 {
+		t.Fatalf("left behind: %v", entries)
+	}
+
+	// An archive without the entry program is refused and leaves nothing.
+	bad := filepath.Join(t.TempDir(), "bad"+plugin.HostFolderSuffix)
+	f, _ := os.Create(bad)
+	zw := zip.NewWriter(f)
+	_, _ = zw.Create("readme.txt")
+	_ = zw.Close()
+	_ = f.Close()
+	if _, err := m.Install(ctx, bad); err == nil {
+		t.Fatal("archive without index.vfgmod installed")
+	}
+
+	if err := m.Uninstall("alpha"); err != nil {
+		t.Fatal(err)
+	}
+	if entries, _ := os.ReadDir(dir); len(entries) != 1 {
+		t.Fatalf("after uninstall: %v", entries)
 	}
 }
 

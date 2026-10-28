@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -14,6 +15,7 @@ import (
 // expires.
 func ReadInfo(ctx context.Context, path string) (Description, error) {
 	cmd := exec.CommandContext(ctx, path, "--"+InfoFlag)
+	cmd.Dir = filepath.Dir(path)
 	prepare(cmd)
 	out, err := cmd.Output()
 	if err != nil {

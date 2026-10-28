@@ -75,7 +75,7 @@ export default {
     installed: 'Installed {name}. Reload the modules to use it.',
     uninstallConfirm: 'Uninstall {name}? A running module is stopped first.',
     uninstalled: 'Uninstalled {name}.',
-    none: 'No modules installed. Install a .vfgmod file to get started.',
+    none: 'No modules installed. Install a .vfgmod or .vfgmodf file to get started.',
     viaDriver: 'via {name}',
     tabModules: 'Modules',
     tabDrivers: 'Drivers',

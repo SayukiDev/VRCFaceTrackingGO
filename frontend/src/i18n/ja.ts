@@ -77,7 +77,7 @@ const ja: typeof en = {
     installed: '{name} をインストールしました。使用するにはモジュールを再読み込みしてください。',
     uninstallConfirm: '{name} をアンインストールしますか？動作中の場合は先に停止します。',
     uninstalled: '{name} をアンインストールしました。',
-    none: 'モジュールがインストールされていません。.vfgmod ファイルをインストールしてください。',
+    none: 'モジュールがインストールされていません。.vfgmod または .vfgmodf ファイルをインストールしてください。',
     viaDriver: '{name} に内包',
     tabModules: 'モジュール',
     tabDrivers: 'ドライバー',

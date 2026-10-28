@@ -12,8 +12,8 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/logging"
+	"github.com/SayukiDev/VRCFaceTrackingGO/internal/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/mixer"
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/osc"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"

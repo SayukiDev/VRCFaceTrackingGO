@@ -7,10 +7,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"path/filepath"
-	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -20,6 +18,7 @@ import (
 	"go.uber.org/zap"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/format"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )
 
@@ -31,8 +30,6 @@ const (
 	// misbehaving device driver cannot stall the whole application.
 	DefaultInitTimeout = 15 * time.Second
 
-	// infoTimeout bounds how long a module program may take for --info.
-	infoTimeout = 5 * time.Second
 	// defaultUpdateTimeout is how long one Update may take before the
 	// module is considered hung and restarted.
 	defaultUpdateTimeout = 5 * time.Second
@@ -44,9 +41,6 @@ const (
 // ErrRunning is returned when a running module would be replaced or
 // removed.
 var ErrRunning = errors.New("module is running")
-
-// validID keeps module IDs usable as file names.
-var validID = regexp.MustCompile(`^[A-Za-z0-9][A-Za-z0-9._-]*$`)
 
 // Info is an installed module: a module program or one of the modules
 // inside a driver program.
@@ -78,8 +72,9 @@ type DriverInfo struct {
 // programFile is a scanned module or driver program together with what
 // identified its version.
 type programFile struct {
-	desc    plugin.Description
-	path    string
+	desc plugin.Description
+	loc  format.Location
+	// modTime and size are those of loc.Program.
 	modTime time.Time
 	size    int64
 }
@@ -87,11 +82,11 @@ type programFile struct {
 // modules returns the loadable modules of p.
 func (p programFile) modules() []Info {
 	if !p.desc.IsDriver() {
-		return []Info{{Description: p.desc, Path: p.path}}
+		return []Info{{Description: p.desc, Path: p.loc.Program}}
 	}
 	out := make([]Info, 0, len(p.desc.Modules))
 	for _, d := range p.desc.Modules {
-		out = append(out, Info{Description: d, Path: p.path, Driver: p.desc.ID})
+		out = append(out, Info{Description: d, Path: p.loc.Program, Driver: p.desc.ID})
 	}
 	return out
 }
@@ -187,7 +182,7 @@ func (m *Manager) Drivers() []DriverInfo {
 	var out []DriverInfo
 	for _, p := range m.programs {
 		if p.desc.IsDriver() {
-			out = append(out, DriverInfo{Description: p.desc, Path: p.path})
+			out = append(out, DriverInfo{Description: p.desc, Path: p.loc.Program})
 		}
 	}
 	return out
@@ -233,29 +228,31 @@ func (m *Manager) Scan(ctx context.Context) []Info {
 	m.mu.Lock()
 	previous := make(map[string]programFile, len(m.programs))
 	for _, p := range m.programs {
-		previous[p.path] = p
+		previous[p.loc.Root] = p
 	}
 	m.mu.Unlock()
 
 	var scanned []*programFile
 	var wg sync.WaitGroup
 	for _, e := range entries {
-		if !e.Type().IsRegular() || !plugin.HasHostSuffix(e.Name()) {
+		loc, ok := format.Locate(m.dir, e)
+		if !ok {
 			continue
 		}
-		fi, err := e.Info()
-		if err != nil {
+		// A folder counts as changed when its entry program does.
+		fi, err := os.Stat(loc.Program)
+		if err != nil || !fi.Mode().IsRegular() {
 			continue
 		}
-		path := filepath.Join(m.dir, e.Name())
-		p := &programFile{path: path, modTime: fi.ModTime(), size: fi.Size()}
+		path := loc.Program
+		p := &programFile{loc: loc, modTime: fi.ModTime(), size: fi.Size()}
 		scanned = append(scanned, p)
-		if old, ok := previous[path]; ok && old.modTime.Equal(p.modTime) && old.size == p.size {
+		if old, ok := previous[loc.Root]; ok && old.modTime.Equal(p.modTime) && old.size == p.size {
 			*p = old
 			continue
 		}
 		wg.Go(func() {
-			desc, err := m.inspect(ctx, path)
+			desc, err := format.Validate(ctx, path)
 			if err != nil {
 				m.logger.Warn("Skipping module program", zap.String("path", path), zap.Error(err))
 				return
@@ -273,7 +270,7 @@ func (m *Manager) Scan(ctx context.Context) []Info {
 		}
 		ids := p.ids()
 		if i := slices.IndexFunc(ids, func(id string) bool { return taken[id] }); i >= 0 {
-			m.logger.Warn("Skipping module program with duplicate ID", zap.String("id", ids[i]), zap.String("path", p.path))
+			m.logger.Warn("Skipping module program with duplicate ID", zap.String("id", ids[i]), zap.String("path", p.loc.Root))
 			continue
 		}
 		for _, id := range ids {
@@ -288,38 +285,32 @@ func (m *Manager) Scan(ctx context.Context) []Info {
 	return m.Installed()
 }
 
-// inspect runs the program with --info and validates the result.
-func (m *Manager) inspect(ctx context.Context, path string) (plugin.Description, error) {
-	ctx, cancel := context.WithTimeout(ctx, infoTimeout)
-	defer cancel()
-	desc, err := plugin.ReadInfo(ctx, path)
+// Inspect reads the description of a module program or archive that is
+// not installed (yet).
+func (m *Manager) Inspect(ctx context.Context, src string) (plugin.Description, error) {
+	staged, err := format.Stage(m.dir, src)
 	if err != nil {
 		return plugin.Description{}, err
 	}
-	for _, id := range (programFile{desc: desc}).ids() {
-		if !validID.MatchString(id) {
-			return plugin.Description{}, fmt.Errorf("invalid module ID %q", id)
-		}
-	}
-	return desc, nil
+	defer staged.Close()
+	return staged.Validate(ctx)
 }
 
-// Inspect reads the description of a module program that is not
-// installed (yet).
-func (m *Manager) Inspect(ctx context.Context, path string) (plugin.Description, error) {
-	return m.inspect(ctx, path)
-}
-
-// Install copies the module or driver program at src into the module
-// directory as <id>.<GOOS>.<GOARCH>.vfgmod, replacing an installed program
-// with the same ID. Only programs named for the host's platform are
-// accepted. A program whose modules are running cannot be replaced, and
-// none of its IDs may belong to another installed program.
+// Install installs the module or driver at src, replacing an installed
+// program with the same ID. A program file is copied into the module
+// directory as <id>.<GOOS>.<GOARCH>.vfgmod; a module archive
+// (<name>.<GOOS>.<GOARCH>.vfgmodf, a zip file) is extracted into the
+// folder <id>.<GOOS>.<GOARCH>.vfgmodf, whose index.vfgmod is run. Only
+// modules named for the host's platform are accepted. A program whose
+// modules are running cannot be replaced, and none of its IDs may belong
+// to another installed program.
 func (m *Manager) Install(ctx context.Context, src string) (plugin.Description, error) {
-	if !plugin.HasHostSuffix(src) {
-		return plugin.Description{}, fmt.Errorf("%s is not a module program for this platform (*%s)", filepath.Base(src), plugin.HostSuffix)
+	staged, err := format.Stage(m.dir, src)
+	if err != nil {
+		return plugin.Description{}, err
 	}
-	desc, err := m.inspect(ctx, src)
+	defer staged.Close()
+	desc, err := staged.Validate(ctx)
 	if err != nil {
 		return plugin.Description{}, err
 	}
@@ -339,32 +330,27 @@ func (m *Manager) Install(ctx context.Context, src string) (plugin.Description, 
 			return plugin.Description{}, fmt.Errorf("install %s: ID %s is already used by %s", desc.ID, p.ids()[k], other.desc.ID)
 		}
 	}
-	p.path = filepath.Join(m.dir, desc.ID+plugin.HostSuffix)
-	if err := os.MkdirAll(m.dir, 0o755); err != nil {
-		return plugin.Description{}, fmt.Errorf("create module directory: %w", err)
+	if p.loc, err = staged.Install(m.dir, desc.ID); err != nil {
+		return plugin.Description{}, fmt.Errorf("install %s: %w", desc.ID, err)
 	}
-	if !sameFile(src, p.path) {
-		if err := copyFile(src, p.path); err != nil {
-			return plugin.Description{}, fmt.Errorf("install %s: %w", desc.ID, err)
-		}
-	}
-	fi, err := os.Stat(p.path)
+	fi, err := os.Stat(p.loc.Program)
 	if err != nil {
 		return plugin.Description{}, err
 	}
 	p.modTime, p.size = fi.ModTime(), fi.Size()
 
 	if i >= 0 {
-		// The same program may have been installed under another file name.
-		if old := m.programs[i].path; !sameFile(old, p.path) {
-			if err := os.Remove(old); err != nil {
+		// The same program may have been installed under another name or
+		// as the other kind (file or folder).
+		if old := m.programs[i].loc.Root; !format.SameFile(old, p.loc.Root) {
+			if err := os.RemoveAll(old); err != nil {
 				m.logger.Warn("Failed to remove the previous module program", zap.String("path", old), zap.Error(err))
 			}
 		}
 		m.programs[i] = p
 	} else {
 		m.programs = append(m.programs, p)
-		slices.SortFunc(m.programs, func(a, b programFile) int { return strings.Compare(a.path, b.path) })
+		slices.SortFunc(m.programs, func(a, b programFile) int { return strings.Compare(a.loc.Root, b.loc.Root) })
 	}
 	m.logger.Info("Module installed", zap.String("id", desc.ID), zap.String("name", desc.Metadata.Name), zap.Bool("driver", desc.IsDriver()))
 	return desc, nil
@@ -386,45 +372,12 @@ func (m *Manager) Uninstall(id string) error {
 	if m.runningLocked(m.programs[i]) {
 		return fmt.Errorf("uninstall %s: %w", id, ErrRunning)
 	}
-	if err := os.Remove(m.programs[i].path); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := os.RemoveAll(m.programs[i].loc.Root); err != nil {
 		return fmt.Errorf("uninstall %s: %w", id, err)
 	}
 	m.programs = slices.Delete(m.programs, i, i+1)
 	m.logger.Info("Module uninstalled", zap.String("id", id))
 	return nil
-}
-
-func sameFile(a, b string) bool {
-	fa, errA := os.Stat(a)
-	fb, errB := os.Stat(b)
-	return errA == nil && errB == nil && os.SameFile(fa, fb)
-}
-
-// copyFile writes src to dst through a temporary file so a failed copy
-// never leaves a broken program behind.
-func copyFile(src, dst string) error {
-	in, err := os.Open(src)
-	if err != nil {
-		return err
-	}
-	defer in.Close()
-	tmp := dst + ".tmp"
-	// Module programs are executed, which needs the execute bit outside
-	// Windows.
-	out, err := os.OpenFile(tmp, os.O_RDWR|os.O_CREATE|os.O_TRUNC, 0o755)
-	if err != nil {
-		return err
-	}
-	if _, err := io.Copy(out, in); err != nil {
-		out.Close()
-		os.Remove(tmp)
-		return err
-	}
-	if err := out.Close(); err != nil {
-		os.Remove(tmp)
-		return err
-	}
-	return os.Rename(tmp, dst)
 }
 
 // Start launches an installed module and initialises it with avail. A

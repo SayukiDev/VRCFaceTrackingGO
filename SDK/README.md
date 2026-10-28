@@ -47,6 +47,23 @@ only recognises and installs programs for its own platform:
 Outside Windows the file must be executable; the Modules page installs it
 that way.
 
+A module that needs more files than its executable (libraries, data,
+models, ...) ships as a **module archive** instead: a zip file named
+`<name>.<os>.<arch>.vfgmodf` (e.g. `MyModule.windows.amd64.vfgmodf`) with
+the program as `index.vfgmod` at its top level, next to those files.
+Installing it from the Modules page extracts it into the folder
+`<id>.<os>.<arch>.vfgmodf` in the module folder, and the host runs the
+`index.vfgmod` inside; everything else about it is the same as for a single
+file. Uninstalling removes the whole folder.
+
+```sh
+# Windows x64: put index.vfgmod and its files in a folder, then zip its contents
+cd MyModule && zip -r ../MyModule.windows.amd64.vfgmodf .
+```
+
+Every module program runs with its own folder as the working directory, so
+files shipped next to it can be opened with relative paths.
+
 It must handle these command lines:
 
 | Command line | Behaviour |

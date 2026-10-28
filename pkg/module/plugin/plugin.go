@@ -33,6 +33,14 @@ const (
 	// the program was built for: <id>.<GOOS>.<GOARCH>.vfgmod (see
 	// PlatformSuffix).
 	Suffix = ".vfgmod"
+	// FolderSuffix is the extension of module archives: a module program
+	// that needs more files than its executable ships as a zip file named
+	// <name>.<GOOS>.<GOARCH>.vfgmodf holding FolderEntry and those files at
+	// its top level. The host extracts it on installation into a module
+	// folder <id>.<GOOS>.<GOARCH>.vfgmodf.
+	FolderSuffix = ".vfgmodf"
+	// FolderEntry is the program the host runs inside a module folder.
+	FolderEntry = "index.vfgmod"
 	// InfoFlag makes a module program print its Description and exit.
 	InfoFlag = "info"
 	// HostFlag must be set to true for a module program to serve the host.
@@ -48,16 +56,32 @@ const (
 // the host runs on. The host only recognises module programs ending in it.
 var HostSuffix = PlatformSuffix(runtime.GOOS, runtime.GOARCH)
 
+// HostFolderSuffix is the name suffix of module archives and installed
+// module folders for the platform the host runs on.
+var HostFolderSuffix = PlatformFolderSuffix(runtime.GOOS, runtime.GOARCH)
+
 // PlatformSuffix returns the file name suffix of module programs built for
 // goos and goarch (GOOS and GOARCH values), e.g. ".windows.amd64.vfgmod".
 func PlatformSuffix(goos, goarch string) string {
 	return "." + goos + "." + goarch + Suffix
 }
 
+// PlatformFolderSuffix returns the name suffix of module archives and
+// folders built for goos and goarch, e.g. ".windows.amd64.vfgmodf".
+func PlatformFolderSuffix(goos, goarch string) string {
+	return "." + goos + "." + goarch + FolderSuffix
+}
+
 // HasHostSuffix reports whether name is a module program file for the
 // platform the host runs on. Case is ignored.
 func HasHostSuffix(name string) bool {
 	return strings.HasSuffix(strings.ToLower(name), HostSuffix)
+}
+
+// HasHostFolderSuffix reports whether name is a module archive or folder
+// for the platform the host runs on. Case is ignored.
+func HasHostFolderSuffix(name string) bool {
+	return strings.HasSuffix(strings.ToLower(name), HostFolderSuffix)
 }
 
 // ErrExited is returned once the module process is gone.
