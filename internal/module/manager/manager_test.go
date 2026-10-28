@@ -5,6 +5,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -16,16 +17,26 @@ import (
 )
 
 // The test binary doubles as a module program when childIDEnv is set; the
-// value is the module ID. childFailEnv ("crash" or "hang") makes Update
+// value is the module ID. With childDriverEnv also set it is a driver
+// program instead, containing the comma separated module IDs. childFailEnv ("crash" or "hang") makes Update
 // fail; with childMarkerEnv set it fails only until that file exists.
 const (
 	childIDEnv     = "VRCFT_MANAGER_TEST_ID"
+	childDriverEnv = "VRCFT_MANAGER_TEST_DRIVER"
 	childFailEnv   = "VRCFT_MANAGER_TEST_FAIL"
 	childMarkerEnv = "VRCFT_MANAGER_TEST_MARKER"
 )
 
 func TestMain(m *testing.M) {
 	if id := os.Getenv(childIDEnv); id != "" {
+		if mods := os.Getenv(childDriverEnv); mods != "" {
+			var list []adapter.Module
+			for _, m := range strings.Split(mods, ",") {
+				list = append(list, &testModule{id: m})
+			}
+			plugin.ServeDriver(plugin.Driver{ID: id, Metadata: adapter.Metadata{Name: "Driver " + id}}, list...)
+			return
+		}
 		plugin.Serve(&testModule{id: id})
 		return
 	}
@@ -48,6 +59,7 @@ func (t *testModule) Update(_ context.Context, d *tracking.TrackingData) error {
 		os.Exit(3)
 	}
 	d.Shapes[tracking.JawOpen].Weight = 0.5
+	d.Eye.Left.Openness = 0.25
 	return nil
 }
 func (t *testModule) Teardown() error { return nil }
@@ -71,6 +83,15 @@ func program(t *testing.T, dir, name, id string) string {
 	// Copies report the ID from the environment, so a program has to be
 	// inspected before the next one is created.
 	t.Setenv(childIDEnv, id)
+	t.Setenv(childDriverEnv, "")
+	return path
+}
+
+// driver is program for a driver program containing mods.
+func driver(t *testing.T, dir, name, id string, mods ...string) string {
+	t.Helper()
+	path := program(t, dir, name, id)
+	t.Setenv(childDriverEnv, strings.Join(mods, ","))
 	return path
 }
 
@@ -103,12 +124,11 @@ func TestScanInstallUninstall(t *testing.T) {
 
 	// Installing the same ID again replaces the old file name.
 	src := program(t, t.TempDir(), "download"+plugin.HostSuffix, "alpha")
-	info, err := m.Install(ctx, src)
-	if err != nil {
+	if _, err := m.Install(ctx, src); err != nil {
 		t.Fatal(err)
 	}
-	if want := filepath.Join(dir, "alpha"+plugin.HostSuffix); info.Path != want {
-		t.Fatalf("installed at %s, want %s", info.Path, want)
+	if info, _ := m.Info("alpha"); info.Path != filepath.Join(dir, "alpha"+plugin.HostSuffix) {
+		t.Fatalf("installed at %s", info.Path)
 	}
 	if _, err := os.Stat(filepath.Join(dir, "custom-name"+plugin.HostSuffix)); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("old program not removed: %v", err)
@@ -189,6 +209,71 @@ func TestStartRunsModuleAndBlocksUninstall(t *testing.T) {
 	}
 	if err := m.Uninstall("alpha"); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestDriverModules(t *testing.T) {
+	dir := t.TempDir()
+	m := New(zap.NewNop(), dir)
+	ctx := context.Background()
+	program(t, dir, "solo"+plugin.HostSuffix, "solo")
+	m.Scan(ctx)
+	// Last, so the started processes are the driver.
+	driver(t, dir, "drv"+plugin.HostSuffix, "drv", "eye", "face")
+	m.Scan(ctx)
+
+	if got := ids(m.Installed()); strings.Join(got, ",") != "eye,face,solo" {
+		t.Fatalf("installed = %v", got)
+	}
+	if info, _ := m.Info("face"); info.Driver != "drv" {
+		t.Fatalf("face belongs to %q", info.Driver)
+	}
+	if d := m.Drivers(); len(d) != 1 || d[0].ID != "drv" || len(d[0].Modules) != 2 {
+		t.Fatalf("drivers = %+v", d)
+	}
+	if _, err := m.Start(ctx, "drv", adapter.Support{Eye: true}); err == nil {
+		t.Fatal("a driver itself was started")
+	}
+	if err := m.Uninstall("eye"); err == nil {
+		t.Fatal("a module inside a driver was uninstalled on its own")
+	}
+
+	inst, err := m.Start(ctx, "face", adapter.Support{Expression: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if inst.Granted() != (adapter.Support{Expression: true}) {
+		t.Fatalf("granted = %+v", inst.Granted())
+	}
+	deadline := time.Now().Add(5 * time.Second)
+	for inst.Latest().Shapes[tracking.JawOpen].Weight != 0.5 {
+		if time.Now().After(deadline) {
+			t.Fatal("never received data")
+		}
+		time.Sleep(DefaultUpdateInterval)
+	}
+	// Another module of the same driver runs in its own process.
+	other, err := m.Start(ctx, "eye", adapter.Support{Eye: true})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other.Stop()
+	if err := m.Uninstall("drv"); !errors.Is(err, ErrRunning) {
+		t.Fatalf("uninstall while running: %v", err)
+	}
+
+	inst.Stop()
+
+	// Another program may not take a module ID of the driver.
+	src := program(t, t.TempDir(), "face"+plugin.HostSuffix, "face")
+	if _, err := m.Install(ctx, src); err == nil {
+		t.Fatal("duplicate module ID installed")
+	}
+	if err := m.Uninstall("drv"); err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(m.Installed()); len(got) != 1 || got[0] != "solo" {
+		t.Fatalf("after uninstall = %v", got)
 	}
 }
 

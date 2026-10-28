@@ -49,7 +49,7 @@ func runHangingHost() {
 	}
 	os.Setenv(childEnv, "1")
 	os.Setenv(childHangEnv, "1")
-	c, err := Start(exe, zap.NewNop())
+	c, err := Start(exe, "", zap.NewNop())
 	if err != nil {
 		panic(err)
 	}
@@ -101,7 +101,7 @@ func startChild(t *testing.T, logger *zap.Logger) *Client {
 		t.Fatal(err)
 	}
 	t.Setenv(childEnv, "1")
-	c, err := Start(exe, logger)
+	c, err := Start(exe, "", logger)
 	if err != nil {
 		t.Fatal(err)
 	}

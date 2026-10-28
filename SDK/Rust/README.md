@@ -80,6 +80,29 @@ cargo build --release
 # copy target/release/<binary>(.exe) to MyModule.windows.amd64.vfgmod (Windows x64)
 ```
 
+## Write a driver
+
+A driver bundles several modules in one program (see
+[Driver programs](../README.md#driver-programs)). Wrap each module in a
+`BoxModule` and serve them together:
+
+```rust
+use vrcftgo_sdk::{BoxModule, Driver, Metadata};
+
+fn main() {
+    vrcftgo_sdk::serve_driver(
+        Driver {
+            id: "MyDriver".into(),
+            metadata: Metadata { name: "My Driver".into(), ..Default::default() },
+        },
+        vec![BoxModule::new(FaceModule), BoxModule::new(EyeModule)],
+    );
+}
+```
+
+The host starts the program with `--source=<id>` for each module it
+loads; `serve_driver` serves that one module.
+
 ## Example
 
 [`examples/demo.rs`](examples/demo.rs) is a demo module that needs no

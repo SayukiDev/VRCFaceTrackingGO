@@ -10,6 +10,10 @@
 // host's protocol (see protocol.go) on its stdin/stdout, one at a time;
 // its stderr carries its zap log as JSON lines, which the host re-logs. Without either flag it refuses to run, so a
 // module program opened by accident does not touch any device.
+//
+// A driver program bundles several modules and calls ServeDriver instead.
+// Its --info lists the modules, and the host starts it with --source
+// naming the one module to serve.
 package plugin
 
 import (
@@ -33,6 +37,11 @@ const (
 	InfoFlag = "info"
 	// HostFlag must be set to true for a module program to serve the host.
 	HostFlag = "vfgmod"
+	// SourceFlag tells a driver program which of its modules to serve.
+	SourceFlag = "source"
+
+	// KindDriver is the Description.Kind of a driver program.
+	KindDriver = "driver"
 )
 
 // HostSuffix is the file name suffix of module programs for the platform
@@ -56,10 +65,18 @@ var ErrExited = errors.New("module process exited")
 
 // Description is the static information a module program reports.
 type Description struct {
+	// Kind is KindDriver for a driver program and empty for a module.
+	Kind      string           `json:"kind,omitempty"`
 	ID        string           `json:"id"`
 	Metadata  adapter.Metadata `json:"metadata"`
-	Supported adapter.Support  `json:"supported"`
+	Supported adapter.Support  `json:"supported,omitzero"`
+	// Modules are the modules a driver program contains. A driver is
+	// never loaded itself; its modules are.
+	Modules []Description `json:"modules,omitempty"`
 }
+
+// IsDriver reports whether d describes a driver program.
+func (d Description) IsDriver() bool { return d.Kind == KindDriver }
 
 // Conn is a running module program as seen by the host.
 type Conn interface {

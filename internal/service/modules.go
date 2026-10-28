@@ -6,11 +6,11 @@ import (
 
 	"go.uber.org/zap"
 
-	"github.com/SayukiDev/VRCFaceTrackingGO/internal/module/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/oscquery"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )
 
 // Modules returns the loaded modules.
@@ -77,31 +77,93 @@ func (s *Service) SetTrackingAssignment(a router.Assignment) error {
 	return nil
 }
 
-// InstallModule installs (or updates) the module program at path. A
-// running module with the same ID is stopped first. The new module only
-// runs after ReloadModules.
-func (s *Service) InstallModule(ctx context.Context, path string) (manager.Info, error) {
-	desc, err := s.modules.Inspect(ctx, path)
-	if err != nil {
-		return manager.Info{}, err
-	}
-	s.router.Unload(desc.ID)
-	info, err := s.modules.Install(ctx, path)
-	if err != nil {
-		return manager.Info{}, err
-	}
-	s.modulesInstalledChanged()
-	return info, nil
+// Driver describes an installed driver for the Modules page. A driver is
+// never loaded itself; its modules appear in the module catalog.
+type Driver struct {
+	ID          string `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description"`
+	Author      string `json:"author"`
+	Version     string `json:"version"`
+	PageURL     string `json:"pageUrl"`
+	// UsageInstructions tell the user what to set up before using it.
+	UsageInstructions string   `json:"usageInstructions"`
+	Icons             []string `json:"icons"`
 }
 
-// UninstallModule stops (if running) and removes an installed module.
+// DriverCatalog returns the installed drivers.
+func (s *Service) DriverCatalog() []Driver {
+	drivers := s.modules.Drivers()
+	out := make([]Driver, 0, len(drivers))
+	for _, d := range drivers {
+		md := d.Metadata
+		out = append(out, Driver{
+			ID:                d.ID,
+			Name:              md.Name,
+			Description:       md.Description,
+			Author:            md.Author,
+			Version:           md.Version,
+			PageURL:           md.PageURL,
+			UsageInstructions: md.UsageInstructions,
+			Icons:             router.EncodeIcons(md.Icons),
+		})
+	}
+	return out
+}
+
+// InstallModule installs (or updates) the module or driver program at
+// path and returns its description. Running modules of the program are
+// stopped first. The new modules only run after ReloadModules.
+func (s *Service) InstallModule(ctx context.Context, path string) (plugin.Description, error) {
+	desc, err := s.modules.Inspect(ctx, path)
+	if err != nil {
+		return plugin.Description{}, err
+	}
+	s.unloadProgram(desc.ID)
+	s.unloadModules(desc)
+	desc, err = s.modules.Install(ctx, path)
+	if err != nil {
+		return plugin.Description{}, err
+	}
+	s.modulesInstalledChanged()
+	return desc, nil
+}
+
+// UninstallModule stops (if running) and removes an installed module or
+// driver. Modules inside a driver cannot be removed on their own.
 func (s *Service) UninstallModule(id string) error {
-	s.router.Unload(id)
+	if info, ok := s.modules.Info(id); ok && info.Driver != "" {
+		return fmt.Errorf("module %s is part of driver %s and can only be uninstalled with it", id, info.Driver)
+	}
+	s.unloadProgram(id)
 	if err := s.modules.Uninstall(id); err != nil {
 		return err
 	}
 	s.modulesInstalledChanged()
 	return nil
+}
+
+// unloadProgram stops the running modules of the installed program with
+// the given ID: the module itself, or every module of a driver.
+func (s *Service) unloadProgram(id string) {
+	for _, d := range s.modules.Drivers() {
+		if d.ID == id {
+			s.unloadModules(d.Description)
+			return
+		}
+	}
+	s.router.Unload(id)
+}
+
+// unloadModules stops the running modules desc describes.
+func (s *Service) unloadModules(desc plugin.Description) {
+	if !desc.IsDriver() {
+		s.router.Unload(desc.ID)
+		return
+	}
+	for _, m := range desc.Modules {
+		s.router.Unload(m.ID)
+	}
 }
 
 // modulesInstalledChanged refreshes the module list after an install or

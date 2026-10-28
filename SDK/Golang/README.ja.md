@@ -74,10 +74,31 @@ go get github.com/SayukiDev/VRCFaceTrackingGO@latest
 
 このリポジトリ内のモジュールは `modules/<id>` に置き、`go run ./cmd/build` でビルドします。`platforms` の判定とインストーラーへの追加もこのコマンドが行います。
 
+## ドライバーを書く
+
+ドライバーは複数のモジュールを1つのプログラムにまとめたものです([ドライバープログラム](../README.ja.md#ドライバープログラム))。各モジュールを上と同じように実装し、まとめて起動します。
+
+```go
+func main() {
+	plugin.ServeDriver(plugin.Driver{
+		ID:       "MyDriver",
+		Metadata: adapter.MustLoadMetadata(files, "metadata.json"),
+	}, face.New(), eye.New())
+}
+```
+
+ホストは読み込むモジュールごとに `--source=<id>` を付けて起動します。`ServeDriver` はその 1 つのモジュールを提供します。
+
 ## 例
 
 [`example`](example) は、ハードウェアなしで動くデモモジュールです。顎・笑顔・視線・瞬きを自動で動かします。
 
 ```sh
 go build -o Demo.windows.amd64.vfgmod ./SDK/Golang/example
+```
+
+[`example-driver`](example-driver) は、同じようなモジュールを 3 つ(アイのみ・フェイスのみ・両方)内包するデモドライバーです。
+
+```sh
+go build -o DemoDriver.windows.amd64.vfgmod ./SDK/Golang/example-driver
 ```

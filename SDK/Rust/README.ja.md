@@ -69,6 +69,26 @@ cargo build --release
 # target/release/<バイナリ>(.exe) を MyModule.windows.amd64.vfgmod としてコピー(Windows x64)
 ```
 
+## ドライバーを書く
+
+ドライバーは複数のモジュールを1つのプログラムにまとめたものです([ドライバープログラム](../README.ja.md#ドライバープログラム))。各モジュールを `BoxModule` で包み、まとめて起動します。
+
+```rust
+use vrcftgo_sdk::{BoxModule, Driver, Metadata};
+
+fn main() {
+    vrcftgo_sdk::serve_driver(
+        Driver {
+            id: "MyDriver".into(),
+            metadata: Metadata { name: "My Driver".into(), ..Default::default() },
+        },
+        vec![BoxModule::new(FaceModule), BoxModule::new(EyeModule)],
+    );
+}
+```
+
+ホストは読み込むモジュールごとに `--source=<id>` を付けて起動します。`serve_driver` はその 1 つのモジュールを提供します。
+
 ## 例
 
 [`examples/demo.rs`](examples/demo.rs) は、ハードウェアなしで動くデモモジュールです。顎・笑顔・視線・瞬きを自動で動かします。

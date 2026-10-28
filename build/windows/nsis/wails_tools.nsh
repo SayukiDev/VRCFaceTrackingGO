@@ -14,7 +14,7 @@
     !define INFO_PRODUCTNAME "VRCFaceTrackingGO"
 !endif
 !ifndef INFO_PRODUCTVERSION
-    !define INFO_PRODUCTVERSION "0.0.6"
+    !define INFO_PRODUCTVERSION "0.0.8"
 !endif
 !ifndef INFO_COPYRIGHT
     !define INFO_COPYRIGHT "© 2026 SayukiDev. Licensed under the GNU AGPL v3.0."

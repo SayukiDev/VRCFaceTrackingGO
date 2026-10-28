@@ -20,6 +20,8 @@ func (a *App) SetModuleTracking(id string, eye, expression bool) {
 
 func (a *App) GetModuleCatalog() []router.Registered { return a.svc.ModuleCatalog() }
 
+func (a *App) GetDriverCatalog() []service.Driver { return a.svc.DriverCatalog() }
+
 func (a *App) SetModuleEnabled(id string, enabled bool) error {
 	return a.svc.SetModuleEnabled(id, enabled)
 }
@@ -32,8 +34,8 @@ func (a *App) SetModuleUse(id string, eye, expression bool) error {
 
 func (a *App) GetModuleConfigDirty() bool { return a.svc.ModuleConfigDirty() }
 
-// InstallModule asks for a module program and installs it. It returns the
-// installed module's name, or "" when cancelled.
+// InstallModule asks for a module or driver program and installs it. It
+// returns the installed program's name, or "" when cancelled.
 func (a *App) InstallModule() (string, error) {
 	path, err := a.app.Dialog.OpenFile().
 		SetTitle("Install module").
@@ -46,11 +48,11 @@ func (a *App) InstallModule() (string, error) {
 	if err != nil {
 		return "", err
 	}
-	info, err := a.svc.InstallModule(a.ctx, path)
+	desc, err := a.svc.InstallModule(a.ctx, path)
 	if err != nil {
 		return "", err
 	}
-	return info.Metadata.Name, nil
+	return desc.Metadata.Name, nil
 }
 
 func (a *App) UninstallModule(id string) error { return a.svc.UninstallModule(id) }

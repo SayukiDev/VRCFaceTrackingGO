@@ -20,20 +20,13 @@ use crate::{Error, Module};
 pub fn serve<M: Module>(module: M) -> ! {
     let args: Vec<String> = std::env::args().skip(1).collect();
     match args.as_slice() {
-        [a] if a == "--info" => {
-            let d = Description {
-                id: module.id().to_owned(),
-                metadata: module.metadata(),
-                supported: module.supported(),
-            };
-            match serde_json::to_string(&d) {
-                Ok(json) => {
-                    println!("{json}");
-                    std::process::exit(0)
-                }
-                Err(_) => std::process::exit(1),
-            }
-        }
+        [a] if a == "--info" => print_description(&Description {
+            kind: None,
+            id: module.id().to_owned(),
+            metadata: module.metadata(),
+            supported: module.supported(),
+            modules: Vec::new(),
+        }),
         [a] if a == "--vfgmod=true" => {}
         _ => {
             eprintln!(
@@ -44,7 +37,25 @@ pub fn serve<M: Module>(module: M) -> ! {
         }
     }
 
-    let logger = Logger::new(module.id());
+    let name = module.id().to_owned();
+    run_host(module, &name)
+}
+
+/// Prints `d` for `--info` and exits.
+pub(crate) fn print_description(d: &Description) -> ! {
+    match serde_json::to_string(d) {
+        Ok(json) => {
+            println!("{json}");
+            std::process::exit(0)
+        }
+        Err(_) => std::process::exit(1),
+    }
+}
+
+/// Serves the host on stdin/stdout with `module`, logging as `name`, and
+/// exits.
+pub(crate) fn run_host<M: Module>(module: M, name: &str) -> ! {
+    let logger = Logger::new(name);
     let runtime = match tokio::runtime::Builder::new_current_thread()
         .enable_all()
         .build()

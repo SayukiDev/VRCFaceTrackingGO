@@ -87,6 +87,24 @@ Modules inside this repository live in `modules/<id>` and are built with
 `go run ./cmd/build`, which also reads `platforms` and adds them to the
 installer.
 
+## Write a driver
+
+A driver bundles several modules in one program (see
+[Driver programs](../README.md#driver-programs)). Implement each module as
+above and serve them together:
+
+```go
+func main() {
+	plugin.ServeDriver(plugin.Driver{
+		ID:       "MyDriver",
+		Metadata: adapter.MustLoadMetadata(files, "metadata.json"),
+	}, face.New(), eye.New())
+}
+```
+
+The host starts the program with `--source=<id>` for each module it
+loads; `ServeDriver` serves that one module.
+
 ## Example
 
 [`example`](example) is a demo module that needs no hardware: it moves the
@@ -94,4 +112,11 @@ jaw, smile, eyes and blinks on its own.
 
 ```sh
 go build -o Demo.windows.amd64.vfgmod ./SDK/Golang/example
+```
+
+[`example-driver`](example-driver) is a demo driver with three such modules
+(eye only, face only, both).
+
+```sh
+go build -o DemoDriver.windows.amd64.vfgmod ./SDK/Golang/example-driver
 ```

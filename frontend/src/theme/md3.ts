@@ -444,6 +444,24 @@ export function themeOverrides(p: Palette): GlobalThemeOverrides {
       boxShadowHover: shadow2,
       boxShadowPressed: shadow1,
     },
+    Radio: {
+      // Segmented button: outlined, full radius, 40px; the selected segment
+      // is secondary-container.
+      buttonHeightMedium: '40px',
+      fontSizeMedium: '14px',
+      buttonBorderRadius: shape.full,
+      buttonColor: 'transparent',
+      buttonColorActive: hex(p.secondaryContainer),
+      buttonTextColor: hex(p.onSurface),
+      buttonTextColorHover: hex(p.onSurface),
+      buttonTextColorActive: hex(p.onSecondaryContainer),
+      buttonBorderColor: hex(p.outline),
+      buttonBorderColorHover: hex(p.outline),
+      buttonBorderColorActive: hex(p.outline),
+      buttonBoxShadow: 'none',
+      buttonBoxShadowHover: 'none',
+      buttonBoxShadowFocus: 'none',
+    },
     Collapse: {
       dividerColor: hex(p.outlineVariant),
       titleTextColor: hex(p.onSurface),

@@ -126,6 +126,11 @@ export class Registered {
     "pageUrl": string;
     "usageInstructions": string;
     "icons": string[];
+
+    /**
+     * Driver is the ID of the driver containing the module, if any.
+     */
+    "driver": string;
     "supportsEye": boolean;
     "supportsExpression": boolean;
     "enabled": boolean;
@@ -163,6 +168,9 @@ export class Registered {
         }
         if (!("icons" in $$source)) {
             this["icons"] = [];
+        }
+        if (!("driver" in $$source)) {
+            this["driver"] = "";
         }
         if (!("supportsEye" in $$source)) {
             this["supportsEye"] = false;

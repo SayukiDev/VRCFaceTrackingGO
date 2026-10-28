@@ -78,6 +78,13 @@ const ja: typeof en = {
     uninstallConfirm: '{name} をアンインストールしますか？動作中の場合は先に停止します。',
     uninstalled: '{name} をアンインストールしました。',
     none: 'モジュールがインストールされていません。.vfgmod ファイルをインストールしてください。',
+    viaDriver: '{name} に内包',
+    tabModules: 'モジュール',
+    tabDrivers: 'ドライバー',
+    noDrivers: 'ドライバーはインストールされていません。',
+    driversIntro:
+      'ドライバーは複数のモジュールをまとめたものです。ドライバー自体は読み込まれず、内包されるモジュールが上の一覧に通常のモジュールとして表示されます。内包モジュールはドライバーごとにのみアンインストールできます。',
+    uninstallDriverConfirm: '{name} と内包されるすべてのモジュールをアンインストールしますか？動作中のモジュールは先に停止します。',
   },
   mutations: {
     names: {

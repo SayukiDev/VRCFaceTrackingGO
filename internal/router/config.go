@@ -17,25 +17,27 @@ type Config struct {
 // Registered describes an installed module for the Modules page: its
 // static metadata, the user's setting and whether it is currently loaded.
 type Registered struct {
-	ID                 string   `json:"id"`
-	Name               string   `json:"name"`
-	Description        string   `json:"description"`
-	Author             string   `json:"author"`
-	Version            string   `json:"version"`
-	PageURL            string   `json:"pageUrl"`
-	UsageInstructions  string   `json:"usageInstructions"`
-	Icons              []string `json:"icons"`
-	SupportsEye        bool     `json:"supportsEye"`
-	SupportsExpression bool     `json:"supportsExpression"`
-	Enabled            bool     `json:"enabled"`
-	UseEye             bool     `json:"useEye"`
-	UseExpression      bool     `json:"useExpression"`
-	Loaded             bool     `json:"loaded"`
-	Active             bool     `json:"active"`
-	UsingEye           bool     `json:"usingEye"`
-	UsingExpression    bool     `json:"usingExpression"`
-	EyeActive          bool     `json:"eyeActive"`
-	ExpressionActive   bool     `json:"expressionActive"`
+	ID                string   `json:"id"`
+	Name              string   `json:"name"`
+	Description       string   `json:"description"`
+	Author            string   `json:"author"`
+	Version           string   `json:"version"`
+	PageURL           string   `json:"pageUrl"`
+	UsageInstructions string   `json:"usageInstructions"`
+	Icons             []string `json:"icons"`
+	// Driver is the ID of the driver containing the module, if any.
+	Driver             string `json:"driver"`
+	SupportsEye        bool   `json:"supportsEye"`
+	SupportsExpression bool   `json:"supportsExpression"`
+	Enabled            bool   `json:"enabled"`
+	UseEye             bool   `json:"useEye"`
+	UseExpression      bool   `json:"useExpression"`
+	Loaded             bool   `json:"loaded"`
+	Active             bool   `json:"active"`
+	UsingEye           bool   `json:"usingEye"`
+	UsingExpression    bool   `json:"usingExpression"`
+	EyeActive          bool   `json:"eyeActive"`
+	ExpressionActive   bool   `json:"expressionActive"`
 }
 
 func defaultConfig(desc manager.Info) Config {
@@ -123,7 +125,8 @@ func (r *Router) Catalog() []Registered {
 			Version:            desc.Metadata.Version,
 			PageURL:            desc.Metadata.PageURL,
 			UsageInstructions:  desc.Metadata.UsageInstructions,
-			Icons:              encodeIcons(desc.Metadata.Icons),
+			Icons:              EncodeIcons(desc.Metadata.Icons),
+			Driver:             desc.Driver,
 			SupportsEye:        desc.Supported.Eye,
 			SupportsExpression: desc.Supported.Expression,
 			Enabled:            c.Enabled,

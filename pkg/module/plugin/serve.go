@@ -22,17 +22,36 @@ import (
 // requires --vfgmod=true. It must be called from main and nothing else may
 // write to stdout.
 func Serve(mod adapter.Module) {
+	serveMain(describe(mod), func(string) (adapter.Module, error) { return mod, nil })
+}
+
+// serveMain parses the command line and either prints desc or serves the
+// module that choose picks for the requested source.
+func serveMain(desc Description, choose func(source string) (adapter.Module, error)) {
 	info := flag.Bool(InfoFlag, false, "print the module description as JSON and exit")
 	host := flag.Bool(HostFlag, false, "serve the VRCFaceTracking host over stdio (set by the host)")
+	var source string
+	if desc.IsDriver() {
+		flag.StringVar(&source, SourceFlag, "", "ID of the module to serve (set by the host)")
+	}
 	flag.Parse()
 	if *info {
-		if err := json.NewEncoder(os.Stdout).Encode(describe(mod)); err != nil {
+		if err := json.NewEncoder(os.Stdout).Encode(desc); err != nil {
 			os.Exit(1)
 		}
 		return
 	}
 	if !*host {
-		fmt.Fprintf(os.Stderr, "%s is a VRCFaceTracking module. Install it from the Modules page instead of running it.\n", mod.Metadata().Name)
+		kind := "module"
+		if desc.IsDriver() {
+			kind = "driver"
+		}
+		fmt.Fprintf(os.Stderr, "%s is a VRCFaceTracking %s. Install it from the Modules page instead of running it.\n", desc.Metadata.Name, kind)
+		os.Exit(2)
+	}
+	mod, err := choose(source)
+	if err != nil {
+		fmt.Fprintln(os.Stderr, err)
 		os.Exit(2)
 	}
 

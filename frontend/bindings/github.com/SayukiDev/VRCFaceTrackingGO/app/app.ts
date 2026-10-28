@@ -68,6 +68,12 @@ export function GetAvatar(): $CancellablePromise<oscquery$0.AvatarInfo> {
     });
 }
 
+export function GetDriverCatalog(): $CancellablePromise<service$0.Driver[]> {
+    return $Call.ByID(4267839869).then(($result: any) => {
+        return $$createType2($result);
+    });
+}
+
 export function GetHideTrayNotice(): $CancellablePromise<boolean> {
     return $Call.ByID(1784054860);
 }
@@ -81,19 +87,19 @@ export function GetLocale(): $CancellablePromise<string> {
 
 export function GetLogs(): $CancellablePromise<logging$0.Line[]> {
     return $Call.ByID(2762259787).then(($result: any) => {
-        return $$createType2($result);
+        return $$createType4($result);
     });
 }
 
 export function GetMetadata(): $CancellablePromise<metadata$0.Metadata> {
     return $Call.ByID(817452477).then(($result: any) => {
-        return $$createType3($result);
+        return $$createType5($result);
     });
 }
 
 export function GetModuleCatalog(): $CancellablePromise<router$0.Registered[]> {
     return $Call.ByID(1171690815).then(($result: any) => {
-        return $$createType5($result);
+        return $$createType7($result);
     });
 }
 
@@ -103,19 +109,19 @@ export function GetModuleConfigDirty(): $CancellablePromise<boolean> {
 
 export function GetModuleTiming(): $CancellablePromise<settings$0.Timing> {
     return $Call.ByID(123002890).then(($result: any) => {
-        return $$createType6($result);
+        return $$createType8($result);
     });
 }
 
 export function GetModules(): $CancellablePromise<router$0.ModuleInfo[]> {
     return $Call.ByID(2237556809).then(($result: any) => {
-        return $$createType8($result);
+        return $$createType10($result);
     });
 }
 
 export function GetMutations(): $CancellablePromise<mixer$0.StageState[]> {
     return $Call.ByID(2546389204).then(($result: any) => {
-        return $$createType10($result);
+        return $$createType12($result);
     });
 }
 
@@ -132,13 +138,13 @@ export function GetOscMode(): $CancellablePromise<string> {
 
 export function GetOscStatus(): $CancellablePromise<service$0.OscStatus> {
     return $Call.ByID(2759346853).then(($result: any) => {
-        return $$createType11($result);
+        return $$createType13($result);
     });
 }
 
 export function GetOscTarget(): $CancellablePromise<osc$0.Target> {
     return $Call.ByID(726227894).then(($result: any) => {
-        return $$createType12($result);
+        return $$createType14($result);
     });
 }
 
@@ -152,7 +158,7 @@ export function GetOutputMode(): $CancellablePromise<string> {
 
 export function GetParameterStats(): $CancellablePromise<sender$0.ParameterStats> {
     return $Call.ByID(2699303386).then(($result: any) => {
-        return $$createType13($result);
+        return $$createType15($result);
     });
 }
 
@@ -173,7 +179,7 @@ export function GetTheme(): $CancellablePromise<string> {
 
 export function GetTrackingAssignment(): $CancellablePromise<router$0.Assignment> {
     return $Call.ByID(1630669780).then(($result: any) => {
-        return $$createType14($result);
+        return $$createType16($result);
     });
 }
 
@@ -182,8 +188,8 @@ export function GetUseSystemAccent(): $CancellablePromise<boolean> {
 }
 
 /**
- * InstallModule asks for a module program and installs it. It returns the
- * installed module's name, or "" when cancelled.
+ * InstallModule asks for a module or driver program and installs it. It
+ * returns the installed program's name, or "" when cancelled.
  */
 export function InstallModule(): $CancellablePromise<string> {
     return $Call.ByID(849455555);
@@ -312,17 +318,19 @@ export function UninstallModule(id: string): $CancellablePromise<void> {
 
 // Private type creation functions
 const $$createType0 = oscquery$0.AvatarInfo.createFrom;
-const $$createType1 = logging$0.Line.createFrom;
+const $$createType1 = service$0.Driver.createFrom;
 const $$createType2 = $Create.Array($$createType1);
-const $$createType3 = metadata$0.Metadata.createFrom;
-const $$createType4 = router$0.Registered.createFrom;
-const $$createType5 = $Create.Array($$createType4);
-const $$createType6 = settings$0.Timing.createFrom;
-const $$createType7 = router$0.ModuleInfo.createFrom;
-const $$createType8 = $Create.Array($$createType7);
-const $$createType9 = mixer$0.StageState.createFrom;
+const $$createType3 = logging$0.Line.createFrom;
+const $$createType4 = $Create.Array($$createType3);
+const $$createType5 = metadata$0.Metadata.createFrom;
+const $$createType6 = router$0.Registered.createFrom;
+const $$createType7 = $Create.Array($$createType6);
+const $$createType8 = settings$0.Timing.createFrom;
+const $$createType9 = router$0.ModuleInfo.createFrom;
 const $$createType10 = $Create.Array($$createType9);
-const $$createType11 = service$0.OscStatus.createFrom;
-const $$createType12 = osc$0.Target.createFrom;
-const $$createType13 = sender$0.ParameterStats.createFrom;
-const $$createType14 = router$0.Assignment.createFrom;
+const $$createType11 = mixer$0.StageState.createFrom;
+const $$createType12 = $Create.Array($$createType11);
+const $$createType13 = service$0.OscStatus.createFrom;
+const $$createType14 = osc$0.Target.createFrom;
+const $$createType15 = sender$0.ParameterStats.createFrom;
+const $$createType16 = router$0.Assignment.createFrom;

@@ -38,9 +38,10 @@ type Client struct {
 
 var _ Conn = (*Client)(nil)
 
-// Start launches the module program at path. Its log is re-logged through
-// logger.
-func Start(path string, logger *zap.Logger) (*Client, error) {
+// Start launches the module program at path. source selects the module of
+// a driver program and must be empty for a module program. Its log is
+// re-logged through logger.
+func Start(path, source string, logger *zap.Logger) (*Client, error) {
 	// Our own pipes rather than cmd.*Pipe, so cmd.Wait does not close them
 	// under the reader.
 	inR, inW, err := os.Pipe()
@@ -58,7 +59,11 @@ func Start(path string, logger *zap.Logger) (*Client, error) {
 		return nil, err
 	}
 
-	cmd := exec.Command(path, "--"+HostFlag+"=true")
+	args := []string{"--" + HostFlag + "=true"}
+	if source != "" {
+		args = append(args, "--"+SourceFlag+"="+source)
+	}
+	cmd := exec.Command(path, args...)
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = inR, outW, errW
 	prepare(cmd)
 	err = cmd.Start()

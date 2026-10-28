@@ -76,6 +76,13 @@ export default {
     uninstallConfirm: 'Uninstall {name}? A running module is stopped first.',
     uninstalled: 'Uninstalled {name}.',
     none: 'No modules installed. Install a .vfgmod file to get started.',
+    viaDriver: 'via {name}',
+    tabModules: 'Modules',
+    tabDrivers: 'Drivers',
+    noDrivers: 'No drivers installed.',
+    driversIntro:
+      'A driver bundles several modules. The driver itself is never loaded; its modules are listed above and work like any other module, but can only be uninstalled together with the driver.',
+    uninstallDriverConfirm: 'Uninstall {name} and all of its modules? Running modules are stopped first.',
   },
   // Display names for mutations coming from the Go side, keyed by their Go
   // name. Missing keys fall back to the original string, so parameter range

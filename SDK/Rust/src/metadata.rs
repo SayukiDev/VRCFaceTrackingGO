@@ -65,7 +65,13 @@ fn base64_list<S: Serializer>(icons: &[Vec<u8>], s: S) -> Result<S::Ok, S::Error
 /// What `--info` prints.
 #[derive(Clone, Debug, PartialEq, Serialize)]
 pub struct Description {
+    /// `Some("driver")` for a driver program, `None` for a module.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub kind: Option<String>,
     pub id: String,
     pub metadata: Metadata,
     pub supported: Support,
+    /// The modules a driver program contains.
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    pub modules: Vec<Description>,
 }

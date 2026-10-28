@@ -205,7 +205,7 @@ func (r *Router) Initialize(ctx context.Context) {
 			Name:            name,
 			UsingEye:        granted.Eye,
 			UsingExpression: granted.Expression,
-			Icons:           encodeIcons(c.info.Metadata.Icons),
+			Icons:           EncodeIcons(c.info.Metadata.Icons),
 		}}
 		e.setTracking(true, true)
 
@@ -224,7 +224,8 @@ func (r *Router) Initialize(ctx context.Context) {
 	r.notifyLocked()
 }
 
-func encodeIcons(icons [][]byte) []string {
+// EncodeIcons turns PNG icons into data: URIs for the UI.
+func EncodeIcons(icons [][]byte) []string {
 	out := make([]string, 0, len(icons))
 	for _, icon := range icons {
 		out = append(out, "data:image/png;base64,"+base64.StdEncoding.EncodeToString(icon))

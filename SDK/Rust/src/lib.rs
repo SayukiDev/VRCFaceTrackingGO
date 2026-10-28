@@ -20,10 +20,14 @@
 //! }
 //! ```
 //!
+//! A driver program bundles several modules in one program; pass them to
+//! [`serve_driver`] instead.
+//!
 //! [`serve`] handles the command line (`--info`, `--vfgmod=true`), the wire
 //! format and the async runtime. Never print to stdout: it carries the
 //! protocol. Log with the [`Logger`] passed to [`Module::initialize`].
 
+mod driver;
 mod expressions;
 mod log;
 mod metadata;
@@ -31,6 +35,7 @@ mod protocol;
 mod serve;
 mod tracking;
 
+pub use driver::{BoxModule, Driver, serve_driver};
 pub use expressions::{EXPRESSION_COUNT, UnifiedExpression};
 pub use log::Logger;
 pub use metadata::{Description, Metadata, Support};

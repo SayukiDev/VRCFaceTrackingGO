@@ -26,8 +26,42 @@ func ReadInfo(ctx context.Context, path string) (Description, error) {
 	if err := json.Unmarshal(out, &d); err != nil {
 		return Description{}, fmt.Errorf("decode module info: %w", err)
 	}
-	if d.ID == "" {
-		return Description{}, errors.New("module info has no ID")
+	if err := d.validate(); err != nil {
+		return Description{}, fmt.Errorf("module info: %w", err)
 	}
 	return d, nil
+}
+
+// validate checks the structure of a description read from a program.
+func (d Description) validate() error {
+	if d.ID == "" {
+		return errors.New("no ID")
+	}
+	switch d.Kind {
+	case "":
+		if len(d.Modules) > 0 {
+			return fmt.Errorf("module %s lists modules but is not a driver", d.ID)
+		}
+		return nil
+	case KindDriver:
+	default:
+		return fmt.Errorf("unknown kind %q", d.Kind)
+	}
+	if len(d.Modules) == 0 {
+		return fmt.Errorf("driver %s contains no modules", d.ID)
+	}
+	seen := make(map[string]bool, len(d.Modules))
+	for _, m := range d.Modules {
+		if m.Kind != "" || len(m.Modules) > 0 {
+			return fmt.Errorf("driver %s: module %s must be a plain module", d.ID, m.ID)
+		}
+		if m.ID == "" {
+			return fmt.Errorf("driver %s: a module has no ID", d.ID)
+		}
+		if m.ID == d.ID || seen[m.ID] {
+			return fmt.Errorf("driver %s: duplicate ID %s", d.ID, m.ID)
+		}
+		seen[m.ID] = true
+	}
+	return nil
 }

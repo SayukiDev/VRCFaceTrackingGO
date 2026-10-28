@@ -10,6 +10,67 @@ import { Create as $Create } from "@wailsio/runtime";
 import * as osc$0 from "../osc/models.js";
 
 /**
+ * Driver describes an installed driver for the Modules page. A driver is
+ * never loaded itself; its modules appear in the module catalog.
+ */
+export class Driver {
+    "id": string;
+    "name": string;
+    "description": string;
+    "author": string;
+    "version": string;
+    "pageUrl": string;
+
+    /**
+     * UsageInstructions tell the user what to set up before using it.
+     */
+    "usageInstructions": string;
+    "icons": string[];
+
+    /** Creates a new Driver instance. */
+    constructor($$source: Partial<Driver> = {}) {
+        if (!("id" in $$source)) {
+            this["id"] = "";
+        }
+        if (!("name" in $$source)) {
+            this["name"] = "";
+        }
+        if (!("description" in $$source)) {
+            this["description"] = "";
+        }
+        if (!("author" in $$source)) {
+            this["author"] = "";
+        }
+        if (!("version" in $$source)) {
+            this["version"] = "";
+        }
+        if (!("pageUrl" in $$source)) {
+            this["pageUrl"] = "";
+        }
+        if (!("usageInstructions" in $$source)) {
+            this["usageInstructions"] = "";
+        }
+        if (!("icons" in $$source)) {
+            this["icons"] = [];
+        }
+
+        Object.assign(this, $$source);
+    }
+
+    /**
+     * Creates a new Driver instance from a string or object.
+     */
+    static createFrom($$source: any = {}): Driver {
+        const $$createField7_0 = $$createType0;
+        let $$parsedSource = typeof $$source === 'string' ? JSON.parse($$source) : $$source;
+        if ("icons" in $$parsedSource) {
+            $$parsedSource["icons"] = $$createField7_0($$parsedSource["icons"]);
+        }
+        return new Driver($$parsedSource as Partial<Driver>);
+    }
+}
+
+/**
  * OscStatus is the state of the OSC endpoints plus per-second counters.
  */
 export class OscStatus {
@@ -60,3 +121,6 @@ export class OscStatus {
         return new OscStatus($$parsedSource as Partial<OscStatus>);
     }
 }
+
+// Private type creation functions
+const $$createType0 = $Create.Array($Create.Any);

@@ -57,9 +57,13 @@ type Instance struct {
 }
 
 func newInstance(m *Manager, info Info, conn plugin.Conn, granted adapter.Support) *Instance {
+	logger := m.logger.With(zap.String("module", info.Metadata.Name))
+	if info.Driver != "" {
+		logger = logger.With(zap.String("driver", info.Driver))
+	}
 	inst := &Instance{
 		manager: m,
-		logger:  m.logger.With(zap.String("module", info.Metadata.Name)),
+		logger:  logger,
 		info:    info,
 		granted: granted,
 		conn:    conn,
@@ -223,7 +227,7 @@ func (i *Instance) poll(ctx context.Context) error {
 
 // restart starts the program again and asks for what it had before.
 func (i *Instance) restart(ctx context.Context) error {
-	conn, err := i.manager.launch(i.info.Path)
+	conn, err := i.manager.launch(i.info.Path, i.info.source())
 	if err != nil {
 		return err
 	}

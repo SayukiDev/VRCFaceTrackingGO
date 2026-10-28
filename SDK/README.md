@@ -90,6 +90,46 @@ device.
 - The host waits at most 5 seconds for `--info`. It re-reads the
   description only when the file's size or modification time changes.
 
+## Driver programs
+
+A driver is a module program that bundles several modules. It uses the
+same file name, wire format and lifecycle; only the command line and
+`--info` differ. The host lists the driver in its own section of the
+Modules page and never loads the driver itself. Its modules appear in the
+module list like any other module (same priority list, enabled flag and
+eye / face choice), but they can only be uninstalled together with the
+driver.
+
+| Command line | Behaviour |
+|---|---|
+| `<prog> --info` | Print the driver description (below) and exit with code 0. |
+| `<prog> --vfgmod=true --source=<id>` | Serve module `<id>` exactly like a module program would. |
+| anything else | Refuse to run, including `--vfgmod=true` without a source. |
+
+```json
+{
+  "kind": "driver",
+  "id": "PicoDriver",
+  "metadata": { "name": "Pico Driver", "...": "..." },
+  "modules": [
+    { "id": "PicoFace", "metadata": { "...": "..." }, "supported": { "eye": false, "expression": true } },
+    { "id": "PicoEye",  "metadata": { "...": "..." }, "supported": { "eye": true,  "expression": false } }
+  ]
+}
+```
+
+- `kind` is `"driver"`; a module program leaves it out. `supported` of the
+  driver itself is ignored.
+- `modules` must not be empty. Their IDs follow the module ID rules and
+  share one namespace with every installed module and driver: a program
+  that claims an ID that is already taken is skipped (or refused on
+  install).
+- The host starts one process per loaded module, each with its own
+  `--source`, and restarts it with the same `--source` after a crash. Two
+  modules of one driver therefore never share a process.
+
+The Go SDK provides `plugin.ServeDriver`, the Rust SDK `serve_driver`.
+
 ## Process lifecycle
 
 1. The host starts `<prog> --vfgmod=true` with stdin, stdout and stderr
