@@ -1,0 +1,8 @@
+{
+  "name": "Demo Driver",
+  "description": "Bundles three hardware free demo modules (eye, face, both), as an example of a driver built with the Go SDK",
+  "author": "SayukiDev",
+  "version": "1.0.0",
+  "icons": [],
+  "platforms": ["windows", "linux", "darwin"]
+}
