@@ -16,3 +16,5 @@ frontend/dist
 .task
 *.syso
 *.exe
+/modules/**/bin/
+/modules/**/obj/

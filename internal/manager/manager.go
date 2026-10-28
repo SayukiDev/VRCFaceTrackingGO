@@ -69,14 +69,10 @@ type DriverInfo struct {
 	Path string `json:"path"`
 }
 
-// programFile is a scanned module or driver program together with what
-// identified its version.
+// programFile is a scanned module or driver program.
 type programFile struct {
 	desc plugin.Description
 	loc  format.Location
-	// modTime and size are those of loc.Program.
-	modTime time.Time
-	size    int64
 }
 
 // modules returns the loadable modules of p.
@@ -216,21 +212,15 @@ func (m *Manager) runningLocked(p programFile) bool {
 	return slices.ContainsFunc(p.modules(), func(info Info) bool { return m.running[info.ID] != nil })
 }
 
-// Scan reads the module directory again. Programs that did not change
-// since the last scan are not run again. Programs that fail --info, and
-// programs claiming an ID already taken, are skipped.
+// Scan reads the module directory again and runs every program with
+// --info, so a reload picks up whatever changed in a module, including
+// files a driver reads besides its program. Programs that fail --info,
+// and programs claiming an ID already taken, are skipped.
 func (m *Manager) Scan(ctx context.Context) []Info {
 	entries, err := os.ReadDir(m.dir)
 	if err != nil && !errors.Is(err, os.ErrNotExist) {
 		m.logger.Warn("Cannot read module directory", zap.String("path", m.dir), zap.Error(err))
 	}
-
-	m.mu.Lock()
-	previous := make(map[string]programFile, len(m.programs))
-	for _, p := range m.programs {
-		previous[p.loc.Root] = p
-	}
-	m.mu.Unlock()
 
 	var scanned []*programFile
 	var wg sync.WaitGroup
@@ -239,18 +229,12 @@ func (m *Manager) Scan(ctx context.Context) []Info {
 		if !ok {
 			continue
 		}
-		// A folder counts as changed when its entry program does.
-		fi, err := os.Stat(loc.Program)
-		if err != nil || !fi.Mode().IsRegular() {
+		if fi, err := os.Stat(loc.Program); err != nil || !fi.Mode().IsRegular() {
 			continue
 		}
 		path := loc.Program
-		p := &programFile{loc: loc, modTime: fi.ModTime(), size: fi.Size()}
+		p := &programFile{loc: loc}
 		scanned = append(scanned, p)
-		if old, ok := previous[loc.Root]; ok && old.modTime.Equal(p.modTime) && old.size == p.size {
-			*p = old
-			continue
-		}
 		wg.Go(func() {
 			desc, err := format.Validate(ctx, path)
 			if err != nil {
@@ -333,11 +317,6 @@ func (m *Manager) Install(ctx context.Context, src string) (plugin.Description, 
 	if p.loc, err = staged.Install(m.dir, desc.ID); err != nil {
 		return plugin.Description{}, fmt.Errorf("install %s: %w", desc.ID, err)
 	}
-	fi, err := os.Stat(p.loc.Program)
-	if err != nil {
-		return plugin.Description{}, err
-	}
-	p.modTime, p.size = fi.ModTime(), fi.Size()
 
 	if i >= 0 {
 		// The same program may have been installed under another name or

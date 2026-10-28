@@ -5,9 +5,12 @@
 //	go run ./cmd/build [flags]
 //
 // It builds every modules/<id> whose metadata.json lists the current OS in
-// "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod, writes
-// the installer's module sections (build/windows/nsis/modules.nsh)
-// from their metadata.json, regenerates the build assets (version info,
+// "platforms" into build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmod. A module
+// that is a .NET project (modules/<id>/<id>.csproj) is published with the
+// dotnet CLI instead and packed as the module archive
+// build/bin/modules/<id>.<GOOS>.<GOARCH>.vfgmodf; it is skipped when dotnet
+// is not installed. It then writes the installer's module sections
+// (build/windows/nsis/modules.nsh) from their metadata.json, regenerates the build assets (version info,
 // manifests, installer defines) from build/config.yml with "wails3 task
 // common:update:build-assets", and then builds the application with the
 // Wails v3 CLI ("wails3 build", or "wails3 package" for the NSIS installer
@@ -17,17 +20,21 @@
 package main
 
 import (
+	"archive/zip"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"runtime"
+	"slices"
 	"strings"
 
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/manager"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/metadata"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/format"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )
 
@@ -117,6 +124,8 @@ type module struct {
 	id   string
 	path string
 	meta adapter.Metadata
+	// archive is set for a module archive (.vfgmodf).
+	archive bool
 }
 
 // buildModules builds every modules/<id> that is a main package and whose
@@ -133,7 +142,9 @@ func buildModules(arch string) ([]module, error) {
 		}
 		id := e.Name()
 		src := filepath.Join(modulesDir, id)
-		if _, err := os.Stat(filepath.Join(src, "main.go")); err != nil {
+		project := filepath.Join(src, id+".csproj")
+		dotnet := exists(project)
+		if !dotnet && !exists(filepath.Join(src, "main.go")) {
 			continue
 		}
 		meta, err := adapter.LoadMetadata(os.DirFS(src), moduleMetadataFile)
@@ -142,6 +153,19 @@ func buildModules(arch string) ([]module, error) {
 		}
 		if !meta.SupportsPlatform(runtime.GOOS) {
 			fmt.Printf("Skipping module %s (platforms: %s)\n", id, strings.Join(meta.Platforms, ", "))
+			continue
+		}
+		if dotnet {
+			out := filepath.Join(moduleOutDir, id+plugin.PlatformFolderSuffix(runtime.GOOS, arch))
+			if _, err := exec.LookPath("dotnet"); err != nil {
+				fmt.Printf("Skipping module %s (needs the .NET SDK)\n", id)
+				continue
+			}
+			fmt.Printf("Building module %s -> %s\n", id, out)
+			if err := buildDotnetModule(id, project, arch, out); err != nil {
+				return nil, fmt.Errorf("build module %s: %w", id, err)
+			}
+			built = append(built, module{id: id, path: out, meta: meta, archive: true})
 			continue
 		}
 		out := filepath.Join(moduleOutDir, id+plugin.PlatformSuffix(runtime.GOOS, arch))
@@ -156,8 +180,53 @@ func buildModules(arch string) ([]module, error) {
 	return built, nil
 }
 
+func exists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil
+}
+
+// dotnetRIDs maps GOOS and GOARCH to .NET runtime identifier parts.
+var (
+	dotnetOS   = map[string]string{"windows": "win", "linux": "linux", "darwin": "osx"}
+	dotnetArch = map[string]string{"amd64": "x64", "arm64": "arm64"}
+)
+
+// buildDotnetModule publishes the .NET project for the current OS and
+// arch and packs the output as the module archive out, with the program
+// (the project's apphost) as its entry.
+func buildDotnetModule(id, project, arch, out string) error {
+	rid := dotnetOS[runtime.GOOS] + "-" + dotnetArch[arch]
+	tmp, err := os.MkdirTemp("", "vfgmod-"+id+"-")
+	if err != nil {
+		return err
+	}
+	defer os.RemoveAll(tmp)
+	if err := runCmd("dotnet", "publish", project, "-c", "Release", "-r", rid, "--self-contained", "false", "-o", tmp); err != nil {
+		return err
+	}
+	exe := strings.TrimSuffix(filepath.Base(project), ".csproj")
+	if runtime.GOOS == "windows" {
+		exe += ".exe"
+	}
+	// The apphost finds its .dll by the name built into it, so it can be
+	// renamed.
+	if err := os.Rename(filepath.Join(tmp, exe), filepath.Join(tmp, plugin.FolderEntry)); err != nil {
+		return err
+	}
+	if err := os.MkdirAll(filepath.Dir(out), 0o755); err != nil {
+		return err
+	}
+	f, err := os.Create(out)
+	if err != nil {
+		return err
+	}
+	w := zip.NewWriter(f)
+	return errors.Join(w.AddFS(os.DirFS(tmp)), w.Close(), f.Close())
+}
+
 // installModules copies the modules to where the application looks for
-// them. The application must not be running.
+// them; module archives are extracted as the application does. The
+// application must not be running.
 func installModules(modules []module) error {
 	dataDir, err := metadata.Info.PersistentDataDir()
 	if err != nil {
@@ -168,6 +237,12 @@ func installModules(modules []module) error {
 		return err
 	}
 	for _, m := range modules {
+		if m.archive {
+			if err := installArchive(dir, m); err != nil {
+				return fmt.Errorf("install module %s (is the application running?): %w", m.id, err)
+			}
+			continue
+		}
 		dst := filepath.Join(dir, m.id+plugin.HostSuffix)
 		fmt.Printf("Installing module %s -> %s\n", m.id, dst)
 		data, err := os.ReadFile(m.path)
@@ -181,6 +256,20 @@ func installModules(modules []module) error {
 	return nil
 }
 
+func installArchive(dir string, m module) error {
+	staged, err := format.Stage(dir, m.path)
+	if err != nil {
+		return err
+	}
+	defer staged.Close()
+	loc, err := staged.Install(dir, m.id)
+	if err != nil {
+		return err
+	}
+	fmt.Printf("Installing module %s -> %s\n", m.id, loc.Root)
+	return nil
+}
+
 // nsisString escapes s for a double quoted NSIS string.
 var nsisString = strings.NewReplacer(`$`, `$$`, `"`, `$\"`, "\r", "", "\n", `$\n`)
 
@@ -189,6 +278,9 @@ var nsisString = strings.NewReplacer(`$`, `$$`, `"`, `$\"`, "\r", "", "\n", `$\n
 func writeNSISInclude(modules []module) error {
 	var b strings.Builder
 	b.WriteString("; Generated by cmd/build. Do not edit.\n\n")
+	// The installer copies single module programs; module archives are
+	// installed from the Modules page.
+	modules = slices.DeleteFunc(slices.Clone(modules), func(m module) bool { return m.archive })
 	b.WriteString("!macro moduleSections\n")
 	for _, m := range modules {
 		fmt.Fprintf(&b, "    Section \"%s\" %s\n", nsisString.Replace(m.meta.Name), sectionID(m.id))

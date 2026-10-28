@@ -17,13 +17,13 @@ import (
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/tracking"
 )
 
-// The test binary doubles as a module program when childIDEnv is set; the
-// value is the module ID. With childDriverEnv also set it is a driver
-// program instead, containing the comma separated module IDs. childFailEnv ("crash" or "hang") makes Update
-// fail; with childMarkerEnv set it fails only until that file exists.
+// Copies of the test binary are module programs: program appends their
+// identity ("<id>" or "<driver id>:<module>,<module>") after idTag, which
+// survives renaming, copying and archiving. childFailEnv ("crash" or
+// "hang") makes Update fail; with childMarkerEnv set it fails only until
+// that file exists.
 const (
-	childIDEnv     = "VRCFT_MANAGER_TEST_ID"
-	childDriverEnv = "VRCFT_MANAGER_TEST_DRIVER"
+	idTag          = "\n#vrcft-manager-test-id="
 	childFailEnv   = "VRCFT_MANAGER_TEST_FAIL"
 	childMarkerEnv = "VRCFT_MANAGER_TEST_MARKER"
 	// childFileEnv names a file Initialize needs in its working directory.
@@ -31,8 +31,8 @@ const (
 )
 
 func TestMain(m *testing.M) {
-	if id := os.Getenv(childIDEnv); id != "" {
-		if mods := os.Getenv(childDriverEnv); mods != "" {
+	if identity, ok := ownIdentity(); ok {
+		if id, mods, ok := strings.Cut(identity, ":"); ok {
 			var list []adapter.Module
 			for _, m := range strings.Split(mods, ",") {
 				list = append(list, &testModule{id: m})
@@ -40,10 +40,30 @@ func TestMain(m *testing.M) {
 			plugin.ServeDriver(plugin.Driver{ID: id, Metadata: adapter.Metadata{Name: "Driver " + id}}, list...)
 			return
 		}
-		plugin.Serve(&testModule{id: id})
+		plugin.Serve(&testModule{id: identity})
 		return
 	}
 	os.Exit(m.Run())
+}
+
+// ownIdentity reads the identity program appended to this executable. The
+// tag is only looked for at the very end, where the test binary itself
+// (which contains it as a constant) has none.
+func ownIdentity() (string, bool) {
+	exe, err := os.Executable()
+	if err != nil {
+		return "", false
+	}
+	data, err := os.ReadFile(exe)
+	if err != nil {
+		return "", false
+	}
+	tail := string(data[max(0, len(data)-512):])
+	i := strings.LastIndex(tail, idTag)
+	if i < 0 {
+		return "", false
+	}
+	return strings.TrimSpace(tail[i+len(idTag):]), true
 }
 
 type testModule struct{ id string }
@@ -76,6 +96,18 @@ func (t *testModule) Teardown() error { return nil }
 // given ID.
 func program(t *testing.T, dir, name, id string) string {
 	t.Helper()
+	return write(t, dir, name, id)
+}
+
+// driver copies the test binary to dir/name as a driver program
+// containing mods.
+func driver(t *testing.T, dir, name, id string, mods ...string) string {
+	t.Helper()
+	return write(t, dir, name, id+":"+strings.Join(mods, ","))
+}
+
+func write(t *testing.T, dir, name, identity string) string {
+	t.Helper()
 	exe, err := os.Executable()
 	if err != nil {
 		t.Fatal(err)
@@ -85,21 +117,9 @@ func program(t *testing.T, dir, name, id string) string {
 		t.Fatal(err)
 	}
 	path := filepath.Join(dir, name)
-	if err := os.WriteFile(path, data, 0o755); err != nil {
+	if err := os.WriteFile(path, append(data, idTag+identity+"\n"...), 0o755); err != nil {
 		t.Fatal(err)
 	}
-	// Copies report the ID from the environment, so a program has to be
-	// inspected before the next one is created.
-	t.Setenv(childIDEnv, id)
-	t.Setenv(childDriverEnv, "")
-	return path
-}
-
-// driver is program for a driver program containing mods.
-func driver(t *testing.T, dir, name, id string, mods ...string) string {
-	t.Helper()
-	path := program(t, dir, name, id)
-	t.Setenv(childDriverEnv, strings.Join(mods, ","))
 	return path
 }
 
@@ -220,13 +240,35 @@ func TestStartRunsModuleAndBlocksUninstall(t *testing.T) {
 	}
 }
 
+func TestScanRereadsEveryProgram(t *testing.T) {
+	dir := t.TempDir()
+	m := New(zap.NewNop(), dir)
+	ctx := context.Background()
+	path := driver(t, dir, "drv"+plugin.HostSuffix, "drv", "eye", "face")
+	if got := ids(m.Scan(ctx)); strings.Join(got, ",") != "eye,face" {
+		t.Fatalf("scan = %v", got)
+	}
+
+	// Same size and time, other modules: a reload still sees them.
+	fi, err := os.Stat(path)
+	if err != nil {
+		t.Fatal(err)
+	}
+	driver(t, dir, "drv"+plugin.HostSuffix, "drv", "eye", "fac2")
+	if err := os.Chtimes(path, fi.ModTime(), fi.ModTime()); err != nil {
+		t.Fatal(err)
+	}
+	if got := ids(m.Scan(ctx)); strings.Join(got, ",") != "eye,fac2" {
+		t.Fatalf("rescan = %v", got)
+	}
+}
+
 func TestDriverModules(t *testing.T) {
 	dir := t.TempDir()
 	m := New(zap.NewNop(), dir)
 	ctx := context.Background()
 	program(t, dir, "solo"+plugin.HostSuffix, "solo")
 	m.Scan(ctx)
-	// Last, so the started processes are the driver.
 	driver(t, dir, "drv"+plugin.HostSuffix, "drv", "eye", "face")
 	m.Scan(ctx)
 
