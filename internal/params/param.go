@@ -60,8 +60,9 @@ type Output interface {
 	Name() string
 	Address() string
 	Deprecated() bool
-	// Process evaluates the parameter against data and returns a message when
-	// the value changed since the last call.
+	// Process evaluates the parameter against data. ok is false when the
+	// output has nothing to send this frame (e.g. a disabled condition).
+	// Change detection is done by the sender.
 	Process(data *tracking.TrackingData) (Message, bool)
 }
 

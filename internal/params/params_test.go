@@ -32,7 +32,7 @@ func TestNameMatcherRejectsVersionedPrefix(t *testing.T) {
 }
 
 func TestBaseResetAndProcess(t *testing.T) {
-	p := NewBase("v2/JawOpen", func(d *tracking.TrackingData) float32 { return d.Shapes[tracking.JawOpen].Weight }, false)
+	p := NewBase("v2/JawOpen", func(d *tracking.TrackingData) float32 { return d.Shapes[tracking.JawOpen].Weight })
 	defs := []Definition{{Address: "/avatar/parameters/v2/JawOpen", Name: "v2/JawOpen", Type: TypeFloat}}
 	outs := p.Reset(defs, false)
 	if len(outs) != 1 {
@@ -43,9 +43,6 @@ func TestBaseResetAndProcess(t *testing.T) {
 	msg, ok := outs[0].Process(data)
 	if !ok || msg.Value.(float32) != 0.3 || msg.Address != defs[0].Address {
 		t.Fatalf("unexpected message %+v ok=%v", msg, ok)
-	}
-	if _, ok := outs[0].Process(data); ok {
-		t.Fatal("unchanged value must not re-send")
 	}
 	if outs := p.Reset([]Definition{{Address: "/avatar/parameters/v2/JawOpen", Type: TypeBool}}, false); len(outs) != 0 {
 		t.Fatal("type mismatch must not be relevant")

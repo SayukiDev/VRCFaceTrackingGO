@@ -4,6 +4,7 @@
 package sender
 
 import (
+	"bytes"
 	"strings"
 	"sync"
 	"sync/atomic"
@@ -65,16 +66,25 @@ type Sender struct {
 	allRelevant bool
 	stats       ParameterStats
 
+	// last holds the value most recently sent by each output, indexed like
+	// outputs; nil means nothing was sent yet. Keying by index rather than
+	// address keeps outputs that share an address (e.g. the bool and float
+	// variant of an EParam under forceRelevant) from defeating each other.
+	last []any
+	// lastNative holds the last value sent to each native endpoint.
+	lastNative map[string]any
+
 	// OnParametersChanged is called after every reset with the new stats.
 	OnParametersChanged func(ParameterStats)
 }
 
 func New(logger *zap.Logger, status params.StatusProvider, transport *osc.Sender) *Sender {
 	s := &Sender{
-		logger:    logger.Named("ParameterSender"),
-		status:    status,
-		transport: transport,
-		all:       params.AllParameters(status),
+		logger:     logger.Named("ParameterSender"),
+		status:     status,
+		transport:  transport,
+		all:        params.AllParameters(status),
+		lastNative: map[string]any{},
 	}
 	s.SetOutputMode(OutputParameters)
 	return s
@@ -90,6 +100,11 @@ func (s *Sender) SetOutputMode(m OutputMode) {
 		return
 	}
 	s.outputMode.Store(m)
+	// Resend everything for the new mode.
+	s.mu.Lock()
+	clear(s.last)
+	clear(s.lastNative)
+	s.mu.Unlock()
 }
 
 // Send evaluates every relevant output against d and sends the changed
@@ -98,18 +113,23 @@ func (s *Sender) Send(d *tracking.TrackingData) {
 	mode := s.OutputMode()
 
 	var messages []params.Message
+	s.mu.Lock()
 	if mode.parameters() {
-		s.mu.Lock()
-		for _, out := range s.outputs {
+		for i, out := range s.outputs {
 			// Native mode sends the eye endpoints itself below.
 			if mode.native() && strings.HasPrefix(out.Address(), nativeEyePrefix) {
 				continue
 			}
-			if msg, ok := out.Process(d); ok {
-				messages = append(messages, msg)
+			msg, ok := out.Process(d)
+			if !ok {
+				continue
 			}
+			if s.last[i] != nil && valueEqual(s.last[i], msg.Value) {
+				continue
+			}
+			s.last[i] = msg.Value
+			messages = append(messages, msg)
 		}
-		s.mu.Unlock()
 	}
 	// Only feed native tracking while a module is tracking, so an idle VRCFT
 	// does not override VRChat's own sources (e.g. Selfie Expression) with
@@ -117,21 +137,47 @@ func (s *Sender) Send(d *tracking.TrackingData) {
 	if mode.native() {
 		eye := s.status.EyeStatus() == adapter.Active
 		if eye || s.status.ExpressionStatus() == adapter.Active {
-			messages = append(messages, params.Message{Address: vrchat.FaceAddress, Value: vrchat.EncodeFace(d)})
+			messages = s.appendNative(messages, vrchat.FaceAddress, vrchat.EncodeFace(d))
+		} else {
+			delete(s.lastNative, vrchat.FaceAddress)
 		}
 		// Bone-rotation gaze and the default eyelids read VRChat's eye
 		// tracking input, not the face tracking EyeLook*/EyeClosed* keys.
 		if eye {
-			messages = append(messages,
-				params.Message{Address: params.NativeGazeAddress, Value: params.NativeGaze(d)},
-				params.Message{Address: params.NativeEyesClosedAddress, Value: params.NativeEyesClosed(d)},
-			)
+			messages = s.appendNative(messages, params.NativeGazeAddress, params.NativeGaze(d))
+			messages = s.appendNative(messages, params.NativeEyesClosedAddress, params.NativeEyesClosed(d))
+		} else {
+			// Resend as soon as eye tracking comes back.
+			delete(s.lastNative, params.NativeGazeAddress)
+			delete(s.lastNative, params.NativeEyesClosedAddress)
 		}
 	}
+	s.mu.Unlock()
 
 	if err := s.transport.Send(messages); err != nil {
 		s.logger.Warn("Failed to send OSC bundle", zap.Error(err))
 	}
+}
+
+// appendNative appends a native endpoint message when value differs from
+// the one last sent there. Callers hold s.mu.
+func (s *Sender) appendNative(messages []params.Message, address string, value any) []params.Message {
+	if prev, ok := s.lastNative[address]; ok && valueEqual(prev, value) {
+		return messages
+	}
+	s.lastNative[address] = value
+	return append(messages, params.Message{Address: address, Value: value})
+}
+
+// valueEqual compares two message values. []byte is not comparable with ==
+// (it would panic through any), so it is handled explicitly. Stored []byte
+// values must not be reused by their producer.
+func valueEqual(a, b any) bool {
+	if x, ok := a.([]byte); ok {
+		y, ok := b.([]byte)
+		return ok && bytes.Equal(x, y)
+	}
+	return a == b
 }
 
 // SetDefinitions resets every parameter against a new avatar definition.
@@ -178,6 +224,9 @@ func (s *Sender) Stats() ParameterStats {
 
 func (s *Sender) resetLocked() {
 	s.outputs = params.ResetAll(s.all, s.defs, s.allRelevant)
+	// A freshly loaded avatar gets every value once.
+	s.last = make([]any, len(s.outputs))
+	clear(s.lastNative)
 
 	stats := ParameterStats{Count: len(s.outputs)}
 	var deprecated []string

@@ -37,28 +37,24 @@ func nameMatcher(name string) *regexp2.Regexp {
 
 // Base is the fundamental typed output parameter.
 type Base[T Value] struct {
-	name       string
-	typ        ValueType
-	get        func(*tracking.TrackingData) T
-	matcher    *regexp2.Regexp
-	sendOnLoad bool
+	name    string
+	typ     ValueType
+	get     func(*tracking.TrackingData) T
+	matcher *regexp2.Regexp
 
 	address  string
 	relevant bool
-	last     *T
 }
 
 // NewBase creates a parameter named name (without the /avatar/parameters/
-// prefix). sendOnLoad forces the current value to be sent as soon as the
-// parameter becomes relevant.
-func NewBase[T Value](name string, get func(*tracking.TrackingData) T, sendOnLoad bool) *Base[T] {
+// prefix).
+func NewBase[T Value](name string, get func(*tracking.TrackingData) T) *Base[T] {
 	return &Base[T]{
-		name:       name,
-		typ:        valueTypeOf[T](),
-		get:        get,
-		matcher:    nameMatcher(name),
-		sendOnLoad: sendOnLoad,
-		address:    defaultPrefix + name,
+		name:    name,
+		typ:     valueTypeOf[T](),
+		get:     get,
+		matcher: nameMatcher(name),
+		address: defaultPrefix + name,
 	}
 }
 
@@ -71,9 +67,6 @@ func (b *Base[T]) Names() []string  { return []string{b.name} }
 func (b *Base[T]) setRelevant(relevant bool, address string) []Output {
 	b.relevant = relevant
 	b.address = address
-	// Force the next Process call to emit the value for a freshly loaded
-	// avatar.
-	b.last = nil
 	if !relevant {
 		return nil
 	}
@@ -96,12 +89,7 @@ func (b *Base[T]) Reset(defs []Definition, forceRelevant bool) []Output {
 }
 
 func (b *Base[T]) Process(data *tracking.TrackingData) (Message, bool) {
-	v := b.get(data)
-	if b.last != nil && *b.last == v {
-		return Message{}, false
-	}
-	b.last = &v
-	return Message{Address: b.address, Value: v}, true
+	return Message{Address: b.address, Value: b.get(data)}, true
 }
 
 // AlwaysRelevant is a Base with a fixed address that is relevant for every
@@ -111,7 +99,7 @@ type AlwaysRelevant[T Value] struct {
 }
 
 func NewAlwaysRelevant[T Value](address string, get func(*tracking.TrackingData) T) *AlwaysRelevant[T] {
-	b := NewBase(currentVersionPrefix, get, false)
+	b := NewBase(currentVersionPrefix, get)
 	b.address = address
 	b.relevant = true
 	return &AlwaysRelevant[T]{Base: b}
@@ -149,7 +137,7 @@ type ConditionalBool struct {
 
 func NewConditionalBool(name string, get func(*tracking.TrackingData) (value, enabled bool)) *ConditionalBool {
 	c := &ConditionalBool{getCond: get}
-	c.Base = NewBase(name, func(d *tracking.TrackingData) bool { v, _ := get(d); return v }, false)
+	c.Base = NewBase(name, func(d *tracking.TrackingData) bool { v, _ := get(d); return v })
 	return c
 }
 

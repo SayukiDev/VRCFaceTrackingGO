@@ -12,8 +12,8 @@ type EParam struct {
 // the value is below minBoolThreshold.
 func NewEParam(name string, get func(*tracking.TrackingData) float32, minBoolThreshold float32) *EParam {
 	return &EParam{children: []Parameter{
-		NewBase(name, func(d *tracking.TrackingData) bool { return get(d) < minBoolThreshold }, false),
-		NewBase(name, get, false),
+		NewBase(name, func(d *tracking.TrackingData) bool { return get(d) < minBoolThreshold }),
+		NewBase(name, get),
 		NewBinary(name, get),
 	}}
 }
@@ -21,8 +21,8 @@ func NewEParam(name string, get func(*tracking.TrackingData) float32, minBoolThr
 // NewEParamNoBinary is NewEParam without the binary encoding.
 func NewEParamNoBinary(name string, get func(*tracking.TrackingData) float32, minBoolThreshold float32) *EParam {
 	return &EParam{children: []Parameter{
-		NewBase(name, func(d *tracking.TrackingData) bool { return get(d) < minBoolThreshold }, false),
-		NewBase(name, get, false),
+		NewBase(name, func(d *tracking.TrackingData) bool { return get(d) < minBoolThreshold }),
+		NewBase(name, get),
 	}}
 }
 
@@ -31,11 +31,11 @@ func NewEParamVector2(name string, get func(*tracking.TrackingData) tracking.Vec
 	x := func(d *tracking.TrackingData) float32 { return get(d).X }
 	y := func(d *tracking.TrackingData) float32 { return get(d).Y }
 	return &EParam{children: []Parameter{
-		NewBase(name+"X", func(d *tracking.TrackingData) bool { return x(d) < minBoolThreshold }, false),
-		NewBase(name+"X", x, false),
+		NewBase(name+"X", func(d *tracking.TrackingData) bool { return x(d) < minBoolThreshold }),
+		NewBase(name+"X", x),
 		NewBinary(name+"X", x),
-		NewBase(name+"Y", func(d *tracking.TrackingData) bool { return y(d) < minBoolThreshold }, false),
-		NewBase(name+"Y", y, false),
+		NewBase(name+"Y", func(d *tracking.TrackingData) bool { return y(d) < minBoolThreshold }),
+		NewBase(name+"Y", y),
 		NewBinary(name+"Y", y),
 	}}
 }

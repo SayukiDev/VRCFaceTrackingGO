@@ -30,7 +30,7 @@ func NewBinary(name string, get func(*tracking.TrackingData) float32) *Binary {
 		name:     name,
 		get:      get,
 		matcher:  regexp2.MustCompile(`(?<!(v\d+))/`+n+`\d+$|^`+n+`\d+$`, regexp2.None),
-		negative: NewBase(name+"Negative", func(d *tracking.TrackingData) bool { return get(d) < 0 }, true),
+		negative: NewBase(name+"Negative", func(d *tracking.TrackingData) bool { return get(d) < 0 }),
 	}
 }
 
@@ -114,7 +114,7 @@ func (b *Binary) Reset(defs []Definition, forceRelevant bool) []Output {
 	b.maxBinaryValue = 1 << len(found)
 	for _, f := range found {
 		shift := f.shift
-		p := NewBase(b.name+strconv.Itoa(f.index), func(d *tracking.TrackingData) bool { return b.processBit(d, shift) }, true)
+		p := NewBase(b.name+strconv.Itoa(f.index), func(d *tracking.TrackingData) bool { return b.processBit(d, shift) })
 		outputs = append(outputs, p.Reset(defs, forceRelevant)...)
 		b.bits = append(b.bits, p)
 	}
