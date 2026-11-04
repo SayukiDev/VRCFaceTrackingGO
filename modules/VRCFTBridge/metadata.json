@@ -1,0 +1,10 @@
+{
+  "name": "VRCFaceTracking Bridge",
+  "description": "Runs VRCFaceTracking (C#) tracking modules",
+  "author": "SayukiDev",
+  "version": "0.1.0",
+  "pageUrl": "https://github.com/benaclejames/VRCFaceTracking",
+  "usageInstructions": "Needs the .NET 9 runtime. Each bundled VRCFaceTracking module appears as its own module",
+  "icons": [],
+  "platforms": ["windows"]
+}

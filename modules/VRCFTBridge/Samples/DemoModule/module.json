@@ -1,0 +1,10 @@
+{
+  "ModuleId": "6b2f5d0e-3c41-4e8a-9f6d-2a7c1b9e4d10",
+  "Version": "1.0.0",
+  "AuthorName": "SayukiDev",
+  "ModuleName": "VRCFT Demo",
+  "ModuleDescription": "A VRCFaceTracking (C#) module that animates the face without hardware, run through the bridge",
+  "UsageInstructions": "Needs no hardware",
+  "ModulePageUrl": "",
+  "DllFileName": "DemoModule.dll"
+}

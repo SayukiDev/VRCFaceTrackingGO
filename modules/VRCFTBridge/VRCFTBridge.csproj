@@ -1,0 +1,51 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- VRCFTBridge: a VRCFaceTrackingGO driver that runs VRCFaceTracking
+       (C#) tracking modules. cmd/build publishes it and packs the output as
+       VRCFTBridge.<GOOS>.<GOARCH>.vfgmodf with the program as index.vfgmod. -->
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net9.0</TargetFramework>
+    <AssemblyName>VRCFTBridge</AssemblyName>
+    <RootNamespace>VRCFTBridge</RootNamespace>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <SelfContained>false</SelfContained>
+    <InvariantGlobalization>true</InvariantGlobalization>
+    <SatelliteResourceLanguages>en</SatelliteResourceLanguages>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- Separate projects below this folder. -->
+    <Compile Remove="Upstream/**;Samples/**;bin/**;obj/**" />
+    <None Remove="Upstream/**;Samples/**" />
+    <None Include="metadata.json" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="Upstream/VRCFaceTracking.Core/VRCFaceTracking.Core.csproj" />
+    <ProjectReference Include="Upstream/VRCFaceTracking.SDK/VRCFaceTracking.SDK.csproj" />
+  </ItemGroup>
+
+  <!-- The bundled modules: each lands in modules/<assembly name> with its
+       module.json, as VRCFaceTracking installs them, without the assemblies
+       the bridge provides. -->
+  <ItemGroup>
+    <BundledModule Include="Samples/DemoModule/DemoModule.csproj" />
+    <!-- Only so restore covers them. -->
+    <ProjectReference Include="@(BundledModule)" ReferenceOutputAssembly="false" Private="false" />
+  </ItemGroup>
+  <Target Name="PublishBundledModules" AfterTargets="Publish">
+    <MSBuild Projects="@(BundledModule)" Targets="Build" Properties="Configuration=$(Configuration)">
+      <Output TaskParameter="TargetOutputs" ItemName="_BundledOutput" />
+    </MSBuild>
+    <ItemGroup>
+      <_BundledFile Include="%(_BundledOutput.RootDir)%(_BundledOutput.Directory)**\*"
+                    Exclude="%(_BundledOutput.RootDir)%(_BundledOutput.Directory)VRCFaceTracking.*;%(_BundledOutput.RootDir)%(_BundledOutput.Directory)Microsoft.Extensions.*"
+                    Module="%(_BundledOutput.Filename)" />
+      <_BundledFile Include="@(_BundledOutput->'%(MSBuildSourceProjectFile)'->'%(RootDir)%(Directory)module.json')"
+                    Module="%(_BundledOutput.Filename)" />
+    </ItemGroup>
+    <Copy SourceFiles="@(_BundledFile)"
+          DestinationFiles="@(_BundledFile->'$(PublishDir)modules\%(Module)\%(RecursiveDir)%(Filename)%(Extension)')" />
+  </Target>
+</Project>

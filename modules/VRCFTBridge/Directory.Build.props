@@ -1,0 +1,7 @@
+<Project>
+  <!-- Shared by the bridge, the VRCFaceTracking assemblies and the bundled
+       modules. Debug symbols are not shipped. -->
+  <PropertyGroup Condition="'$(Configuration)' == 'Release'">
+    <DebugType>none</DebugType>
+  </PropertyGroup>
+</Project>

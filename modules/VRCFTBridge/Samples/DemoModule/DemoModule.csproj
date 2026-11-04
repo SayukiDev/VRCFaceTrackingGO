@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <!-- Built like a module for VRCFaceTracking: only its own assembly ships;
+       VRCFaceTracking.Core and .SDK come from the host (here, the bridge). -->
+  <PropertyGroup>
+    <TargetFramework>net9.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Upstream\VRCFaceTracking.Core\VRCFaceTracking.Core.csproj" Private="false" />
+    <ProjectReference Include="..\..\Upstream\VRCFaceTracking.SDK\VRCFaceTracking.SDK.csproj" Private="false" />
+    <PackageReference Include="Microsoft.Extensions.Logging.Abstractions" Version="9.0.0" ExcludeAssets="runtime" />
+  </ItemGroup>
+</Project>
