@@ -11,6 +11,7 @@ the licenses that follow.
 - Copyright 2024 benaclejames
 - License: Apache License 2.0 (full text below)
 - Used in: the application (parameter definitions, OSC output, mutations), rewritten in Go.
+- Used in: `modules/VRCFTBridge/Upstream` (module SDK and tracking data types), unchanged C# source.
 
 ## VRCFT-ALVR
 
