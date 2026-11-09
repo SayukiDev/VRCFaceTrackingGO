@@ -43,7 +43,15 @@ Windows 以外ではファイルに実行権限が必要です。モジュール
 cd MyModule && zip -r ../MyModule.windows.amd64.vfgmodf .
 ```
 
-モジュールプログラムは、自分のあるフォルダーを作業ディレクトリとして起動されるので、同梱したファイルは相対パスで開けます。
+それ自体が実行ファイルではないモジュール(インタープリターで動くスクリプト、.NET アセンブリなど)は、**ランチャーファイル**として配布することもできます。`<id>.<os>.<arch>.vfgmod.json`(例: `MyModule.windows.amd64.vfgmod.json`)という名前の JSON ファイルで、モジュールを起動するコマンドを指定します。
+
+```json
+{"Command": "python", "Args": ["C:/MyModule/mymodule.py"]}
+```
+
+ホストは `Command` を、`Args` の後ろに自分の引数(`--info`、`--vfgmod=true`、`--source=<id>`)を付けて起動します。そのため、起動されるプログラムには `Args` の後ろに下のコマンドラインが渡されます。相対パスの `Command` は、ランチャーファイルのあるフォルダーにあればそれを実行し、なければ `PATH` から探します。モジュールページからインストールすると JSON ファイルだけが `<id>.<os>.<arch>.vfgmod.json` としてコピーされるので、参照するファイルは元の場所に置いたままにしてください(`Args` には絶対パスを使ってください)。
+
+モジュールプログラムは、自分のあるフォルダーを作業ディレクトリとして起動されるので、同梱したファイルは相対パスで開けます。ランチャーファイルの場合はモジュールフォルダーになります。
 
 次のコマンドラインに対応する必要があります。
 
@@ -192,7 +200,7 @@ SDK を使ってください。[Go のガイド](Golang/README.ja.md)と [Rust �
 
 ## ほかの言語でモジュールを書く
 
-アプリが動く OS の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(Windows は PE、Linux は ELF、macOS は Mach-O)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめ、`<id>.<os>.<arch>.vfgmod` に名前を変えてください。Windows ではコンソールウィンドウをホストが非表示にするので、コンソールアプリのままで問題ありません。情報の `platforms` には、ビルドした OS を指定してください。
+アプリが動く OS の実行ファイルにできれば、どの言語でも書けます。ホストは `.vfgmod` ファイルを直接起動するので、スクリプトではなくネイティブのプログラム(Windows は PE、Linux は ELF、macOS は Mach-O)である必要があります。スクリプト言語の場合は PyInstaller などで実行ファイルにまとめて `<id>.<os>.<arch>.vfgmod` に名前を変えるか、インタープリターを指すランチャーファイル(`<id>.<os>.<arch>.vfgmod.json`、上記参照)を使ってください。Windows ではコンソールウィンドウをホストが非表示にするので、コンソールアプリのままで問題ありません。情報の `platforms` には、ビルドした OS を指定してください。
 
 チェックリスト:
 
@@ -290,6 +298,12 @@ copy dist\MyModule.exe MyModule.windows.amd64.vfgmod
 cp dist/MyModule MyModule.linux.amd64.vfgmod
 # macOS Apple シリコン
 cp dist/MyModule MyModule.darwin.arm64.vfgmod
+```
+
+ビルドせずに、インストール済みの Python でスクリプトを実行するランチャーファイル(例: `MyModule.windows.amd64.vfgmod.json`)をインストールすることもできます。
+
+```json
+{"Command": "python", "Args": ["C:/MyModule/mymodule.py"]}
 ```
 
 あとはモジュールページからインストールします。シェイプの番号は [`pkg/tracking/expressions.go`](../pkg/tracking/expressions.go) での並び順(0 始まり)です。

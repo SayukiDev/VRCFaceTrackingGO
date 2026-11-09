@@ -236,3 +236,56 @@ func writeFile(t *testing.T, name, content string) string {
 	}
 	return path
 }
+
+func TestValidateLauncher(t *testing.T) {
+	ctx := context.Background()
+	dir := t.TempDir()
+	selfProgram(t, dir, "child.exe", "Launched")
+	// The launcher's Args come before the host's --info: a positional
+	// argument first would stop flag parsing and the program would refuse
+	// to run.
+	good := writeFileIn(t, dir, "good"+plugin.HostLauncherSuffix, `{"Command":"child.exe","Args":["-test.count=1"]}`)
+	desc, err := Validate(ctx, good)
+	if err != nil || desc.ID != "Launched" {
+		t.Fatalf("validate = %+v, %v", desc, err)
+	}
+	positional := writeFileIn(t, dir, "pos"+plugin.HostLauncherSuffix, `{"Command":"child.exe","Args":["x"]}`)
+	if _, err := Validate(ctx, positional); err == nil {
+		t.Fatal("launcher args were not put before the host's flags")
+	}
+	for name, content := range map[string]string{
+		"empty": `{"Command":""}`,
+		"bad":   `not json`,
+		"gone":  `{"Command":"./missing.exe"}`,
+	} {
+		p := writeFileIn(t, dir, name+plugin.HostLauncherSuffix, content)
+		if _, err := Validate(ctx, p); err == nil {
+			t.Errorf("launcher %s accepted", name)
+		}
+	}
+}
+
+func TestInstallLauncherFile(t *testing.T) {
+	src := writeFile(t, "x"+plugin.HostLauncherSuffix, `{"Command":"python"}`)
+	dir := t.TempDir()
+	s, err := Stage(dir, src)
+	if err != nil {
+		t.Fatal(err)
+	}
+	loc, err := s.Install(dir, "mod")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if loc.Root != filepath.Join(dir, "mod"+plugin.HostLauncherSuffix) || loc.Program != loc.Root {
+		t.Fatalf("installed = %+v", loc)
+	}
+}
+
+func writeFileIn(t *testing.T, dir, name, content string) string {
+	t.Helper()
+	p := filepath.Join(dir, name)
+	if err := os.WriteFile(p, []byte(content), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	return p
+}

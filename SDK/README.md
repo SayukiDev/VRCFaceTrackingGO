@@ -61,8 +61,26 @@ file. Uninstalling removes the whole folder.
 cd MyModule && zip -r ../MyModule.windows.amd64.vfgmodf .
 ```
 
+A module that is not an executable of its own (a script run by an
+interpreter, a .NET assembly, ...) can ship as a **launcher file**
+instead: a JSON file named `<id>.<os>.<arch>.vfgmod.json` (e.g.
+`MyModule.windows.amd64.vfgmod.json`) naming the command that runs it.
+
+```json
+{"Command": "python", "Args": ["C:/MyModule/mymodule.py"]}
+```
+
+The host runs `Command` with `Args` followed by its own arguments
+(`--info`, `--vfgmod=true`, `--source=<id>`), so the program behind it
+sees the command lines below after the launcher's `Args`. A relative
+`Command` that exists in the launcher's folder is run from there;
+otherwise it is looked up in `PATH`. Installing it from the Modules page
+copies only the JSON file to `<id>.<os>.<arch>.vfgmod.json`, so the files
+it refers to must stay where they are (use absolute paths in `Args`).
+
 Every module program runs with its own folder as the working directory, so
-files shipped next to it can be opened with relative paths.
+files shipped next to it can be opened with relative paths. For a launcher
+file that is the module folder.
 
 It must handle these command lines:
 
@@ -268,7 +286,9 @@ Any language works as long as the result is an executable for the OS the
 application runs on. The host starts the `.vfgmod` file directly, so it
 must be a native program (PE on Windows, ELF on Linux, Mach-O on macOS),
 not a script: bundle scripts into an executable (for example with
-PyInstaller) and rename it to `<id>.<os>.<arch>.vfgmod`. On Windows the host already
+PyInstaller) and rename it to `<id>.<os>.<arch>.vfgmod`, or point a
+launcher file (`<id>.<os>.<arch>.vfgmod.json`, see above) at the
+interpreter. On Windows the host already
 hides the console window, so a console program is fine. Set `platforms` in
 the description to the operating systems you build it for.
 
@@ -377,6 +397,13 @@ copy dist\MyModule.exe MyModule.windows.amd64.vfgmod
 cp dist/MyModule MyModule.linux.amd64.vfgmod
 # macOS Apple silicon
 cp dist/MyModule MyModule.darwin.arm64.vfgmod
+```
+
+Or skip the bundling and install a launcher file that runs the script
+with the installed Python, e.g. `MyModule.windows.amd64.vfgmod.json`:
+
+```json
+{"Command": "python", "Args": ["C:/MyModule/mymodule.py"]}
 ```
 
 Then install it from the Modules page. Shape indices are the positions in

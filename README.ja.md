@@ -32,7 +32,7 @@
 | [VirtualDesktop](modules/VirtualDesktop) | Virtual Desktop 経由の Quest Pro など | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
-モジュールは独立したプログラム(`.vfgmod`)です。同梱のモジュールはインストーラーで、それ以外はアプリのモジュールページからインストールします。自作する場合は、Go・Rust の SDK とプロトコルの説明がある[モジュール SDK](SDK/README.ja.md) を参照してください。
+モジュールは独立したプログラム(`.vfgmod`、ランチャーファイル `.vfgmod.json`、アーカイブ `.vfgmodf`)です。同梱のモジュールはインストーラーで、それ以外はアプリのモジュールページからインストールします。自作する場合は、Go・Rust の SDK とプロトコルの説明がある[モジュール SDK](SDK/README.ja.md) を参照してください。
 
 ## 動作環境
 

@@ -4,6 +4,10 @@
 //
 //	func main() { plugin.Serve(mymodule.New()) }
 //
+// Instead of a program, a module may ship a launcher file (*.vfgmod.json,
+// see Launcher) naming the command that runs it; the host's flags follow
+// the launcher's Args.
+//
 // Started with --info it prints its Description as JSON to stdout and
 // exits, which is how the host inspects a module that is not running.
 // Started by the host with --vfgmod=true it answers the requests of the
@@ -39,6 +43,12 @@ const (
 	// its top level. The host extracts it on installation into a module
 	// folder <id>.<GOOS>.<GOARCH>.vfgmodf.
 	FolderSuffix = ".vfgmodf"
+	// LauncherSuffix is the extension of launcher files, a module format
+	// of its own beside program files and archives: a JSON file
+	// <id>.<GOOS>.<GOARCH>.vfgmod.json naming the command that runs the
+	// module (see Launcher), for modules that are not an executable of
+	// their own.
+	LauncherSuffix = Suffix + ".json"
 	// FolderEntry is the program the host runs inside a module folder.
 	FolderEntry = "index.vfgmod"
 	// InfoFlag makes a module program print its Description and exit.
@@ -55,6 +65,10 @@ const (
 // HostSuffix is the file name suffix of module programs for the platform
 // the host runs on. The host only recognises module programs ending in it.
 var HostSuffix = PlatformSuffix(runtime.GOOS, runtime.GOARCH)
+
+// HostLauncherSuffix is the file name suffix of launcher files for the
+// platform the host runs on.
+var HostLauncherSuffix = HostSuffix + ".json"
 
 // HostFolderSuffix is the name suffix of module archives and installed
 // module folders for the platform the host runs on.
@@ -76,6 +90,12 @@ func PlatformFolderSuffix(goos, goarch string) string {
 // platform the host runs on. Case is ignored.
 func HasHostSuffix(name string) bool {
 	return strings.HasSuffix(strings.ToLower(name), HostSuffix)
+}
+
+// HasHostLauncherSuffix reports whether name is a launcher file for the
+// platform the host runs on. Case is ignored.
+func HasHostLauncherSuffix(name string) bool {
+	return strings.HasSuffix(strings.ToLower(name), HostLauncherSuffix)
 }
 
 // HasHostFolderSuffix reports whether name is a module archive or folder

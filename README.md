@@ -32,7 +32,7 @@ It receives eye and face tracking from tracking modules and sends it to VRChat o
 | [VirtualDesktop](modules/VirtualDesktop) | Quest Pro etc. through Virtual Desktop | Windows | [VirtualDesktop.VRCFaceTracking](https://github.com/guygodin/VirtualDesktop.VRCFaceTracking) |
 | [VRCFTPicoModule](modules/VRCFTPicoModule) | PICO 4 Pro / Enterprise | Windows | [VRCFTPicoModule](https://github.com/lonelyicer/VRCFTPicoModule) |
 
-Modules are standalone programs (`.vfgmod`). The installer can install the bundled ones; others are installed from the Modules page. To write your own, see the [module SDK](SDK/README.md) for Go and Rust and the protocol.
+Modules are standalone programs (`.vfgmod`, `.vfgmod.json` launcher files or `.vfgmodf` archives). The installer can install the bundled ones; others are installed from the Modules page. To write your own, see the [module SDK](SDK/README.md) for Go and Rust and the protocol.
 
 ## Requirements
 

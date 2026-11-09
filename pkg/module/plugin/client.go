@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"sync"
 	"time"
 
@@ -39,9 +38,9 @@ type Client struct {
 
 var _ Conn = (*Client)(nil)
 
-// Start launches the module program at path. source selects the module of
-// a driver program and must be empty for a module program. Its log is
-// re-logged through logger.
+// Start launches the module program (or launcher file) at path. source
+// selects the module of a driver program and must be empty for a module
+// program. Its log is re-logged through logger.
 func Start(path, source string, logger *zap.Logger) (*Client, error) {
 	// Our own pipes rather than cmd.*Pipe, so cmd.Wait does not close them
 	// under the reader.
@@ -64,10 +63,13 @@ func Start(path, source string, logger *zap.Logger) (*Client, error) {
 	if source != "" {
 		args = append(args, "--"+SourceFlag+"="+source)
 	}
-	cmd := exec.Command(path, args...)
 	// Files shipped next to the program (a module folder) resolve relative
 	// to it.
-	cmd.Dir = filepath.Dir(path)
+	cmd, err := command(context.Background(), path, args...)
+	if err != nil {
+		closeAll(inR, inW, outR, outW, errR, errW)
+		return nil, fmt.Errorf("start module %s: %w", path, err)
+	}
 	cmd.Stdin, cmd.Stdout, cmd.Stderr = inR, outW, errW
 	prepare(cmd)
 	err = cmd.Start()

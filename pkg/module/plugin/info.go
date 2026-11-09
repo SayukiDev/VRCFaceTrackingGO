@@ -6,16 +6,17 @@ import (
 	"errors"
 	"fmt"
 	"os/exec"
-	"path/filepath"
 	"strings"
 )
 
-// ReadInfo runs the module program at path with --info and returns its
-// Description. Use a ctx with a deadline; the program is killed when it
-// expires.
+// ReadInfo runs the module program (or launcher file) at path with --info
+// and returns its Description. Use a ctx with a deadline; the program is
+// killed when it expires.
 func ReadInfo(ctx context.Context, path string) (Description, error) {
-	cmd := exec.CommandContext(ctx, path, "--"+InfoFlag)
-	cmd.Dir = filepath.Dir(path)
+	cmd, err := command(ctx, path, "--"+InfoFlag)
+	if err != nil {
+		return Description{}, fmt.Errorf("read module info: %w", err)
+	}
 	prepare(cmd)
 	out, err := cmd.Output()
 	if err != nil {

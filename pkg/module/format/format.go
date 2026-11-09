@@ -7,6 +7,9 @@
 // files it needs at its top level. In the module directory a program file
 // is kept as <id>.<GOOS>.<GOARCH>.vfgmod and an archive is extracted into
 // the folder <id>.<GOOS>.<GOARCH>.vfgmodf.
+//
+// A module may also be a launcher file <id>.<GOOS>.<GOARCH>.vfgmod.json
+// (see plugin.Launcher), kept in the module directory under that name.
 package format
 
 import (
@@ -81,7 +84,7 @@ type Location struct {
 func Locate(dir string, e os.DirEntry) (Location, bool) {
 	root := filepath.Join(dir, e.Name())
 	switch {
-	case e.Type().IsRegular() && plugin.HasHostSuffix(e.Name()):
+	case e.Type().IsRegular() && (plugin.HasHostSuffix(e.Name()) || plugin.HasHostLauncherSuffix(e.Name())):
 		return Location{Root: root, Program: root}, true
 	case e.IsDir() && plugin.HasHostFolderSuffix(e.Name()):
 		return Location{Root: root, Program: filepath.Join(root, plugin.FolderEntry), Folder: true}, true
@@ -103,11 +106,11 @@ type Staged struct {
 // .install-* are not modules, so a scan meanwhile ignores it.
 func Stage(dir, src string) (*Staged, error) {
 	switch {
-	case plugin.HasHostSuffix(src):
+	case plugin.HasHostSuffix(src) || plugin.HasHostLauncherSuffix(src):
 		return &Staged{Location: Location{Root: src, Program: src}}, nil
 	case !plugin.HasHostFolderSuffix(src):
-		return nil, fmt.Errorf("%s is not a module for this platform (*%s or *%s)",
-			filepath.Base(src), plugin.HostSuffix, plugin.HostFolderSuffix)
+		return nil, fmt.Errorf("%s is not a module for this platform (*%s, *%s or *%s)",
+			filepath.Base(src), plugin.HostSuffix, plugin.HostLauncherSuffix, plugin.HostFolderSuffix)
 	}
 	if err := os.MkdirAll(dir, 0o755); err != nil {
 		return nil, fmt.Errorf("create module directory: %w", err)
@@ -147,7 +150,11 @@ func (s *Staged) Install(dir, id string) (Location, error) {
 		}
 		return Location{Root: root, Program: filepath.Join(root, plugin.FolderEntry), Folder: true}, nil
 	}
-	root := filepath.Join(dir, id+plugin.HostSuffix)
+	suffix := plugin.HostSuffix
+	if plugin.IsLauncher(s.Root) {
+		suffix = plugin.HostLauncherSuffix
+	}
+	root := filepath.Join(dir, id+suffix)
 	if !SameFile(s.Root, root) {
 		if err := copyFile(s.Root, root); err != nil {
 			return Location{}, err
