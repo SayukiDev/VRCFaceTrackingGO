@@ -1,0 +1,9 @@
+{
+  "name": "WiVRn",
+  "description": "Provides face and eye tracking from headsets connected through WiVRn",
+  "author": "SayukiDev",
+  "version": "1.0.0",
+  "usageInstructions": "Enable face and eye tracking in the WiVRn headset app, then connect the headset. The module connects on its own once the headset is streaming",
+  "icons": ["wivrn.png"],
+  "platforms": ["linux"]
+}

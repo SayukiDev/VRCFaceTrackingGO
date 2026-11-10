@@ -4,6 +4,7 @@ go 1.26.0
 
 require (
 	github.com/dlclark/regexp2 v1.12.0
+	github.com/ebitengine/purego v0.10.2
 	github.com/grandcat/zeroconf v1.0.0
 	github.com/hypebeast/go-osc v0.0.0-20220308234300-cec5a8a1e5f5
 	github.com/shirou/gopsutil/v4 v4.26.7
@@ -17,7 +18,6 @@ require (
 	github.com/adrg/xdg v0.5.3 // indirect
 	github.com/cenkalti/backoff v2.2.1+incompatible // indirect
 	github.com/coder/websocket v1.8.14 // indirect
-	github.com/ebitengine/purego v0.10.2 // indirect
 	github.com/go-ole/go-ole v1.3.0 // indirect
 	github.com/godbus/dbus/v5 v5.2.2 // indirect
 	github.com/lufia/plan9stats v0.0.0-20211012122336-39d0f177ccd0 // indirect
