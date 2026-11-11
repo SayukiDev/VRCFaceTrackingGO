@@ -6,6 +6,7 @@ import (
 	"net"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/grandcat/zeroconf"
 	"go.uber.org/zap"
@@ -35,8 +36,11 @@ func NewDiscovery(logger *zap.Logger) *Discovery {
 	return &Discovery{logger: logger.Named("mDNS")}
 }
 
+const browseInterval = 10 * time.Second
+
 // Start begins browsing for VRChat.
 func (d *Discovery) Start(ctx context.Context) error {
+	// Validate the multicast setup once so a hard failure is reported.
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		return fmt.Errorf("create mdns resolver: %w", err)
@@ -46,48 +50,74 @@ func (d *Discovery) Start(ctx context.Context) error {
 	d.cancel = cancel
 	d.mu.Unlock()
 
-	entries := make(chan *zeroconf.ServiceEntry, 16)
-	go d.consume(ctx, entries)
-	if err := resolver.Browse(ctx, oscJSONService, mdnsDomain, entries); err != nil {
-		cancel()
-		return fmt.Errorf("browse %s: %w", oscJSONService, err)
-	}
+	go d.browseLoop(ctx, resolver)
 	return nil
+}
+
+func (d *Discovery) browseLoop(ctx context.Context, resolver *zeroconf.Resolver) {
+	for ctx.Err() == nil {
+		if resolver == nil {
+			var err error
+			resolver, err = zeroconf.NewResolver(nil)
+			if err != nil {
+				d.logger.Warn("Failed to create mDNS resolver", zap.Error(err))
+			}
+		}
+		if resolver != nil {
+			d.browseOnce(ctx, resolver)
+			resolver = nil // a resolver's sockets are closed when its browse ends
+		}
+		select {
+		case <-ctx.Done():
+		case <-time.After(time.Second):
+		}
+	}
+}
+
+func (d *Discovery) browseOnce(ctx context.Context, resolver *zeroconf.Resolver) {
+	roundCtx, cancel := context.WithTimeout(ctx, browseInterval)
+	defer cancel()
+	entries := make(chan *zeroconf.ServiceEntry, 16)
+	if err := resolver.Browse(roundCtx, oscJSONService, mdnsDomain, entries); err != nil {
+		d.logger.Debug("mDNS browse failed", zap.Error(err))
+		return
+	}
+	// consume returns once zeroconf closes entries (round over).
+	d.consume(entries)
 }
 
 func isGameClient(instance string) bool {
 	return strings.HasPrefix(instance, "VRChat-Client") || strings.HasPrefix(instance, "ChilloutVR-GameClient")
 }
 
-func (d *Discovery) consume(ctx context.Context, entries <-chan *zeroconf.ServiceEntry) {
-	for {
-		select {
-		case <-ctx.Done():
-			return
-		case e, ok := <-entries:
-			if !ok {
-				return
-			}
-			if !isGameClient(e.Instance) || len(e.AddrIPv4) == 0 || e.Port == 0 {
-				continue
-			}
-			// VRChat always advertises 127.0.0.1; prefer a non-loopback
-			// address if one is present, otherwise use loopback.
-			ip := net.IPv4(127, 0, 0, 1)
-			for _, a := range e.AddrIPv4 {
-				if !a.IsLoopback() {
-					ip = a
-					break
-				}
-			}
-			d.setEndpoint(&net.TCPAddr{IP: ip, Port: e.Port})
+func (d *Discovery) consume(entries <-chan *zeroconf.ServiceEntry) {
+	for e := range entries {
+		if !isGameClient(e.Instance) || len(e.AddrIPv4) == 0 || e.Port == 0 {
+			continue
 		}
+		// VRChat always advertises 127.0.0.1; prefer a non-loopback
+		// address if one is present, otherwise use loopback.
+		ip := net.IPv4(127, 0, 0, 1)
+		for _, a := range e.AddrIPv4 {
+			if !a.IsLoopback() {
+				ip = a
+				break
+			}
+		}
+		d.setEndpoint(&net.TCPAddr{IP: ip, Port: e.Port})
 	}
 }
 
 func (d *Discovery) setEndpoint(ep *net.TCPAddr) {
 	d.mu.Lock()
+	if d.cancel == nil { // closed; a late entry from a finishing round
+		d.mu.Unlock()
+		return
+	}
 	first := d.endpoint == nil
+	if !first && (!d.endpoint.IP.Equal(ep.IP) || d.endpoint.Port != ep.Port) {
+		d.logger.Info("VRChat OSCQuery endpoint changed", zap.String("endpoint", ep.String()))
+	}
 	d.endpoint = ep
 	fn := d.OnClientDiscovered
 	d.mu.Unlock()
