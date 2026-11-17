@@ -77,6 +77,7 @@ export default {
     uninstalled: 'Uninstalled {name}.',
     none: 'No modules installed. Install a .vfgmod, .vfgmod.json or .vfgmodf file to get started.',
     viaDriver: 'via {name}',
+    uninstallViaDriver: 'Provided by {name}. Uninstall the driver to remove it.',
     tabModules: 'Modules',
     tabDrivers: 'Drivers',
     noDrivers: 'No drivers installed.',

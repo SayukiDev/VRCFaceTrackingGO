@@ -187,12 +187,14 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
           </n-switch>
           <!-- A plain span is the tooltip trigger: Naive popovers cannot use
                another popover component (the popconfirm) as their trigger. -->
-          <n-tooltip v-if="!m.driver">
+          <!-- A module provided by a driver keeps the button, disabled: it can
+               only be uninstalled together with its driver. -->
+          <n-tooltip>
             <template #trigger>
               <span class="uninstall">
-                <n-popconfirm @positive-click="uninstall(m)">
+                <n-popconfirm :disabled="!!m.driver" @positive-click="uninstall(m)">
                   <template #trigger>
-                    <n-button quaternary type="error" :aria-label="t('modules.uninstall')" :disabled="reloading">
+                    <n-button quaternary type="error" :aria-label="t('modules.uninstall')" :disabled="reloading || !!m.driver">
                       <template #icon><n-icon><delete24-regular /></n-icon></template>
                     </n-button>
                     </template>
@@ -200,7 +202,7 @@ function status(m: router.Registered): { text: string; type: 'success' | 'warnin
                 </n-popconfirm>
               </span>
               </template>
-            {{ t('modules.uninstall') }}
+            {{ m.driver ? t('modules.uninstallViaDriver', { name: driverName(m.driver) }) : t('modules.uninstall') }}
           </n-tooltip>
         </div>
 

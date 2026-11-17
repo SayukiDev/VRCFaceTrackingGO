@@ -79,6 +79,7 @@ const ja: typeof en = {
     uninstalled: '{name} をアンインストールしました。',
     none: 'モジュールがインストールされていません。.vfgmod / .vfgmod.json / .vfgmodf ファイルをインストールしてください。',
     viaDriver: '{name} に内包',
+    uninstallViaDriver: '{name} に内包されています。削除するにはドライバーをアンインストールしてください。',
     tabModules: 'モジュール',
     tabDrivers: 'ドライバー',
     noDrivers: 'ドライバーはインストールされていません。',
