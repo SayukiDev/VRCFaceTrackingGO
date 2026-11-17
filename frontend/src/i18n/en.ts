@@ -25,6 +25,7 @@ export default {
     eyeInactive: 'Eye Tracking Inactive',
     faceInactive: 'Face Tracking Inactive',
     toggleTracking: 'Toggle Tracking',
+    keepTracking: 'Keep Current Data',
     assignTitle: 'Eye & Face Source',
     assignBody: 'Pick the module for each kind by hand. Automatic follows the order on the Modules page. Not saved; resets on the next launch.',
     assignAuto: 'Automatic',

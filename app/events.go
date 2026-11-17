@@ -18,6 +18,7 @@ const (
 	eventAvatar     = "avatar:changed"
 	eventOscStats   = "osc:stats"
 	eventParameters = "parameters:changed"
+	eventKeep       = "keep:changed"
 )
 
 // emitter implements service.Listener by emitting Wails events.
@@ -38,6 +39,8 @@ func (e *emitter) OnAvatarChanged(info oscquery.AvatarInfo) {
 func (e *emitter) OnParametersChanged(stats sender.ParameterStats) {
 	e.app.Event.Emit(eventParameters, stats)
 }
+
+func (e *emitter) OnKeepChanged(keep bool) { e.app.Event.Emit(eventKeep, keep) }
 
 func (e *emitter) OnOscStats(status service.OscStatus) {
 	e.app.Event.Emit(eventOscStats, status)

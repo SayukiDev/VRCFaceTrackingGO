@@ -381,7 +381,7 @@ export function themeOverrides(p: Palette): GlobalThemeOverrides {
       paddingSingle: '0 40px 0 16px',
     },
     Switch: {
-      // 52×32 track, 24dp handle when on / 16dp when off (handled in style.css).
+      // 52×32 track with a 24dp handle (state colours are in style.css).
       railWidthMedium: '52px',
       railHeightMedium: '32px',
       railBorderRadiusMedium: shape.full,
@@ -389,6 +389,15 @@ export function themeOverrides(p: Palette): GlobalThemeOverrides {
       buttonHeightMedium: '24px',
       buttonWidthPressedMedium: '24px',
       buttonBorderRadiusMedium: shape.full,
+      // Large keeps the medium proportions; Naive's own large is smaller
+      // than the M3 medium above.
+      railWidthLarge: '65px',
+      railHeightLarge: '40px',
+      railBorderRadiusLarge: shape.full,
+      buttonWidthLarge: '30px',
+      buttonHeightLarge: '30px',
+      buttonWidthPressedLarge: '30px',
+      buttonBorderRadiusLarge: shape.full,
       railColor: hex(p.surfaceContainerHighest),
       railColorActive: hex(p.primary),
       buttonColor: hex(p.outline),

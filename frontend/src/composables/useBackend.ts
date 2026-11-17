@@ -25,4 +25,5 @@ export const Events = {
   avatar: 'avatar:changed',
   oscStats: 'osc:stats',
   parameters: 'parameters:changed',
+  keep: 'keep:changed',
 } as const

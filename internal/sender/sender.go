@@ -74,8 +74,40 @@ type Sender struct {
 	// lastNative holds the last value sent to each native endpoint.
 	lastNative map[string]any
 
+	// keep freezes the output: while it is set, Send sends kept, the data
+	// of the first Send after keep was switched on, instead of its argument.
+	keep bool
+	kept *tracking.TrackingData
+
 	// OnParametersChanged is called after every reset with the new stats.
 	OnParametersChanged func(ParameterStats)
+	// OnKeepChanged is called whenever keeping is switched on or off.
+	OnKeepChanged func(bool)
+}
+
+// Keep reports whether the output is frozen.
+func (s *Sender) Keep() bool {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.keep
+}
+
+// SetKeep freezes the output on the data of the next Send, or releases it.
+// The modules keep running either way.
+func (s *Sender) SetKeep(keep bool) {
+	s.mu.Lock()
+	changed := keep != s.keep
+	s.keep = keep
+	if !keep {
+		s.kept = nil
+	}
+	s.mu.Unlock()
+	if changed {
+		s.logger.Info("Tracking keep changed", zap.Bool("keep", keep))
+		if s.OnKeepChanged != nil {
+			s.OnKeepChanged(keep)
+		}
+	}
 }
 
 func New(logger *zap.Logger, status params.StatusProvider, transport *osc.Sender) *Sender {
@@ -114,6 +146,13 @@ func (s *Sender) Send(d *tracking.TrackingData) {
 
 	var messages []params.Message
 	s.mu.Lock()
+	if s.keep {
+		if s.kept == nil {
+			kept := *d
+			s.kept = &kept
+		}
+		d = s.kept
+	}
 	if mode.parameters() {
 		for i, out := range s.outputs {
 			// Native mode sends the eye endpoints itself below.

@@ -114,9 +114,10 @@ body {
   letter-spacing: var(--md-sys-typescale-label-large-tracking);
 }
 
-/* M3 switch: unselected track has a 2dp outline and a 16dp outline-coloured
-   handle; selected handle is 24dp on-primary. Naive UI only has one handle
-   size and colour, so the unselected state is adjusted here. */
+/* M3 switch: unselected track has a 2dp outline and an outline-coloured
+   handle; selected handle is on-primary. Naive UI only has one handle colour,
+   so the states are adjusted here. The handle keeps one size in both states
+   (M3 shrinks it to 16dp when unselected, which reads as a size mismatch). */
 .n-switch .n-switch__rail {
   box-shadow: inset 0 0 0 2px var(--md-sys-color-outline);
 }
@@ -124,13 +125,19 @@ body {
   box-shadow: none;
 }
 .n-switch .n-switch__button {
-  transform: scale(calc(16 / 24));
   transition: left 0.3s cubic-bezier(0.2, 0, 0, 1), max-width 0.3s cubic-bezier(0.2, 0, 0, 1),
     transform 0.3s cubic-bezier(0.2, 0, 0, 1), background-color 0.3s cubic-bezier(0.2, 0, 0, 1);
 }
 .n-switch.n-switch--active .n-switch__button {
-  transform: none;
   background-color: var(--md-sys-color-on-primary);
+}
+/* Naive UI draws the switch label white in both states, which is unreadable
+   on the light unselected track. */
+.n-switch .n-switch__unchecked {
+  color: var(--md-sys-color-on-surface-variant);
+}
+.n-switch .n-switch__checked {
+  color: var(--md-sys-color-on-primary);
 }
 /* Naive UI's FAB state layer misses a semicolon after `bottom: 0`, which
    drops `left: 0` and leaves the hover/pressed layer offset. */

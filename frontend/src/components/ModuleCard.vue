@@ -2,13 +2,18 @@
 import { useI18n } from 'vue-i18n'
 import { NCard, NImage, NSwitch, NTag, NText } from 'naive-ui'
 import type * as router from '@go/internal/router'
-import { SetModuleActive } from '@go/app/app'
+import { SetModuleActive, SetTrackingKeep } from '@go/app/app'
 
-defineProps<{ module: router.ModuleInfo }>()
+// keep is the output-wide keep state, shared by every module card.
+defineProps<{ module: router.ModuleInfo; keep: boolean }>()
 const { t } = useI18n()
 
 function toggle(id: string, value: boolean) {
   void SetModuleActive(id, value)
+}
+
+function setKeep(value: boolean) {
+  void SetTrackingKeep(value)
 }
 </script>
 
@@ -37,6 +42,12 @@ function toggle(id: string, value: boolean) {
         <n-switch :value="module.active" size="large" @update:value="(v: boolean) => toggle(module.id, v)">
           <template #checked>{{ t('home.toggleTracking') }}</template>
           <template #unchecked>{{ t('home.toggleTracking') }}</template>
+        </n-switch>
+        <!-- Keeping needs live tracking; the backend drops it when tracking
+             is switched off. -->
+        <n-switch :value="keep && module.active" :disabled="!module.active" @update:value="setKeep">
+          <template #checked>{{ t('home.keepTracking') }}</template>
+          <template #unchecked>{{ t('home.keepTracking') }}</template>
         </n-switch>
       </div>
     </div>
@@ -68,6 +79,10 @@ function toggle(id: string, value: boolean) {
   opacity: 0.5;
 }
 .toggle {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
   margin-right: 16px;
 }
 </style>

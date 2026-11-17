@@ -30,6 +30,7 @@ type Listener interface {
 	OnModulesChanged(modules []router.ModuleInfo)
 	OnAvatarChanged(avatar oscquery.AvatarInfo)
 	OnParametersChanged(stats sender.ParameterStats)
+	OnKeepChanged(keep bool)
 	OnOscStats(status OscStatus)
 }
 
@@ -93,7 +94,7 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 	s.mixer = mixer.New(cfg.Mixer)
 	s.modules = manager.New(s.root, manager.DefaultDir(s.dataDir))
 	s.router = router.New(s.root, s.mixer, s.modules)
-	s.router.OnChange = listener.OnModulesChanged
+	s.router.OnChange = s.modulesChanged
 	if cfg.Modules != nil {
 		s.router.SetConfig(cfg.Modules)
 	}
@@ -104,6 +105,7 @@ func (s *Service) Start(ctx context.Context, listener Listener) error {
 
 	s.sender = sender.New(s.root, s.router, s.transport)
 	s.sender.OnParametersChanged = listener.OnParametersChanged
+	s.sender.OnKeepChanged = listener.OnKeepChanged
 	s.sender.SetOutputMode(cfg.Output)
 
 	s.query = oscquery.NewService(s.root)

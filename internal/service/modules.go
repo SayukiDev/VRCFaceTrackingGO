@@ -10,6 +10,7 @@ import (
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/router"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/sender"
 	"github.com/SayukiDev/VRCFaceTrackingGO/internal/settings"
+	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/adapter"
 	"github.com/SayukiDev/VRCFaceTrackingGO/pkg/module/plugin"
 )
 
@@ -23,6 +24,27 @@ func (s *Service) SetModuleActive(id string, active bool) { s.router.SetActive(i
 // independently.
 func (s *Service) SetModuleTracking(id string, eye, expression bool) {
 	s.router.SetTracking(id, eye, expression)
+}
+
+// TrackingKeep reports whether the output is frozen.
+func (s *Service) TrackingKeep() bool { return s.sender.Keep() }
+
+// SetTrackingKeep freezes the output on the current tracking data, or
+// releases it. The modules keep running. Keeping needs tracking: it cannot
+// be switched on, and ends, while no module is tracking.
+func (s *Service) SetTrackingKeep(keep bool) { s.sender.SetKeep(keep && s.tracking()) }
+
+// tracking reports whether any module is tracking eye or expression.
+func (s *Service) tracking() bool {
+	return s.router.EyeStatus() == adapter.Active || s.router.ExpressionStatus() == adapter.Active
+}
+
+// modulesChanged is the router's change callback.
+func (s *Service) modulesChanged(mods []router.ModuleInfo) {
+	if !s.tracking() {
+		s.sender.SetKeep(false)
+	}
+	s.listener.OnModulesChanged(mods)
 }
 
 // ModuleCatalog returns every installed module with its setting and state.

@@ -3,7 +3,7 @@ import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NText, NAlert, NButton, NIcon } from 'naive-ui'
 import { PlugConnected24Regular, Person24Regular, ArrowSync24Regular } from '@vicons/fluent'
-import { GetModules, GetOscStatus, GetAvatar, GetParameterStats, ReloadModules } from '@go/app/app'
+import { GetModules, GetOscStatus, GetAvatar, GetParameterStats, GetTrackingKeep, ReloadModules } from '@go/app/app'
 import type * as router from '@go/internal/router'
 import type * as service from '@go/internal/service'
 import { Mode as OscMode } from '@go/internal/osc'
@@ -19,6 +19,7 @@ const modules = useBackendState<router.ModuleInfo[]>(GetModules, Events.modules,
 const osc = useBackendState<service.OscStatus | null>(GetOscStatus, Events.oscStats, null)
 const avatar = useBackendState<oscquery.AvatarInfo | null>(GetAvatar, Events.avatar, null)
 const stats = useBackendState<sender.ParameterStats | null>(GetParameterStats, Events.parameters, null)
+const keep = useBackendState<boolean>(GetTrackingKeep, Events.keep, false)
 
 // Modules that are running but have not delivered new data for a while.
 const stale = computed(() => modules.value.filter((m) => m.stale))
@@ -44,7 +45,7 @@ async function reload() {
       </div>
     </n-alert>
 
-    <module-card v-for="m in modules" :key="m.id" :module="m" />
+    <module-card v-for="m in modules" :key="m.id" :module="m" :keep="keep" />
 
     <tracking-assignment />
 

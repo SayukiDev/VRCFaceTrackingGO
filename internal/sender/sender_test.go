@@ -65,6 +65,36 @@ func TestSendSkipsUnchangedParameters(t *testing.T) {
 	}
 }
 
+func TestKeepFreezesTheOutput(t *testing.T) {
+	s, dispatched := newTestSender(t, &fakeStatus{eye: adapter.Active, expr: adapter.Active})
+	s.SetDefinitions([]params.Definition{{Address: "/avatar/parameters/v2/JawOpen", Name: "v2/JawOpen", Type: params.TypeFloat}})
+	var notified []bool
+	s.OnKeepChanged = func(keep bool) { notified = append(notified, keep) }
+
+	d := tracking.NewTrackingData()
+	d.Shapes[tracking.JawOpen].Weight = 0.3
+	sendCount(s, dispatched, d)
+
+	// The first Send after switching keep on is what gets kept.
+	s.SetKeep(true)
+	d.Shapes[tracking.JawOpen].Weight = 0.5
+	if n := sendCount(s, dispatched, d); n != 1 {
+		t.Fatalf("data to keep sent %d messages, want 1", n)
+	}
+	d.Shapes[tracking.JawOpen].Weight = 0.9
+	if n := sendCount(s, dispatched, d); n != 0 {
+		t.Fatalf("kept data sent %d messages", n)
+	}
+
+	s.SetKeep(false)
+	if n := sendCount(s, dispatched, d); n != 1 {
+		t.Fatalf("released data sent %d messages, want 1", n)
+	}
+	if len(notified) != 2 || !notified[0] || notified[1] {
+		t.Fatalf("notified = %v", notified)
+	}
+}
+
 func TestSendForceRelevantSharedAddress(t *testing.T) {
 	s, dispatched := newTestSender(t, &fakeStatus{eye: adapter.Active, expr: adapter.Active})
 	s.SetAllRelevant(true)

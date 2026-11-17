@@ -183,6 +183,10 @@ export function GetTrackingAssignment(): $CancellablePromise<router$0.Assignment
     });
 }
 
+export function GetTrackingKeep(): $CancellablePromise<boolean> {
+    return $Call.ByID(3204793580);
+}
+
 export function GetUseSystemAccent(): $CancellablePromise<boolean> {
     return $Call.ByID(2990424308);
 }
@@ -306,6 +310,14 @@ export function SetTheme(theme: string): $CancellablePromise<void> {
  */
 export function SetTrackingAssignment(eye: string, expression: string): $CancellablePromise<void> {
     return $Call.ByID(4236853656, eye, expression);
+}
+
+/**
+ * SetTrackingKeep freezes the output on the current tracking data, or
+ * releases it.
+ */
+export function SetTrackingKeep(keep: boolean): $CancellablePromise<void> {
+    return $Call.ByID(2263918688, keep);
 }
 
 export function SetUseSystemAccent(use: boolean): $CancellablePromise<void> {

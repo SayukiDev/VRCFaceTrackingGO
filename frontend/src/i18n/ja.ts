@@ -27,6 +27,7 @@ const ja: typeof en = {
     eyeInactive: 'アイトラッキング 停止中',
     faceInactive: 'フェイストラッキング 停止中',
     toggleTracking: 'トラッキング切替',
+    keepTracking: '現在の値をキープ',
     assignTitle: 'アイ / フェイスの取得元',
     assignBody: '種類ごとに使うモジュールを手動で選べます。「自動」はモジュールページの順序に従います。この設定は保存されず、次回起動時に元に戻ります。',
     assignAuto: '自動',

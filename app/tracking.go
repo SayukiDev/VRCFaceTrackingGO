@@ -18,6 +18,12 @@ func (a *App) SetModuleTracking(id string, eye, expression bool) {
 	a.svc.SetModuleTracking(id, eye, expression)
 }
 
+func (a *App) GetTrackingKeep() bool { return a.svc.TrackingKeep() }
+
+// SetTrackingKeep freezes the output on the current tracking data, or
+// releases it.
+func (a *App) SetTrackingKeep(keep bool) { a.svc.SetTrackingKeep(keep) }
+
 func (a *App) GetModuleCatalog() []router.Registered { return a.svc.ModuleCatalog() }
 
 func (a *App) GetDriverCatalog() []service.Driver { return a.svc.DriverCatalog() }
